@@ -1,41 +1,23 @@
 %% Set up variable values
-arOrder = 2;
+ord = 2;
 sigLen = 1000;
 sigFreq = 440;
 gapLen = 200;
-preLen = 200;
+fitLen = 200;
+prDir = -1;
 
 %% Prepare the damaged signal
 sig = getSineSig(sigFreq, sigLen);
 [dam, gapLoc] = makeGap(sig, gapLen);
 
-%% Restoration
-% Select signal section for model fitting
-fitSect = dam(gapLoc - preLen:gapLoc - 1);
+% Predict the missing signal
+pred = predictOneDir(dam, ord, gapLoc, gapLoc + gapLen - 1, fitLen, prDir);
 
-% Fit the model
-[a, e] = arburg(fitSect, arOrder);
-
-% Find initial conditions
-zinit = filtic(e, a, fliplr(fitSect));
-
-% Prepare impulse signal
-imp = zeros(gapLen, 1);
-imp(1) = 1;
-
-% Get restored signal
-rest = filter(e, a, imp, zinit);
-
-% Replace gap with restored signal
-dam(gapLoc:gapLoc + gapLen - 1) = rest;
+% Replace gap with predicted signal
+dam(gapLoc:gapLoc + gapLen - 1) = pred;
 
 %% Plotting
-% Plot AR model in z-domain
-subplot(2, 1, 1);
-zplane(1, a);
-
 % Plot the restored signal
-subplot(2, 1, 2);
 plot(sig, ':');
 hold on;
 plot(dam);
