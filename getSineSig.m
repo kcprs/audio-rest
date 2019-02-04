@@ -9,6 +9,6 @@ function sine = getSineSig(freq, duration, fs)
         fs = 44100;
     end
 
-    n = 1:1:fs * duration;
+    n = 1:(fs * duration);
     sine = sin(2 * pi * n * freq / fs);
 end
