@@ -6,12 +6,25 @@
         {
             "label": "Run Current File",
             "type": "shell",
-            "command": ".\\matlabRun.ps1",
+            "command": ".\\PowerShell\\matlabRun.ps1",
             "args": [
+                "${workspaceFolder}",
                 "${fileBasename}"
             ],
             "group": {
                 "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Run Test Suite",
+            "type": "shell",
+            "command": ".\\PowerShell\\runTestSuite.ps1",
+            "args": [
+                "${workspaceFolder}"
+            ],
+            "group": {
+                "kind": "test",
                 "isDefault": true
             }
         }
