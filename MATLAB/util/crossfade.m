@@ -1,5 +1,5 @@
 function output = crossfade(sig1, sig2)
-    %CROSSFADE Crossfades two signals using a raised cosine weight function.
+    %CROSSFADE Crossfade two signals using a raised cosine weight function.
     %   output = CROSSFADE(sig1, sig2) applies weight function to signals
     %   sig1 (weight == 1 at index 0) and sig2 (weight == 0 at index 0),
     %   then sums them and returns the result.

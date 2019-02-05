@@ -1,5 +1,5 @@
 function chirpSig = getChirpSig(f0, f1, len, fs)
-    %GETCHIRPSIG Create a linear cosine sweep
+    %GETCHIRPSIG Generate a linear cosine sweep
     %   chirpSig = GETCHIRPSIG(f0, f1, len) returns a cosine sweep starting
     %   at frequency f0 and linearly changing to f1 over len samples.
     %   Default sampling rate is 44100 Hz.
