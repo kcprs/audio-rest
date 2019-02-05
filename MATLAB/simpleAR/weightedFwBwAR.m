@@ -1,12 +1,14 @@
 %% Set up variable values
+fs = 44100;
 ord = 2;
-sigLen = 1000;
+sigLen = 5 * fs;
 sigFreq = 440;
-gapLen = 200;
+gapLen = fs;
 fitLen = 200;
 
 %% Prepare the damaged signal
-sig = getSineSig(sigFreq, sigLen);
+% sig = getSineSig(sigFreq, sigLen);
+sig = getChirpSig(sigFreq, sigFreq * 10, sigLen);
 [dam, gapLoc] = makeGap(sig, gapLen);
 
 %% Restoration
@@ -24,9 +26,14 @@ dam(gapLoc:gapLoc + gapLen - 1) = pred;
 
 %% Plotting
 % Plot the restored signal
+subplot(2, 1, 1);
 plot(sig, ':');
 hold on;
 plot(dam);
 plot([gapLoc, gapLoc], [-1, 1], 'Color', [0, 0, 0, 0.3]);
 plot([gapLoc + gapLen - 1, gapLoc + gapLen - 1], [-1, 1], 'Color', [0, 0, 0, 0.3]);
 hold off;
+subplot(2, 1, 2);
+nfft = 2048;
+spectrogram(dam, nfft, nfft / 16, nfft, fs, 'yaxis');
+set(gca, 'YScale', 'log');

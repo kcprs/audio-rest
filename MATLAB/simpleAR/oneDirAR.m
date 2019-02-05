@@ -7,7 +7,8 @@ fitLen = 200;
 prDir = -1;
 
 %% Prepare the damaged signal
-sig = getSineSig(sigFreq, sigLen);
+% sig = getSineSig(sigFreq, sigLen);
+sig = getChirpSig(sigFreq, sigFreq * 10, sigLen);
 [dam, gapLoc] = makeGap(sig, gapLen);
 
 %% Restoration
