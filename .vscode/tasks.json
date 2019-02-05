@@ -8,8 +8,8 @@
             "type": "shell",
             "command": ".\\PowerShell\\matlabRun.ps1",
             "args": [
-                "${workspaceFolder}",
-                "${fileBasename}"
+                "${fileDirname}",
+                "${fileBasename}",
             ],
             "group": {
                 "kind": "build",

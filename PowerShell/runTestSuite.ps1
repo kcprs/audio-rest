@@ -3,10 +3,10 @@ $workspacePath = $args[0]
 
 # MATLAB command to be ran
 $command = @"
-addpath('$workspacePath');
+addpath('$workspacePath\MATLAB');
+setup('$workspacePath\MATLAB')
 import matlab.unittest.TestSuite;
-run(TestSuite.fromFolder('.\tests'));
-rmpath('$workspacePath');
+run(TestSuite.fromFolder('$workspacePath\MATLAB\tests'));
 "@
 
 # Execute the command

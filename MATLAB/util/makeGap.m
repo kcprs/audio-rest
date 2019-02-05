@@ -8,7 +8,7 @@ function [output, gapLoc] = makeGap(sig, gapLen, gapLoc)
     %   signal sig with gap of length gapLen starting at index gapLoc.
 
     if nargin == 2
-        gapLoc = floor((length(sig) - gapLen) / 2);
+        gapLoc = floor((length(sig) - gapLen) / 2) + 1;
     end
 
     output = sig;

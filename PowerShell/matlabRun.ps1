@@ -1,9 +1,9 @@
-# Workspace path and script name is passed from VS Code
-$workspacePath = $args[0]
+# Script path and script name is passed from VS Code
+$scriptPath = $args[0]
 $scriptName = $args[1]
 
-# Change directory to workspace path
-Set-Location $workspacePath
+# Change directory to MATLAB folder
+Set-Location "$scriptPath"
 
 # Running file name as command opens the script in MATLAB
 Invoke-Expression ".\$scriptName"
