@@ -31,13 +31,12 @@ function pred = predictOneDir(sig, ord, gapStart, gapEnd, fitLen, dr)
     % Find initial conditions
     zinit = filtic(e, a, flipud(fitSect));
 
-    % Prepare impulse signal
+    % Prepare white noise input signal
     gapLen = gapEnd - gapStart + 1;
-    imp = zeros(gapLen, 1);
-    imp(1) = 1;
+    in = randn(gapLen, 1);
 
-    % Get prediction of signal
-    pred = filter(e, a, imp, zinit);
+    % Get prediction of missing signal
+    pred = filter(e, a, in, zinit);
 
     % Flip prediction if direction is backwards
     if dr < 0
