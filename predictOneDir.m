@@ -16,7 +16,7 @@ function pred = predictOneDir(sig, ord, gapStart, gapEnd, fitLen, dr)
 
     % If direction is backwards, flip signal and adjust gapLoc
     if dr < 0
-        sig = fliplr(sig);
+        sig = flipud(sig);
         gapLoc = length(sig) - gapEnd + 1;
     else
         gapLoc = gapStart;
@@ -29,7 +29,7 @@ function pred = predictOneDir(sig, ord, gapStart, gapEnd, fitLen, dr)
     [a, e] = arburg(fitSect, ord);
 
     % Find initial conditions
-    zinit = filtic(e, a, fliplr(fitSect));
+    zinit = filtic(e, a, flipud(fitSect));
 
     % Prepare impulse signal
     gapLen = gapEnd - gapStart + 1;
@@ -37,11 +37,11 @@ function pred = predictOneDir(sig, ord, gapStart, gapEnd, fitLen, dr)
     imp(1) = 1;
 
     % Get prediction of signal
-    pred = filter(e, a, imp, zinit)';
+    pred = filter(e, a, imp, zinit);
 
     % Flip prediction if direction is backwards
     if dr < 0
-        pred = fliplr(pred);
+        pred = flipud(pred);
     end
 
 end
