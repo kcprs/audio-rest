@@ -10,6 +10,7 @@ prDir = -1;
 sig = getSineSig(sigFreq, sigLen);
 [dam, gapLoc] = makeGap(sig, gapLen);
 
+%% Restoration
 % Predict the missing signal
 pred = predictOneDir(dam, ord, gapLoc, gapLoc + gapLen - 1, fitLen, prDir);
 

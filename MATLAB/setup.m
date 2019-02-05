@@ -5,7 +5,7 @@ function setup(basePath)
 
     % Add subfolders to path
     addpath(basePath + "\util");
-    addpath(basePath + "\linearAR");
+    addpath(basePath + "\simpleAR");
 
     disp('Setup complete.');
 end
