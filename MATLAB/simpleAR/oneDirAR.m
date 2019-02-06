@@ -5,7 +5,8 @@ f1 = 1000;
 ord = 2;
 sigLen = 3000;
 gapLen = 1000;
-fitLen = 200;
+% fitLen = 500;
+fitLen = round(fs / f0);
 prDir = 1;
 
 sigType = 'sine';
