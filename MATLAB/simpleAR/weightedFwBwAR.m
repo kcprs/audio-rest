@@ -1,14 +1,22 @@
 %% Set up variable values
 fs = 44100;
+f0 = 100;
+f1 = 1000;
 ord = 2;
-sigLen = 5 * fs;
-sigFreq = 440;
-gapLen = fs;
+sigLen = 4000;
+gapLen = 2000;
 fitLen = 200;
 
+% sigType = 'sine';
+sigType = 'sweep';
+
 %% Prepare the damaged signal
-% sig = getSineSig(sigFreq, sigLen);
-sig = getChirpSig(sigFreq, sigFreq * 10, sigLen);
+if strcmp(sigType, 'sweep')
+    sig = getChirpSig(f0, f0 * 10, sigLen);
+else
+    sig = getSineSig(f0, sigLen);
+end
+
 [dam, gapLoc] = makeGap(sig, gapLen);
 
 %% Restoration
@@ -25,15 +33,41 @@ pred = crossfade(predFwd, predBwd);
 dam(gapLoc:gapLoc + gapLen - 1) = pred;
 
 %% Plotting
-% Plot the restored signal
+% Time domain
+% Plot the original signal
 subplot(2, 1, 1);
 plot(sig, ':');
+
+% Plot the restored signal with legend
 hold on;
-plot(dam);
-plot([gapLoc, gapLoc], [-1, 1], 'Color', [0, 0, 0, 0.3]);
-plot([gapLoc + gapLen - 1, gapLoc + gapLen - 1], [-1, 1], 'Color', [0, 0, 0, 0.3]);
+if strcmp(sigType, 'sweep')
+    sigDescription = ['f0 = ', num2str(f0), ' f1 = ', num2str(f1)];
+else
+    sigDescription = ['f0 = ', num2str(f0)];
+end
+description = ['ord = ', num2str(2), ...
+                ', gapLen = ', num2str(gapLen), ...
+                ', fitLen = ', num2str(fitLen), ...
+                ', ', sigDescription, ...
+                ', fs = ', num2str(fs)];
+p1 = plot(dam, 'DisplayName', description);
+
+% Mark gap area
+rectangle('Position', [gapLoc, -1.2, gapLen, 2.4], ...
+    'FaceColor', [1, 0, 0, 0.1], ...
+    'EdgeColor', 'none');
 hold off;
+
+% Add title and legend
+title('Reconstruction with Weighted Fwd-Bwd Burg AR Model (time-domain)');
+legend(p1, 'Location', 'southoutside');
+
+% Frequency domain
 subplot(2, 1, 2);
-nfft = 2048;
-spectrogram(dam, nfft, nfft / 16, nfft, fs, 'yaxis');
+nfft = 1024;
+hopSize = 64;
+spectrogram(dam, nfft, nfft - hopSize, nfft, fs, 'yaxis');
 set(gca, 'YScale', 'log');
+
+% Add title
+title('Reconstruction with Weighted Fwd-Bwd Burg AR Model (frequency-domain)');
