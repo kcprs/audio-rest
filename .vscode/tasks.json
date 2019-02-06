@@ -20,9 +20,6 @@
             "label": "Run Test Suite",
             "type": "shell",
             "command": ".\\PowerShell\\runTestSuite.ps1",
-            "args": [
-                "${workspaceFolder}"
-            ],
             "group": {
                 "kind": "test",
                 "isDefault": true
