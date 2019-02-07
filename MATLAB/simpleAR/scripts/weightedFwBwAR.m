@@ -1,3 +1,6 @@
+% WEIGHTEDFWBWAR Fix a gap in a signal using a weighted forward-backward
+% predictor
+
 %% Set up variable values
 fs = 44100;
 f0 = 100;
