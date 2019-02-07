@@ -8,12 +8,13 @@ function setup(basePath)
     %   to the MATLAB folder in this package.
 
     if nargin == 0
-        basePath = ".";
+        basePath = '.';
     end
 
     % Add required subfolders to path
-    addpath(basePath + "\util");
-    addpath(basePath + "\simpleAR");
+    addpath([basePath, '\\util']);
+    addpath([basePath, '\\simpleAR\\scripts']);
+    addpath([basePath, '\\simpleAR\\functions']);
 
     disp('Setup complete.');
 end

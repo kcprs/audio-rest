@@ -7,7 +7,9 @@ sigLen = 3000;
 gapLen = 1000;
 % fitLen = 500;
 fitLen = round(fs / f0);
-prDir = 1;
+
+prDir = 'fwd';
+% prDir = 'bwd';
 
 sigType = 'sine';
 % sigType = 'sweep';
@@ -19,14 +21,22 @@ else
     sig = getSineSig(f0, sigLen);
 end
 
-[dam, gapLoc] = makeGap(sig, gapLen);
+[dam, gapStart, gapEnd] = makeGap(sig, gapLen);
 
 %% Restoration
 % Predict the missing signal
-pred = predictOneDir(dam, ord, gapLoc, gapLoc + gapLen - 1, fitLen, prDir);
+if strcmp(prDir, 'bwd')
+    predStart = gapEnd;
+    predLen = -gapLen;
+else
+    predStart = gapStart;
+    predLen = gapLen;
+end
+
+pred = burgPredict(dam, ord, predStart, predLen, fitLen);
 
 % Replace gap with predicted signal
-dam(gapLoc:gapLoc + gapLen - 1) = pred;
+dam(gapStart:gapStart + gapLen - 1) = pred;
 
 %% Plotting
 % Plot the original signal
@@ -34,21 +44,23 @@ plot(sig, ':');
 
 % Plot the restored signal with legend
 hold on;
+
 if strcmp(sigType, 'sweep')
     sigDescription = ['f0 = ', num2str(f0), ' f1 = ', num2str(f1)];
 else
     sigDescription = ['f0 = ', num2str(f0)];
 end
+
 description = ['ord = ', num2str(2), ...
                 ', gapLen = ', num2str(gapLen), ...
                 ', fitLen = ', num2str(fitLen), ...
                 ', ', sigDescription, ...
                 ', fs = ', num2str(fs), ...
-                ', dir = ', num2str(prDir)];
+                ', dir = ', prDir];
 p1 = plot(dam, 'DisplayName', description);
 
 % Mark gap area
-rectangle('Position', [gapLoc, -1.2, gapLen, 2.4], ...
+rectangle('Position', [gapStart, -1.2, gapLen, 2.4], ...
     'FaceColor', [1, 0, 0, 0.1], ...
     'EdgeColor', 'none');
 hold off;

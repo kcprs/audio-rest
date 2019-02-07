@@ -32,7 +32,7 @@ if ($exit) {
 
 
 # Execute the command
-Write-Host "Running test suite..." -ForegroundColor green
+Write-Host "Running test suite..." -ForegroundColor yellow
 matlab -nosplash -nodesktop -wait -r $command
 
 # Return MATLAB exit code if exiting

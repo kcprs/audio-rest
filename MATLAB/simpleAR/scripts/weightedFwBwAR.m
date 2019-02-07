@@ -17,20 +17,20 @@ else
     sig = getSineSig(f0, sigLen);
 end
 
-[dam, gapLoc] = makeGap(sig, gapLen);
+[dam, gapStart, gapEnd] = makeGap(sig, gapLen);
 
 %% Restoration
 % Predict the missing signal forward
-predFwd = predictOneDir(dam, ord, gapLoc, gapLoc + gapLen - 1, fitLen);
+predFwd = burgPredict(dam, ord, gapStart, gapLen, fitLen);
 
 % Predict the missing signal backward
-predBwd = predictOneDir(dam, ord, gapLoc, gapLoc + gapLen - 1, fitLen, -1);
+predBwd = burgPredict(dam, ord, gapEnd, -gapLen, fitLen);
 
 % Apply the crossfade
 pred = crossfade(predFwd, predBwd);
 
 % Replace gap with predicted signal
-dam(gapLoc:gapLoc + gapLen - 1) = pred;
+dam(gapStart:gapEnd) = pred;
 
 %% Plotting
 % Time domain
@@ -40,11 +40,13 @@ plot(sig, ':');
 
 % Plot the restored signal with legend
 hold on;
+
 if strcmp(sigType, 'sweep')
     sigDescription = ['f0 = ', num2str(f0), ' f1 = ', num2str(f1)];
 else
     sigDescription = ['f0 = ', num2str(f0)];
 end
+
 description = ['ord = ', num2str(2), ...
                 ', gapLen = ', num2str(gapLen), ...
                 ', fitLen = ', num2str(fitLen), ...
@@ -53,7 +55,7 @@ description = ['ord = ', num2str(2), ...
 p1 = plot(dam, 'DisplayName', description);
 
 % Mark gap area
-rectangle('Position', [gapLoc, -1.2, gapLen, 2.4], ...
+rectangle('Position', [gapStart, -1.2, gapLen, 2.4], ...
     'FaceColor', [1, 0, 0, 0.1], ...
     'EdgeColor', 'none');
 hold off;
