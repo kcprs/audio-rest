@@ -5,9 +5,9 @@ fs = 44100;
 f0 = 100;
 f1 = 1000;
 ord = 2;
-sigLen = 3000;
+sigLen = 6000;
 gapLen = 1000;
-fitLen = 500;
+fitLen = 900;
 % fitLen = round(fs / f0);
 
 prDir = 'fwd';
@@ -64,6 +64,17 @@ p1 = plot(dam, 'DisplayName', description);
 % Mark gap area
 rectangle('Position', [gapStart, -1.2, gapLen, 2.4], ...
     'FaceColor', [1, 0, 0, 0.1], ...
+    'EdgeColor', 'none');
+
+% Mark fitting area
+if strcmp(prDir, 'bwd')
+    fitStart = predStart + 1;
+else
+    fitStart = predStart - fitLen;
+end
+
+rectangle('Position', [fitStart, -1.2, fitLen, 2.4], ...
+    'FaceColor', [0, 1, 0, 0.1], ...
     'EdgeColor', 'none');
 hold off;
 

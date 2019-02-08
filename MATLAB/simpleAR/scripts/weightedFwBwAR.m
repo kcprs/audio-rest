@@ -63,6 +63,16 @@ rectangle('Position', [gapStart, -1.2, gapLen, 2.4], ...
     'EdgeColor', 'none');
 hold off;
 
+% Mark fitting areas
+rectangle('Position', [gapStart - fitLen, -1.2, fitLen, 2.4], ...
+    'FaceColor', [0, 1, 0, 0.1], ...
+    'EdgeColor', 'none');
+
+rectangle('Position', [gapEnd + 1, -1.2, fitLen, 2.4], ...
+    'FaceColor', [0, 1, 0, 0.1], ...
+    'EdgeColor', 'none');
+hold off;
+
 % Add title and legend
 title('Reconstruction with Weighted Fwd-Bwd Burg AR Model (time-domain)');
 legend(p1, 'Location', 'southoutside');
