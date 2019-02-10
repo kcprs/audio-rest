@@ -2,7 +2,7 @@ classdef GetSineSigTest < matlab.unittest.TestCase
 
     methods (Test)
 
-        function testLongSineZeroPhase(testCase)
+        function testDefaultFs(testCase)
             freq = 440;
             len = 1000;
             fs = 44100;
