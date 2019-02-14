@@ -6,27 +6,30 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             f = 2000;
             l = 2000;
             sig = getSineSig(f, l);
-            result = findSpecPeak(sig);
+            [freqEst, ~, ampEst] = findSpecPeak(sig);
 
-            testCase.verifyEqual(result, f, 'RelTol', 0.01);
+            testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
+            testCase.verifyEqual(ampEst, 1, 'RelTol', 0.01);
         end
 
         function testLowFreqLongSigNoPad(testCase)
             f = 100;
             l = 2000;
             sig = getSineSig(f, l);
-            result = findSpecPeak(sig);
+            [freqEst, ~, ampEst] = findSpecPeak(sig);
 
-            testCase.verifyEqual(result, f, 'RelTol', 0.01);
+            testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
+            testCase.verifyEqual(ampEst, 1, 'RelTol', 0.011);
         end
 
         function testHighFreqShortSigNoPad(testCase)
             f = 2000;
             l = 100;
             sig = getSineSig(f, l);
-            result = findSpecPeak(sig);
+            [freqEst, ~, ampEst] = findSpecPeak(sig);
 
-            testCase.verifyEqual(result, f, 'RelTol', 0.01);
+            testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
+            testCase.verifyEqual(ampEst, 1, 'RelTol', 0.01);
         end
 
         function testHighFreqLongSigWithPad(testCase)
@@ -34,9 +37,10 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             l = 2000;
             nfft = 2048;
             sig = getSineSig(f, l);
-            result = findSpecPeak(sig, nfft);
+            [freqEst, ~, ampEst] = findSpecPeak(sig, nfft);
 
-            testCase.verifyEqual(result, f, 'RelTol', 0.01);
+            testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
+            testCase.verifyEqual(ampEst, 1, 'RelTol', 0.01);
         end
 
         function testLowFreqLongSigWithPad(testCase)
@@ -44,9 +48,10 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             l = 2000;
             nfft = 2048;
             sig = getSineSig(f, l);
-            result = findSpecPeak(sig, nfft);
+            [freqEst, ~, ampEst] = findSpecPeak(sig, nfft);
 
-            testCase.verifyEqual(result, f, 'RelTol', 0.01);
+            testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
+            testCase.verifyEqual(ampEst, 1, 'RelTol', 0.01);
         end
 
         function testHighFreqShortSigWithPad(testCase)
@@ -54,9 +59,10 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             l = 100;
             nfft = 2048;
             sig = getSineSig(f, l);
-            result = findSpecPeak(sig, nfft);
+            [freqEst, ~, ampEst] = findSpecPeak(sig, nfft);
 
-            testCase.verifyEqual(result, f, 'RelTol', 0.01);
+            testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
+            testCase.verifyEqual(ampEst, 1, 'RelTol', 0.015);
         end
 
     end
