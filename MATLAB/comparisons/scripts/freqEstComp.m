@@ -1,15 +1,16 @@
 %FREQESTCOMP Compare frequency estimation accuracy between AR modelling and
-%spectral peak detection
+%two varieties of spectral peak detection
 
 %% Set variable values
 fs = 44100;
 freq = 1000;
+nfft = 2048;
 
 % errMode = 'abs';
 errMode = 'rel';
 
-% lenMode = 'samples';
-lenMode = 'ms';
+lenMode = 'samples';
+% lenMode = 'ms';
 % lenMode = 'period';
 
 %% Prepare intermediate variables
@@ -23,6 +24,7 @@ nComps = length(sigLengths);
 % Prepare vectors for storing error values
 arErrors = zeros(nComps, 1);
 pdErrors = zeros(nComps, 1);
+pdpErrors = zeros(nComps, 1);
 
 % Compute errors for given frequency at multiple signal lengths
 for iter = 1:nComps
@@ -35,9 +37,13 @@ for iter = 1:nComps
     arFreqEst = fs * abs(angle(poles(1))) / (2 * pi);
     arErrors(iter) = arFreqEst - freq;
 
-    % Peak detection error
+    % Peak detection error without padding
     pdFreqEst = findSpecPeak(sig);
     pdErrors(iter) = pdFreqEst - freq;
+
+    % Peak detection error with padding
+    pdpFreqEst = findSpecPeak(sig, nfft);
+    pdpErrors(iter) = pdpFreqEst - freq;
 end
 
 %% Plotting
@@ -58,22 +64,25 @@ end
 if strcmp(errMode, 'rel')
     arVec = arErrors / freq * 100;
     pdVec = pdErrors / freq * 100;
+    pdpVec = pdpErrors / freq * 100;
     yLabelDesc = 'Frequency estimate - relative error';
 else
     arVec = arErrors;
     pdVec = pdErrors;
+    pdpVec = pdpErrors;
     yLabelDesc = 'Frequency estimate error in Hz';
 end
 
 semilogx(xVec, arVec, 'DisplayName', 'AR modelling');
 hold on;
-semilogx(xVec, pdVec, 'DisplayName', 'Peak detection');
+semilogx(xVec, pdVec, 'DisplayName', ...
+    'Peak detection without padding (nfft = length(sig))');
+semilogx(xVec, pdpVec, 'DisplayName', ...
+    ['Peak detection with padding (nfft = ', num2str(nfft), ')']);
 hold off;
 
 title(['Frequency estimate error for sine wave @ ', num2str(freq), ' Hz']);
 xlabel(xLabelDesc);
-% ax = gca;
-% ax.XLim = arrayfun(@round, xLimits);
 ylabel(yLabelDesc);
 grid on;
 legend;
