@@ -29,7 +29,7 @@ pdpErrors = zeros(nComps, 1);
 % Compute errors for given frequency at multiple signal lengths
 for iter = 1:nComps
     len = sigLengths(iter);
-    sig = getSineSig(freq, len);
+    sig = getSineSig(len, freq);
 
     % AR modelling error
     [~, A] = burgPredict(sig, 2, 0, -100, len);

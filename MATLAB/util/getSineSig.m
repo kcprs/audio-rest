@@ -1,6 +1,6 @@
-function sig = getSineSig(freq, len, amp, phase, fs)
+function sig = getSineSig(len, freq, amp, phase, fs)
     %GETSINESIG Generate a sinewave of given frequency and length in samples
-    %   sig = GETSINESIG(freq, len, amp, phase, fs) returns sine wave of
+    %   sig = GETSINESIG(len, freq, amp, phase, fs) returns sine wave of
     %   frequency freq, amplitude amp, with specified initial phase and
     %   at a specifed sampling frequency fs. Arguments freq and amp can
     %   either be scalars or vectors of length len, mapping the value at
@@ -9,12 +9,12 @@ function sig = getSineSig(freq, len, amp, phase, fs)
     %   argument is interpreted as the phase at index 0 (the sample
     %   preceeding the generated signal).
     %
-    %   sig = GETSINESIG(freq, len, amp, phase) uses default fs = 44100.
+    %   sig = GETSINESIG(len, freq, amp, phase) uses default fs = 44100.
     %
-    %   sig = GETSINESIG(freq, len, amp) uses default values: phase = 0
+    %   sig = GETSINESIG(len, freq, amp) uses default values: phase = 0
     %   and fs = 44100.
     %
-    %   sig = GETSINESIG(freq, len) uses default values: amp = 1, phase = 0
+    %   sig = GETSINESIG(len, freq) uses default values: amp = 1, phase = 0
     %   and fs = 44100.
 
     if nargin < 5
@@ -52,19 +52,16 @@ function sig = getSineSig(freq, len, amp, phase, fs)
         amp = ones(len, 1) * amp;
     end
 
-    % Initialise
-    sig = zeros(len, 1);
-    n = 1;
-
     % Generate signal
-    while n <= len
+    sig = zeros(len, 1);
+
+    for n = 1:len
 
         if skipFirstPhase
             phase = getNextPhase(phase, freq(n), fs);
         end
 
         sig(n) = amp(n) * sin(phase);
-        n = n + 1;
         skipFirstPhase = true;
     end
 

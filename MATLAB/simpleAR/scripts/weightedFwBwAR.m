@@ -17,7 +17,7 @@ sigType = 'sweep';
 if strcmp(sigType, 'sweep')
     sig = getChirpSig(f0, f0 * 10, sigLen);
 else
-    sig = getSineSig(f0, sigLen);
+    sig = getSineSig(sigLen, f0);
 end
 
 [dam, gapStart, gapEnd] = makeGap(sig, gapLen);

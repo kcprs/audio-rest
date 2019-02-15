@@ -7,7 +7,7 @@ classdef BurgPredictTest < matlab.unittest.TestCase
             sigLen = 1000;
             gapLen = 500;
             fitLen = 200;
-            sig = getSineSig(440, sigLen);
+            sig = getSineSig(sigLen, 440);
             [dam, gapStart, ~] = makeGap(sig, gapLen);
 
             testCase.assumeSize(dam, [sigLen, 1]);
@@ -21,7 +21,7 @@ classdef BurgPredictTest < matlab.unittest.TestCase
             sigLen = 1000;
             gapLen = 500;
             fitLen = 200;
-            sig = getSineSig(440, sigLen);
+            sig = getSineSig(sigLen, 440);
             [dam, ~, gapEnd] = makeGap(sig, gapLen);
 
             testCase.assumeSize(dam, [sigLen, 1]);
@@ -36,7 +36,7 @@ classdef BurgPredictTest < matlab.unittest.TestCase
             gapLen = 500;
             fitLen = 200;
             predLen = 200;
-            sig = getSineSig(440, sigLen);
+            sig = getSineSig(sigLen, 440);
             [dam, gapStart, ~] = makeGap(sig, gapLen);
 
             testCase.assumeSize(dam, [sigLen, 1]);
@@ -51,7 +51,7 @@ classdef BurgPredictTest < matlab.unittest.TestCase
             gapLen = 500;
             fitLen = 200;
             predLen = 200;
-            sig = getSineSig(440, sigLen);
+            sig = getSineSig(sigLen, 440);
             [dam, ~, gapEnd] = makeGap(sig, gapLen);
 
             testCase.assumeSize(dam, [sigLen, 1]);

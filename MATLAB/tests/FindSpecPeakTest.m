@@ -5,7 +5,7 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
         function testHighFreqLongSigNoPad(testCase)
             f = 2000;
             l = 2000;
-            sig = getSineSig(f, l);
+            sig = getSineSig(l, f);
             [freqEst, ~, ampEst] = findSpecPeak(sig);
 
             testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
@@ -15,7 +15,7 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
         function testLowFreqLongSigNoPad(testCase)
             f = 100;
             l = 2000;
-            sig = getSineSig(f, l);
+            sig = getSineSig(l, f);
             [freqEst, ~, ampEst] = findSpecPeak(sig);
 
             testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
@@ -25,7 +25,7 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
         function testHighFreqShortSigNoPad(testCase)
             f = 2000;
             l = 100;
-            sig = getSineSig(f, l);
+            sig = getSineSig(l, f);
             [freqEst, ~, ampEst] = findSpecPeak(sig);
 
             testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
@@ -36,7 +36,7 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             f = 2000;
             l = 2000;
             nfft = 2048;
-            sig = getSineSig(f, l);
+            sig = getSineSig(l, f);
             [freqEst, ~, ampEst] = findSpecPeak(sig, nfft);
 
             testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
@@ -47,7 +47,7 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             f = 100;
             l = 2000;
             nfft = 2048;
-            sig = getSineSig(f, l);
+            sig = getSineSig(l, f);
             [freqEst, ~, ampEst] = findSpecPeak(sig, nfft);
 
             testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
@@ -58,7 +58,7 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             f = 2000;
             l = 100;
             nfft = 2048;
-            sig = getSineSig(f, l);
+            sig = getSineSig(l, f);
             [freqEst, ~, ampEst] = findSpecPeak(sig, nfft);
 
             testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
