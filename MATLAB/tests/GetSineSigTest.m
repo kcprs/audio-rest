@@ -45,23 +45,9 @@ classdef GetSineSigTest < matlab.unittest.TestCase
             len = 1000;
             freq = 440;
             actual = getSineSig(len, ones(len, 1) * freq, 1, 0);
-            expected = sin(2 * pi * (1:len)' * freq / fs);
+            expected = sin(2 * pi * ((1:len) - 1)' * freq / fs);
 
             testCase.verifyEqual(actual, expected, 'AbsTol', 1.0e-13);
-        end
-
-        function testVectorFreq(testCase)
-            fs = 44100;
-            len = 1000;
-            f0 = 100;
-            f1 = 200;
-            freq = linspace(f0, f1, len)';
-            phase = 0.5 * pi - 2 * pi * f0 / fs;
-            actual = getSineSig(len, freq, 1, phase);
-            t = linspace(0, len / fs, len)';
-            expected = chirp(t, f0, len / fs, f1);
-
-            testCase.verifyEqual(actual, expected, 'AbsTol', 0.02);
         end
 
         function testVectorAmp(testCase)
@@ -75,6 +61,22 @@ classdef GetSineSigTest < matlab.unittest.TestCase
             expected = amp(indx) .* sin(2 * pi * (indx - 1) * freq / fs);
 
             testCase.verifyEqual(actual, expected, 'AbsTol', 1.0e-13);
+        end
+
+        function testEndPhase(testCase)
+            fs = 44100;
+            len = 1000;
+            freq = linspace(10, 20, len);
+            sig = getSineSig(len, freq);
+            w = 2 * pi * freq / fs;
+            expected = mod(sum(w(1:end - 1)), 2 * pi);
+            actual = asin(sig(end));
+
+            if sig(end) < sig(end - 1)
+                actual = pi - actual;
+            end
+
+            testCase.verifyEqual(actual, expected);
         end
 
     end

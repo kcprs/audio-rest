@@ -4,10 +4,8 @@ function sig = getSineSig(len, freq, amp, phase, fs)
     %   frequency freq, amplitude amp, with specified initial phase and
     %   at a specifed sampling frequency fs. Arguments freq and amp can
     %   either be scalars or vectors of length len, mapping the value at
-    %   each index to the frequency or amplitude at corresponding sample of
-    %   the generated signal. If freq is given as a vector, the phase
-    %   argument is interpreted as the phase at index 0 (the sample
-    %   preceeding the generated signal).
+    %   each index to the frequency or amplitude at the corresponding sample
+    %   of the generated signal.
     %
     %   sig = GETSINESIG(len, freq, amp, phase) uses default fs = 44100.
     %
@@ -40,11 +38,6 @@ function sig = getSineSig(len, freq, amp, phase, fs)
     % If freq is a scalar, convert to a vector.
     if length(freq) == 1
         freq = ones(len, 1) * freq;
-        skipFirstPhase = false;
-    else
-        % If freq is a vector, treat the phase argument as the phase of the
-        % preceeding sample.
-        skipFirstPhase = true;
     end
 
     % If amp is a scalar, convert to a vector.
@@ -56,13 +49,8 @@ function sig = getSineSig(len, freq, amp, phase, fs)
     sig = zeros(len, 1);
 
     for n = 1:len
-
-        if skipFirstPhase
-            phase = getNextPhase(phase, freq(n), fs);
-        end
-
         sig(n) = amp(n) * sin(phase);
-        skipFirstPhase = true;
+        phase = getNextPhase(phase, freq(n), fs);
     end
 
 end
