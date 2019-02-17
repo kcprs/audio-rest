@@ -13,11 +13,11 @@ function [freq, mag, amp] = findSpecPeak(sig, nfft, fs)
     %   [freq, mag, amp] = FINDSPECPEAK(sig) uses default values
     %   of fs = 44100 and nfft = length(sig).
 
-    nsig = length(sig);
-
     if nargin < 3
         fs = 44100;
     end
+    
+    nsig = length(sig);
 
     if nargin < 2
         nfft = nsig;
