@@ -91,6 +91,7 @@ if strcmp(errMode, 'rel')
     ytickformat(gca, 'percentage');
 end
 
+% Change xlabel format from 10^(n) to simple integers
 % Code below is from: https://uk.mathworks.com/matlabcentral/answers/95023-how-do-i-change-the-x-axis-label-on-a-semilogx-plot-from-exponential-to-normal-format-in-matlab
 New_XTickLabel = get(gca, 'xtick');
 set(gca, 'XTickLabel', New_XTickLabel);
