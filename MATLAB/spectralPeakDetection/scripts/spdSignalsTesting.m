@@ -7,11 +7,12 @@ nfft = 2048;
 sigType = 'sin + noise';
 % sigType = 'realrec';
 sigLen = 1000;
-sinFreqs = [1000; 890; 2000];
-sinAmps = [0.4; 0.7; 0.4];
-sinPhs = rand(length(sinFreqs), 1);
-randPhase = true;
-noiseAmp = 0.4;
+sinFreqs = [50; 890; 1000; 2000];
+sinAmps = [0.1; 0.1; 0.15; 0.1];
+% sinPhs = rand(length(sinFreqs), 1) * 2 * pi;
+sinPhs = zeros(length(sinFreqs), 1);
+noiseAmp = 0.6;
+detThresh = 25;
 
 %% Prepare signal
 if strcmp(sigType, 'realrec')
@@ -28,19 +29,36 @@ else
 end
 
 %% Find spectral peaks
-[f, m, a] = findSpecPeak(sig, nfft);
+specPeaks = findSpecPeaks(sig, detThresh, nfft);
+f = specPeaks(:, 1);
+m = specPeaks(:, 2);
+a = specPeaks(:, 3);
 
 %% Plotting
+% Prepare strings for plot legend
+sigString = '';
+
+for iter = 1:length(sinFreqs)
+    fSigFig = floor(log10(sinFreqs(iter))) + 1;
+    fString = num2str(sinFreqs(iter), fSigFig);
+    aString = num2str(sinAmps(iter), 3);
+    pString = num2str(sinPhs(iter), 2);
+
+    sigString = strcat(sigString, {' ('}, fString, {', '}, aString, ...
+        {', '}, pString, ')');
+end
+
+% Plot analysed signal
 subplot(2, 1, 1);
-sinusoids = [sinFreqs, sinAmps, sinPhs];
 plot(sig, 'DisplayName', ['Signal: ', num2str(length(sinFreqs)), ...
-                        ' sinusoids (freq, amp, ph): ', ...
-                        mat2str(sinusoids, 4), ' + white noise of amp ', ...
-                        num2str(noiseAmp)]);
+                        ' sinusoids (f, a, p):', char(sigString), ...
+                        ' + white noise of amp ', num2str(noiseAmp)]);
 title('Spectral peak detection test');
 xlabel('Time in samples');
 ylabel('Analysed signal');
 legend;
+
+% Plot spectrum and peak estimates
 subplot(2, 1, 2);
 yVec = 20 * log10(abs(fft(sig .* gausswin(sigLen) .* kaiser(sigLen), ...
     nfft)));
@@ -55,10 +73,24 @@ ylabel('Magnitude spectrum in dB');
 legend;
 grid on;
 
+% Prepare strings for plot annotations
+fString = cell(1, length(f));
+mString = cell(1, length(m));
+aString = cell(1, length(a));
+
 for iter = 1:length(f)
-    text(f(iter), m(iter), ['  f = ', num2str(f(iter), 5), ', m = ', ...
-                                num2str(m(iter), 3), ', a = ', ...
-                                num2str(a(iter), 2)]);
+    fSigFig = floor(log10(round(f(iter)))) + 1;
+    fString(iter) = {num2str(f(iter), fSigFig)};
+
+    mString(iter) = {num2str(m(iter), 3)};
+    aString(iter) = {num2str(a(iter), 2)};
+end
+
+% Add plot annotations for peak estimates
+for iter = 1:length(f)
+    text(f(iter), m(iter), ['  f=', char(fString(iter)), ', m=', ...
+                                char(mString(iter)), ', a=', ...
+                                char(aString(iter))]);
 end
 
 % Change xlabel format from 10^(n) to simple integers
