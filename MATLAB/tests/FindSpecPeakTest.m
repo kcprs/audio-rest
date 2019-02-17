@@ -65,6 +65,15 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             testCase.verifyEqual(ampEst, 1, 'RelTol', 0.015);
         end
 
+        function testLowRes(testCase)
+            f = 30;
+            l = 1000;
+            sig = getSineSig(l, f);
+            [freqEst, ~, ~] = findSpecPeak(sig);
+            
+            testCase.verifyEqual(freqEst, 0);
+        end
+
     end
 
 end

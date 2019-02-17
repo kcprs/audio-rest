@@ -38,30 +38,30 @@ function [freq, mag, amp] = findSpecPeak(sig, nfft, fs)
     mags = abs(fft(sig));
 
     % Find peak frequency bin
-    [~, peakBin] = max(mags(1:ceil(nfft / 2)));
+    [peakBinMag, peakBin] = max(mags(1:ceil(nfft / 2)));
 
-    % Skip interpolation if fft resolution is insufficient or the signal
-    % is too short, causing the highest peak to be at DC bin.
-    if peakBin == 1
+    if peakBin ~= 1
+        % Apply parabolic interpolation
+        % X. Serra, `A system for sound analysis/transformation/synthesis based
+        % on a deterministic plus stochastic decomposition', PhD thesis,
+        % Stanford University, 1989.
+        a = 20 * log10(mags(peakBin - 1));
+        c = 20 * log10(mags(peakBin + 1));
+        b = 20 * log10(mags(peakBin));
+        p = 0.5 * (a - c) / (a - 2 * b + c);
+        
+        % Get peak frequency estimate.
+        % Accommodate for the fact that MATLAB's indexing starts from 1.
+        freq = fs * (peakBin - 1 + p) / nfft;
+        
+        % Get peak magnitude estimate.
+        mag = (b - 0.25 * (a - c) * p);
+    else
+        % Skip interpolation if fft resolution is insufficient or the signal
+        % is too short, causing the highest peak to be at DC bin.
         freq = 0;
-        return
+        mag = 20 * log10(peakBinMag); 
     end
-
-    % Apply parabolic interpolation
-    % X. Serra, `A system for sound analysis/transformation/synthesis based
-    % on a deterministic plus stochastic decomposition', PhD thesis,
-    % Stanford University, 1989.
-    a = 20 * log10(mags(peakBin - 1));
-    c = 20 * log10(mags(peakBin + 1));
-    b = 20 * log10(mags(peakBin));
-    p = 0.5 * (a - c) / (a - 2 * b + c);
-
-    % Get peak frequency estimate.
-    % Accommodate for the fact that MATLAB's indexing starts from 1.
-    freq = fs * (peakBin - 1 + p) / nfft;
-
-    % Get peak magnitude estimate.
-    mag = (b - 0.25 * (a - c) * p);
 
     % Get sine wave amplitude based on peak fft magnitude.
     amp = 2 * 10^(mag / 20) / nsig; % Amplitude if windowing were not used
