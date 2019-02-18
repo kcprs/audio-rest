@@ -64,8 +64,8 @@ function [freq, mag, amp] = findSpecPeak(sig, nfft, fs)
     end
 
     % Get sine wave amplitude based on peak fft magnitude.
-    amp = 2 * 10^(mag / 20) / nsig; % Amplitude if windowing were not used
-    amp = amp * sum(2 * abs(fft(win)) / nsig); % Compensate for windows used
+    winMag = abs(fft(win));
+    amp = 2 * 10^(mag / 20) / winMag(1);
 
     % %% Plotting
     % % Plot the fragment of the spectrum that contains the peak
