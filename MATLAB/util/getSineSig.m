@@ -1,5 +1,5 @@
 function sig = getSineSig(len, freq, amp, phase, fs)
-    %GETSINESIG Generate a sinewave of given frequency and length in samples
+    %GETSINESIG Generate a sinewave
     %   sig = GETSINESIG(len, freq, amp, phase, fs) returns sine wave of
     %   frequency freq, amplitude amp, with specified initial phase and
     %   at a specifed sampling frequency fs. Arguments freq and amp can
