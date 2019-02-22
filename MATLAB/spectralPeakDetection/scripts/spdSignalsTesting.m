@@ -29,7 +29,7 @@ else
 end
 
 %% Find spectral peaks
-specPeaks = findSpecPeaks(sig, detThresh, nfft);
+specPeaks = findSpecPeaksIter(sig, detThresh, nfft);
 f = specPeaks(:, 1);
 m = specPeaks(:, 2);
 a = specPeaks(:, 3);
