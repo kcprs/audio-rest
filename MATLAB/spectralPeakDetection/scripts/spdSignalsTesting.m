@@ -4,19 +4,23 @@
 %% Set variable values
 fs = 44100;
 nfft = 2048;
-sigType = 'sin + noise';
-% sigType = 'realrec';
+npks = 5;
+% sigType = 'sin + noise';
+sigType = 'realrec';
+filename = 'Flute.nonvib.ff.A4.wav';
 sigLen = 1000;
 sinFreqs = [50; 890; 1000; 2000];
 sinAmps = [0.1; 0.1; 0.15; 0.1];
 % sinPhs = rand(length(sinFreqs), 1) * 2 * pi;
 sinPhs = zeros(length(sinFreqs), 1);
-noiseAmp = 0.6;
-detThresh = 25;
+noiseAmp = 0.8;
+detThresh = 0;
 
 %% Prepare signal
 if strcmp(sigType, 'realrec')
-    error('Not yet implemented');
+    [sig, fs] = audioread(['audio/', filename]);
+    sig = sig(floor(fs/2):end);
+    sigLen = length(sig);
 else
     sig = zeros(sigLen, 1);
 
@@ -29,7 +33,7 @@ else
 end
 
 %% Find spectral peaks
-specPeaks = findSpecPeaksMult(sig, detThresh, nfft);
+specPeaks = findSpecPeaksMult(sig, detThresh, nfft, npks, fs);
 f = specPeaks(:, 1);
 m = specPeaks(:, 2);
 a = specPeaks(:, 3);
@@ -50,9 +54,16 @@ end
 
 % Plot analysed signal
 subplot(2, 1, 1);
-plot(sig, 'DisplayName', ['Signal: ', num2str(length(sinFreqs)), ...
-                        ' sinusoids (f, a, p):', char(sigString), ...
-                        ' + white noise of amp ', num2str(noiseAmp)]);
+ 
+if strcmp(sigType, 'realrec')
+    desc = filename;
+else
+    desc = ['Signal: ', num2str(length(sinFreqs)), ...
+    ' sinusoids (f, a, p):', char(sigString), ...
+    ' + white noise of amp ', num2str(noiseAmp)];
+end
+
+plot(sig, 'DisplayName', desc);
 title('Spectral peak detection test');
 xlabel('Time in samples');
 ylabel('Analysed signal');

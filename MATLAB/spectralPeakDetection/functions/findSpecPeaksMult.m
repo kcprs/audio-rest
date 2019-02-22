@@ -1,22 +1,29 @@
-function specPeaks = findSpecPeaksMult(sig, trshld, nfft, fs)
+function specPeaks = findSpecPeaksMult(sig, trshld, nfft, npks, fs)
     %FINDSPECPEAKSMULT Find multiple spectral peaks in the given signal
-    %   specPeaks = FINDSPECPEAKSMULT(sig, trshld, nfft, fs) returns a matrix
-    %   containing information about most prominent frequency components of
-    %   the given signal sig, that is all spectral peaks with magnitude
-    %   above the threshold trshld in dB. The returned matrix is empty if
-    %   no peaks are found. Otherwise, the matrix is of size N x 3, where N
-    %   is the number of peaks found. Matrix columns correspond to
+    %   specPeaks = FINDSPECPEAKSMULT(sig, trshld, nfft, npks, fs) returns
+    %   a matrix containing information about npks most prominent frequency
+    %   components of the given signal sig, that is all spectral peaks with 
+    %   magnitude above the threshold trshld in dB. The returned matrix is
+    %   empty if no peaks are found. Otherwise, the matrix is of size N x 3,
+    %   where N is the number of peaks found. Matrix columns correspond to
     %   frequency, magnitude and amplitude estimates, respectively. Analysis
     %   is done using fft of size nfft.
     %
-    %   specPeaks = FINDSPECPEAKSMULT(sig, trshld, nfft) uses default value
-    %   of fs = 44100.
+    %   specPeaks = FINDSPECPEAKSMULT(sig, trshld, nfft, npks) uses default
+    %   value of fs = 44100.
+    % 
+    %   specPeaks = FINDSPECPEAKSMULT(sig, trshld, nfft) uses default values
+    %   of fs = 44100 and npeaks = 20.
     %
     %   specPeaks = FINDSPECPEAKSMULT(sig, trshld) uses default values
-    %   of fs = 44100 and nfft = length(sig).
+    %   of fs = 44100, npeaks = 20 and nfft = length(sig).
+
+    if nargin < 5
+        fs = 44100;
+    end
 
     if nargin < 4
-        fs = 44100;
+        npks = 20;
     end
 
     nsig = length(sig);
@@ -41,7 +48,7 @@ function specPeaks = findSpecPeaksMult(sig, trshld, nfft, fs)
 
     % Find peaks in magnitude spectrum
     [~, peakBins] = findpeaks(mags(1:ceil(nfft / 2)), 'MinPeakHeight', ...
-        trshld);
+        trshld, 'NPeaks', npks);
 
     % Find frequency and amplitude estimates for each peak
     specPeaks = zeros(length(peakBins), 3);
