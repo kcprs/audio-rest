@@ -1,6 +1,6 @@
-function specPeaks = findSpecPeaksMult(sig, trshld, nfft, npks, fs)
-    %FINDSPECPEAKSMULT Find multiple spectral peaks in the given signal
-    %   specPeaks = FINDSPECPEAKSMULT(sig, trshld, nfft, npks, fs) returns
+function specPeaks = findSpecPeaks(sig, trshld, nfft, npks, fs)
+    %FINDSPECPEAKS Find multiple spectral peaks in the given signal
+    %   specPeaks = FINDSPECPEAKS(sig, trshld, nfft, npks, fs) returns
     %   a matrix containing information about npks most prominent frequency
     %   components of the given signal sig, that is all spectral peaks with 
     %   magnitude above the threshold trshld in dBFS. The returned matrix is
@@ -9,13 +9,13 @@ function specPeaks = findSpecPeaksMult(sig, trshld, nfft, npks, fs)
     %   frequency and amplitude estimates, respectively. Analysis is done
     %   using fft of size nfft.
     %
-    %   specPeaks = FINDSPECPEAKSMULT(sig, trshld, nfft, npks) uses default
+    %   specPeaks = FINDSPECPEAKS(sig, trshld, nfft, npks) uses default
     %   value of fs = 44100.
     % 
-    %   specPeaks = FINDSPECPEAKSMULT(sig, trshld, nfft) uses default values
+    %   specPeaks = FINDSPECPEAKS(sig, trshld, nfft) uses default values
     %   of fs = 44100 and npeaks = 20.
     %
-    %   specPeaks = FINDSPECPEAKSMULT(sig, trshld) uses default values
+    %   specPeaks = FINDSPECPEAKS(sig, trshld) uses default values
     %   of fs = 44100, npeaks = 20 and nfft = length(sig).
 
     if nargin < 5

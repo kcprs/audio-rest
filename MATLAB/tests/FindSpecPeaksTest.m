@@ -1,11 +1,11 @@
-classdef FindSpecPeaksMultTest < matlab.unittest.TestCase
+classdef FindSpecPeaksTest < matlab.unittest.TestCase
 
     methods (Test)
 
         function testEmptyWithDefaults(testCase)
             l = 1000;
             sig = zeros(l, 1);
-            specPeaks = findSpecPeaksMult(sig, -1);
+            specPeaks = findSpecPeaks(sig, -1);
             testCase.verifyEqual(specPeaks, double.empty(0, 2));
         end
 
@@ -18,7 +18,7 @@ classdef FindSpecPeaksMultTest < matlab.unittest.TestCase
                 getSineSig(l, f(2), a(2)) + ...
                 getSineSig(l, f(3), a(3));
 
-            specPeaks = findSpecPeaksMult(sig, -15, nfft);
+            specPeaks = findSpecPeaks(sig, -15, nfft);
             [fEst, I] = sort(specPeaks(:, 1));
             aEst = specPeaks(:, 2);
             aEst = aEst(I);
