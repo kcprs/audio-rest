@@ -1,16 +1,16 @@
-function [freq, mag, amp] = findSpecPeak(sig, nfft, fs)
+function [freq, amp] = findSpecPeak(sig, nfft, fs)
     %FINDSPECPEAK Estimate frequency and magnitude of highest spectrum peak
-    %   [freq, mag, amp] = FINDSPECPEAK(sig, nfft, fs) returns frequency
-    %   estimate freq in Hz and magnitude mag in dB of the most prominent
-    %   spectral peak of the given signal sig, sampled at frequency fs.
-    %   Magnitude spectrum is computed using fft of size nfft. Parabolic
-    %   interpolation is used to increase accuracy. Also returns estimate of
-    %   sine wave amplitude amp, based on peak fft magnitude.
+    %   [freq, amp] = FINDSPECPEAK(sig, nfft, fs) returns frequency
+    %   estimate freq in Hz of the most prominent spectral peak of the given
+    %   signal sig, sampled at frequency fs. Amplitude estimate amp is also 
+    %   returned for the corresponding sinusoid component. Magnitude
+    %   spectrum is computed using fft of size nfft. Parabolic interpolation
+    %   is used to increase accuracy.
     %
-    %   [freq, mag, amp] = FINDSPECPEAK(sig, nfft) uses default value
+    %   [freq, amp] = FINDSPECPEAK(sig, nfft) uses default value
     %   of fs = 44100.
     %
-    %   [freq, mag, amp] = FINDSPECPEAK(sig) uses default values
+    %   [freq, amp] = FINDSPECPEAK(sig) uses default values
     %   of fs = 44100 and nfft = length(sig).
 
     if nargin < 3
@@ -23,31 +23,20 @@ function [freq, mag, amp] = findSpecPeak(sig, nfft, fs)
         nfft = nsig;
     end
 
-    % Apply windowing to the given signal, as described by X. Serra (below)
-    win = gausswin(nsig) .* kaiser(nsig);
-    sig = sig .* win;
-
-    % Add padding or remove samples to get fft of requested size
-    if nsig < nfft
-        sig = [sig; zeros(nfft - nsig, 1)];
-    else
-        sig = sig(1:nfft);
-    end
-
-    % Compute magnitude spectrum of the given signal
-    mags = abs(fft(sig));
+    % Get magnitude spectrum in dBFS
+    mags = fftMag(sig, nfft, 'gausswin');
 
     % Find peak frequency bin
     [peakBinMag, peakBin] = max(mags(1:ceil(nfft / 2)));
 
     if peakBin ~= 1
         % Apply parabolic interpolation
-        % X. Serra, `A system for sound analysis/transformation/synthesis based
-        % on a deterministic plus stochastic decomposition', PhD thesis,
-        % Stanford University, 1989.
-        a = 20 * log10(mags(peakBin - 1));
-        c = 20 * log10(mags(peakBin + 1));
-        b = 20 * log10(mags(peakBin));
+        % X. Serra, `A system for sound analysis/transformation/synthesis
+        % based on a deterministic plus stochastic decomposition',
+        % PhD thesis, Stanford University, 1989.
+        a = mags(peakBin - 1);
+        c = mags(peakBin + 1);
+        b = mags(peakBin);
         p = 0.5 * (a - c) / (a - 2 * b + c);
         
         % Get peak frequency estimate.
@@ -60,17 +49,16 @@ function [freq, mag, amp] = findSpecPeak(sig, nfft, fs)
         % Skip interpolation if fft resolution is insufficient or the signal
         % is too short, causing the highest peak to be at DC bin.
         freq = 0;
-        mag = 20 * log10(peakBinMag); 
+        mag = peakBinMag; 
     end
 
-    % Get sine wave amplitude based on peak fft magnitude.
-    winMag = abs(fft(win));
-    amp = 2 * 10^(mag / 20) / winMag(1);
+    % Get sine wave amplitude in linear scale
+    amp = 10^(mag / 20);
 
     % %% Plotting
     % % Plot the fragment of the spectrum that contains the peak
     % xAxis = max(1, peakBin - 10):(peakBin + 10);
-    % plot(xAxis, 20 * log10(mags(xAxis)), '.');
+    % plot(xAxis, mags(xAxis), '.');
     % hold on;
 
     % % Plot the parabola used for interpolation
@@ -87,6 +75,6 @@ function [freq, mag, amp] = findSpecPeak(sig, nfft, fs)
     % plot(peakBin - 1 + stp * (indx - 1), parMaxY, 'x');
 
     % % Mark the frequency estimated by the algorithm with a vertical line
-    % plot([peakBin + p, peakBin + p], [0, parMaxY + 10]);
+    % plot([peakBin + p, peakBin + p], [parMaxY - 10, parMaxY + 10]);
     % hold off;
 end

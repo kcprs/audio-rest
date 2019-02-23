@@ -5,8 +5,8 @@ classdef FindSpecPeaksIterTest < matlab.unittest.TestCase
         function testEmptyWithDefaults(testCase)
             l = 1000;
             sig = zeros(l, 1);
-            specPeaks = findSpecPeaksIter(sig, 30);
-            testCase.verifyEqual(specPeaks, []);
+            specPeaks = findSpecPeaksIter(sig, -6);
+            testCase.verifyEqual(specPeaks, double.empty(0, 2));
         end
 
         function testThreePeaks(testCase)
@@ -18,9 +18,9 @@ classdef FindSpecPeaksIterTest < matlab.unittest.TestCase
                 getSineSig(l, f(2), a(2)) + ...
                 getSineSig(l, f(3), a(3));
 
-            specPeaks = findSpecPeaksIter(sig, 30, nfft);
+            specPeaks = findSpecPeaksIter(sig, -20, nfft);
             [fEst, I] = sort(specPeaks(:, 1));
-            aEst = specPeaks(:, 3);
+            aEst = specPeaks(:, 2);
             aEst = aEst(I);
             testCase.verifyEqual(fEst, f, 'RelTol', 0.01);
             testCase.verifyEqual(aEst, a, 'RelTol', 0.01);

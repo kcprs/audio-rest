@@ -3,7 +3,7 @@ function specPeaks = findSpecPeaksMult(sig, trshld, nfft, npks, fs)
     %   specPeaks = FINDSPECPEAKSMULT(sig, trshld, nfft, npks, fs) returns
     %   a matrix containing information about npks most prominent frequency
     %   components of the given signal sig, that is all spectral peaks with 
-    %   magnitude above the threshold trshld in dB. The returned matrix is
+    %   magnitude above the threshold trshld in dBFS. The returned matrix is
     %   empty if no peaks are found. Otherwise, the matrix is of size N x 2,
     %   where N is the number of peaks found. Matrix columns correspond to
     %   frequency and amplitude estimates, respectively. Analysis is done

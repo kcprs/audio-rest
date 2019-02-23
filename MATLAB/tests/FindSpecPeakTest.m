@@ -7,7 +7,7 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             f = 2000;
             a = 0.7;
             sig = getSineSig(l, f, a);
-            [freqEst, ~, ampEst] = findSpecPeak(sig);
+            [freqEst, ampEst] = findSpecPeak(sig);
 
             testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
             testCase.verifyEqual(ampEst, a, 'RelTol', 0.01);
@@ -18,7 +18,7 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             f = 100;
             a = 0.4;
             sig = getSineSig(l, f, a);
-            [freqEst, ~, ampEst] = findSpecPeak(sig);
+            [freqEst, ampEst] = findSpecPeak(sig);
 
             testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
             testCase.verifyEqual(ampEst, a, 'RelTol', 0.02);
@@ -29,7 +29,7 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             f = 2000;
             a = 0.8;
             sig = getSineSig(l, f, a);
-            [freqEst, ~, ampEst] = findSpecPeak(sig);
+            [freqEst, ampEst] = findSpecPeak(sig);
 
             testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
             testCase.verifyEqual(ampEst, a, 'RelTol', 0.02);
@@ -41,7 +41,7 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             a = 0.9;
             nfft = 2048;
             sig = getSineSig(l, f, a);
-            [freqEst, ~, ampEst] = findSpecPeak(sig, nfft);
+            [freqEst, ampEst] = findSpecPeak(sig, nfft);
 
             testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
             testCase.verifyEqual(ampEst, a, 'RelTol', 0.01);
@@ -53,7 +53,7 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             a = 1;
             nfft = 2048;
             sig = getSineSig(l, f, a);
-            [freqEst, ~, ampEst] = findSpecPeak(sig, nfft);
+            [freqEst, ampEst] = findSpecPeak(sig, nfft);
 
             testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
             testCase.verifyEqual(ampEst, a, 'RelTol', 0.01);
@@ -65,7 +65,7 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             a = 0.2;
             nfft = 2048;
             sig = getSineSig(l, f, a);
-            [freqEst, ~, ampEst] = findSpecPeak(sig, nfft);
+            [freqEst, ampEst] = findSpecPeak(sig, nfft);
 
             testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
             testCase.verifyEqual(ampEst, a, 'RelTol', 0.015);
@@ -75,7 +75,7 @@ classdef FindSpecPeakTest < matlab.unittest.TestCase
             f = 30;
             l = 1000;
             sig = getSineSig(l, f);
-            [freqEst, ~, ~] = findSpecPeak(sig);
+            [freqEst, ~] = findSpecPeak(sig);
 
             testCase.verifyEqual(freqEst, 0);
         end
