@@ -5,16 +5,16 @@
 fs = 44100;
 nfft = 2048;
 npks = 5;
-% sigType = 'sin + noise';
-sigType = 'realrec';
+sigType = 'sin + noise';
+% sigType = 'realrec';
 filename = 'Flute.nonvib.ff.A4.wav';
 sigLen = 1000;
 sinFreqs = [50; 890; 1000; 2000];
 sinAmps = [0.1; 0.1; 0.15; 0.1];
 % sinPhs = rand(length(sinFreqs), 1) * 2 * pi;
 sinPhs = zeros(length(sinFreqs), 1);
-noiseAmp = 0.8;
-detThresh = 0;
+noiseAmp = 0.5;
+detThresh = -25;
 
 %% Prepare signal
 if strcmp(sigType, 'realrec')
@@ -35,8 +35,8 @@ end
 %% Find spectral peaks
 specPeaks = findSpecPeaksMult(sig, detThresh, nfft, npks, fs);
 f = specPeaks(:, 1);
-m = specPeaks(:, 2);
-a = specPeaks(:, 3);
+a = specPeaks(:, 2);
+m = 20 * log10(a);
 
 %% Plotting
 % Prepare strings for plot legend
@@ -71,8 +71,7 @@ legend;
 
 % Plot spectrum and peak estimates
 subplot(2, 1, 2);
-yVec = 20 * log10(abs(fft(sig .* gausswin(sigLen) .* kaiser(sigLen), ...
-    nfft)));
+yVec = fftMag(sig, nfft, 'gausswin');
 xVec = linspace(0, fs / 2, nfft / 2);
 semilogx(xVec, yVec(1:nfft / 2), 'DisplayName', 'Signal spectrum');
 xlim([20, 20000]);
@@ -80,27 +79,24 @@ hold on;
 plot(f, m, 'x', 'DisplayName', 'Frequency and magnitude estimates');
 hold off;
 xlabel('Frequency in Hz');
-ylabel('Magnitude spectrum in dB');
+ylabel('Magnitude spectrum in dBFS');
 legend;
 grid on;
 
 % Prepare strings for plot annotations
 fString = cell(1, length(f));
-mString = cell(1, length(m));
 aString = cell(1, length(a));
 
 for iter = 1:length(f)
     fSigFig = floor(log10(round(f(iter)))) + 1;
     fString(iter) = {num2str(f(iter), fSigFig)};
 
-    mString(iter) = {num2str(m(iter), 3)};
     aString(iter) = {num2str(a(iter), 2)};
 end
 
 % Add plot annotations for peak estimates
 for iter = 1:length(f)
-    text(f(iter), m(iter), ['  f=', char(fString(iter)), ', m=', ...
-                                char(mString(iter)), ', a=', ...
+    text(f(iter), m(iter), ['  f=', char(fString(iter)), ', a=', ...
                                 char(aString(iter))]);
 end
 
