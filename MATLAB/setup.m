@@ -15,8 +15,8 @@ function setup(basePath)
     addpath([basePath, '\\util']);
     addpath([basePath, '\\simpleAR\\scripts']);
     addpath([basePath, '\\simpleAR\\functions']);
-    addpath([basePath, '\\spectralPeakDetection\\scripts']);
-    addpath([basePath, '\\spectralPeakDetection\\functions']);
+    addpath([basePath, '\\spectral\\scripts']);
+    addpath([basePath, '\\spectral\\functions']);
     addpath([basePath, '\\comparisons\\scripts']);
 
     disp('Setup complete.');
