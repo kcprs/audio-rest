@@ -1,4 +1,4 @@
-function specPeaks = findSpecPeaks(sig, trshld, nfft, npks, fs)
+function specPeaks = serraSPD(sig, trshld, nfft, npks, fs)
     %FINDSPECPEAKS Find multiple spectral peaks in the given signal
     %   specPeaks = FINDSPECPEAKS(sig, trshld, nfft, npks, fs) returns
     %   a matrix containing information about npks most prominent frequency
@@ -26,51 +26,54 @@ function specPeaks = findSpecPeaks(sig, trshld, nfft, npks, fs)
         npks = 20;
     end
 
-    sigLen = length(sig);
-
     if nargin < 3
-        nfft = sigLen;
+        nfft = length(sig);
     end
 
-    mags = fftMag(sig, nfft, 'gausswin');
+    % Get magnitude and phase spectra
+    [mag, phs] = getFT(sig, nfft, 'gausswin');
 
     % Find peaks in magnitude spectrum
-    [~, peakBins] = findpeaks(mags(1:ceil(nfft / 2)), 'MinPeakHeight', ...
-        trshld, 'NPeaks', npks);
+    [peakMag, peakLoc] = findpeaks(mag(1:(nfft / 2 + 1)), ...
+        'MinPeakHeight', trshld, 'NPeaks', npks);
 
-    % Find frequency and amplitude estimates for each peak
-    specPeaks = zeros(length(peakBins), 2);
+    % Interpolation method based on:
+    % DAFX - Digital Audio Effects (2002), Chapter 10 - Spectral Processing
+    % X. Amatriain, J. Bonada, A. Loscos, X. Serra
 
-    for iter = 1:length(peakBins)
-        peakBin = peakBins(iter);
+    % Calculate interpolated peak positions in bins (intpLoc)
+    leftMag = mag((peakLoc - 1) .* ((peakLoc - 1) > 0) + ...
+        ((peakLoc - 1) <= 0) .* 1);
+    rightMag = mag((peakLoc + 1) .* ((peakLoc + 1) < nfft / 2) + ...
+        ((peakLoc + 1) >= nfft / 2) .* (nfft / 2));
+    intpLoc = peakLoc + 0.5 * (leftMag - rightMag) ./ (leftMag ...
+        -2 * peakMag + rightMag);
+    intpLoc = (intpLoc >= 1) .* intpLoc + (intpLoc < 1) .* 1;
+    intpLoc = (intpLoc > nfft / 2 + 1) .* (nfft / 2 + 1) + ...
+        (intpLoc <= nfft / 2 + 1) .* intpLoc;
 
-        if peakBin ~= 1
-            % Apply parabolic interpolation
-            % X. Serra, `A system for sound analysis/transformation/synthesis based
-            % on a deterministic plus stochastic decomposition', PhD thesis,
-            % Stanford University, 1989.
-            a = mags(peakBin - 1);
-            c = mags(peakBin + 1);
-            b = mags(peakBin);
-            p = 0.5 * (a - c) / (a - 2 * b + c);
+    % Calculate corresponding frequencies
+    intpFreq = fs * (intpLoc - 1) / nfft;
 
-            % Get peak frequency estimate.
-            % Accommodate for the fact that MATLAB's indexing starts from 1.
-            freq = fs * (peakBin - 1 + p) / nfft;
+    % Calculate interpolated phase (intPhs)
+    leftPhs = phs(floor(intpLoc));
+    rightPhs = phs(floor(intpLoc + 1));
+    intpFactor = intpLoc - peakLoc;
+    intpFactor = (intpFactor > 0) .* intpFactor + (intpFactor < 0) ...
+        .* (1 + intpFactor);
+    diffPhs = unwrap2pi(rightPhs - leftPhs);
+    intpPhs = leftPhs + intpFactor .* diffPhs;
 
-            % Get peak magnitude estimate.
-            mag = (b - 0.25 * (a - c) * p);
-        else
-            % Skip interpolation if fft resolution is insufficient or the signal
-            % is too short, causing the highest peak to be at DC bin.
-            freq = 0;
-            mag = mags(peakBin);
-        end
+    % Calculate interpolated amplitude (intpAmp)
+    intpAdB = peakMag - 0.25 * (leftMag - rightMag) .* (intpLoc - peakLoc);
+    intpAmp = 10.^(intpAdB / 20);
 
-        % Get sine wave amplitude in linear scale
-        amp = 10^(mag / 20);
+    % Combine results into one matrix
+    specPeaks = [intpFreq, intpAmp, intpPhs];
+end
 
-        specPeaks(iter, :) = [freq, amp];
-    end
-
+function argUnwrap = unwrap2pi(arg)
+    %ARGUNWRAP Heler function for unwrapping phase spectra
+    arg = arg - floor(arg / 2 / pi) * 2 * pi;
+    argUnwrap = arg - arg >= pi * 2 * pi;
 end
