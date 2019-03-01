@@ -5,7 +5,7 @@ classdef TrackSpecPeaksTest < matlab.unittest.TestCase
         function testBasic(testCase)
             fs = 44100;
             l = 2 * fs;
-            f = [linspace(100, 1000, l).', linspace(1000, 2000, l).', ...
+            f = [linspace(100, 1000, l).', linspace(1000, 3000, l).', ...
                     linspace(14000, 12000, l).'];
             a = [linspace(0.2, 1, l).', linspace(1, 0.5, l).', ...
                     0.5 + getCosSig(l, 1.3, 0.3)];
@@ -19,7 +19,7 @@ classdef TrackSpecPeaksTest < matlab.unittest.TestCase
                 trackSpecPeaks(s, 1024, 256, spdParams);
             testCase.verifyEqual(freqEst, f(smpl, :), 'RelTol', 0.01);
             testCase.verifyEqual(ampEst, a(smpl, :), 'RelTol', 0.01);
-            % plotPeakTracking(f, freqEst, a, ampEst, smpl);
+            % plotPeakTrackingGT(f, freqEst, a, ampEst, smpl);
         end
 
     end
