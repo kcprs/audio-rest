@@ -94,14 +94,14 @@ classdef FindSpecPeaksTest < matlab.unittest.TestCase
             npks = 10;
             sig = zeros(l, 1);
             [freqEst, ~, ~] = findSpecPeaks(sig, -2, npks);
-            testCase.verifyEqual(freqEst, zeros(npks, 1));
+            testCase.verifyEqual(freqEst, zeros(1, npks));
         end
 
         function testThreePeaks(testCase)
             l = 1000;
             nfft = 2048;
-            f = [200; 500; 1000];
-            a = [0.4; 0.2; 0.6];
+            f = [200, 500, 1000];
+            a = [0.4, 0.2, 0.6];
             thrs = 20 * log10(min(a)) - 2;
             sig = getCosSig(l, f(1), a(1)) + ...
                 getCosSig(l, f(2), a(2)) + ...

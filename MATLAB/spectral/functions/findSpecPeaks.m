@@ -59,9 +59,9 @@ function [freqEst, ampEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
     ampEst = 10.^(intpAdB / 20);
 
     % If fewer peaks detected than npks, add zeros to match expected size
-    freqEst = [freqEst; zeros(npks - length(freqEst), 1)];
-    ampEst = [ampEst; zeros(npks - length(ampEst), 1)];
-    phsEst = [phsEst; zeros(npks - length(phsEst), 1)];
+    freqEst = [freqEst, zeros(1, npks - length(freqEst))];
+    ampEst = [ampEst, zeros(1, npks - length(ampEst))];
+    phsEst = [phsEst, zeros(1, npks - length(phsEst))];
 end
 
 function argUnwrap = unwrap2pi(arg)

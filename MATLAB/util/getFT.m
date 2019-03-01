@@ -41,7 +41,10 @@ function [magSpec, phsSpec] = getFT(sig, nfft, winType)
     % Apply circular shift to obtain phase spectrum in relation to the
     % middle of the frame.
     sigWin = circshift(sigWin, -ceil(sigLen / 2));
-    sigFT = fft(sigWin);
+
+    % Transpose from vertical to horizontal vector - by convention vertical
+    % dimension is reserved for time.
+    sigFT = fft(sigWin).';
     phsSpec = angle(sigFT);
 
     % Compute magnitude spectrum of the given signal. Normalise so that

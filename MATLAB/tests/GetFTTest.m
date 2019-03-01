@@ -14,6 +14,7 @@ classdef GetFTTest < matlab.unittest.TestCase
 
             [~, peakBin] = max(mag);
 
+            testCase.verifySize(mag, [1, l]);
             testCase.verifyEqual(peakBin, f * l / fs + 1);
             testCase.verifyEqual(mag(peakBin), 0, 'AbsTol', 10e-3);
             testCase.verifyEqual(phs(peakBin), ...
