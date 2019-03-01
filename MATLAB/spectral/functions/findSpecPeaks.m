@@ -1,29 +1,22 @@
-function [freqEst, ampEst, phsEst] = findSpecPeaks(sig, trs, nfft, npks, fs)
+function [freqEst, ampEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
     %FINDSPECPEAKS Find multiple spectral peaks in the given signal
-    %   [freqEst, ampEst, phsEst] = FINDSPECPEAKS(sig, trs, nfft, npks, fs)
+    %   [freqEst, ampEst, phsEst] = FINDSPECPEAKS(sig, trs, npks, nfft, fs)
     %   returns frequency, amplitude and phase information about npks most
     %   prominent frequency components of the given signal sig, i.e. all
     %   spectral peaks with magnitude above the threshold trs in dBFS.
     %   Analysis is done using fft of size nfft.
     %
-    %   [freqEst, ampEst, phsEst] = FINDSPECPEAKS(sig, trs, nfft, npks)
+    %   [freqEst, ampEst, phsEst] = FINDSPECPEAKS(sig, trs, npks, nfft)
     %   uses default value of fs = 44100.
     % 
-    %   [freqEst, ampEst, phsEst] = FINDSPECPEAKS(sig, trs, nfft) uses
-    %   default values of fs = 44100 and npeaks = 20.
-    %
-    %   [freqEst, ampEst, phsEst] = FINDSPECPEAKS(sig, trs) uses default
-    %   values of fs = 44100, npeaks = 20 and nfft = length(sig).
+    %   [freqEst, ampEst, phsEst] = FINDSPECPEAKS(sig, trs, npks) uses
+    %   default values of fs = 44100 and nfft = length(sig).
 
     if nargin < 5
         fs = 44100;
     end
 
     if nargin < 4
-        npks = 20;
-    end
-
-    if nargin < 3
         nfft = length(sig);
     end
 
@@ -64,6 +57,11 @@ function [freqEst, ampEst, phsEst] = findSpecPeaks(sig, trs, nfft, npks, fs)
     % Calculate interpolated amplitude (ampEst)
     intpAdB = peakMag - 0.25 * (leftMag - rightMag) .* (intpLoc - peakLoc);
     ampEst = 10.^(intpAdB / 20);
+
+    % If fewer peaks detected than npks, add zeros to match expected size
+    freqEst = [freqEst; zeros(npks - length(freqEst), 1)];
+    ampEst = [ampEst; zeros(npks - length(ampEst), 1)];
+    phsEst = [phsEst; zeros(npks - length(phsEst), 1)];
 end
 
 function argUnwrap = unwrap2pi(arg)

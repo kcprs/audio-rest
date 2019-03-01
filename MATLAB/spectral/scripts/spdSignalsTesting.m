@@ -33,7 +33,7 @@ else
 end
 
 %% Find spectral peaks
-[f, a, ~] = findSpecPeaks(sig, detThresh, nfft, npks, fs);
+[f, a, ~] = findSpecPeaks(sig, detThresh, npks, nfft, fs);
 m = 20 * log10(a);
 
 %% Plotting
