@@ -1,8 +1,8 @@
-function [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, spdArgs)
+function [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, npks, spdArgs)
     %TRACKSPECPEAKS Track spectral peaks in given signal over time
-    %   [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, spdArgs)
+    %   [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, npks, spdArgs)
     %   returns matrices containing frequency, amplitude and phase
-    %   information of spectral peaks in signal sig over time. Matrices
+    %   information of npks spectral peaks in signal sig over time. Matrices
     %   freq, amp and phs are of size numFrames x npks, where numFrames is
     %   the number of frames analysed and npks is the number of spectral
     %   peaks detected. Vector smpl contains indexes of centre samples of
@@ -16,11 +16,17 @@ function [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, spdArgs)
     %   -----------|---------------|----------------------------------------
     %    trs       | -Inf (dBFS)   | Treshold magnitude for peak detection
     %    nfft      | 2048          | FFT size
-    %    npks      | 1000          | Number of peaks to be found
     %    fs        | 44100         | Sampling frequency
+    % 
+    %   [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen) uses
+    %   all default values for spdArgs.
+
+    if nargin < 5
+        spdArgs = struct;
+    end
 
     % Unpack struct with spectral peak detection arguments
-    [trs, nfft, npks, fs] = unpackSPDArgs(spdArgs);
+    [trs, nfft, fs] = unpackSPDArgs(spdArgs);
 
     % Calculate number of frames that will fit in the the given signal
     numFrames = floor((length(sig) - frmLen) / hopLen) + 1;
@@ -35,25 +41,30 @@ function [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, spdArgs)
     for frmIter = 1:numFrames
         frmStart = 1 + (frmIter - 1) * hopLen;
         smpl(frmIter) = frmStart + ceil(frmLen / 2);
-        [frmFreq, frmAmp, frmPhs] = ...
+        [pkFreq, pkAmp, pkPhs] = ...
             findSpecPeaks(sig(frmStart:frmStart + frmLen - 1), ...
-            trs, npks, nfft, fs);
+            trs, 0, nfft, fs);
 
         % Peak continuation - connect closest peaks between frames
         for pkIter = 1:npks
             prevFrmIterMod = mod(frmIter - 2, numFrames) + 1;
-            [~, clstPkIndx] = min(abs(frmFreq - freq(prevFrmIterMod, pkIter)));
-            freq(frmIter, pkIter) = frmFreq(clstPkIndx);
-            frmFreq(clstPkIndx) = NaN;
-            amp(frmIter, pkIter) = frmAmp(clstPkIndx);
-            phs(frmIter, pkIter) = frmPhs(clstPkIndx);
+            [~, clstPkIndx] = min(abs(pkFreq - freq(prevFrmIterMod, pkIter)));
+
+            if isnan(pkFreq(clstPkIndx)) 
+                break;
+            end
+
+            freq(frmIter, pkIter) = pkFreq(clstPkIndx);
+            pkFreq(clstPkIndx) = NaN;
+            amp(frmIter, pkIter) = pkAmp(clstPkIndx);
+            phs(frmIter, pkIter) = pkPhs(clstPkIndx);
         end
 
     end
 
 end
 
-function [trs, nfft, npks, fs] = unpackSPDArgs(spdArgs)
+function [trs, nfft, fs] = unpackSPDArgs(spdArgs)
 
     if isfield(spdArgs, 'trs')
         trs = spdArgs.trs;
@@ -67,13 +78,6 @@ function [trs, nfft, npks, fs] = unpackSPDArgs(spdArgs)
         spdArgs = rmfield(spdArgs, 'nfft');
     else
         nfft = 2048;
-    end
-
-    if isfield(spdArgs, 'npks')
-        npks = spdArgs.npks;
-        spdArgs = rmfield(spdArgs, 'npks');
-    else
-        npks = 10;
     end
 
     if isfield(spdArgs, 'fs')

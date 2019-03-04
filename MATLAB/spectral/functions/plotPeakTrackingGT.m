@@ -1,4 +1,8 @@
 function plotPeakTrackingGT(fgt, fEst, agt, aEst, smpl)
+    % Strip zeros - NaN will not show on the plot
+    fEst(fEst == 0) = NaN;
+    aEst(aEst == 0) = NaN;
+
     subplot(2, 2, 1);
     semilogy(fgt, '--');
     hold on;
@@ -23,6 +27,8 @@ function plotPeakTrackingGT(fgt, fEst, agt, aEst, smpl)
 
     subplot(2, 2, 2);
     fgtSmpl = fgt(smpl, :);
+    fgtSmpl = [fgtSmpl, zeros(size(fEst, 1), ...
+                size(fEst, 2) - size(fgtSmpl, 2))];
     fRelErr = (fEst - fgtSmpl) ./ fgtSmpl;
     fRelErr = 100 * fRelErr;
     plot(smpl, fRelErr);
@@ -34,6 +40,8 @@ function plotPeakTrackingGT(fgt, fEst, agt, aEst, smpl)
 
     subplot(2, 2, 4);
     agtSmpl = agt(smpl, :);
+    agtSmpl = [agtSmpl, zeros(size(aEst, 1), ...
+                size(aEst, 2) - size(agtSmpl, 2))];
     aRelErr = (aEst - agtSmpl) ./ agtSmpl;
     aRelErr = 100 * aRelErr;
     plot(smpl, aRelErr);

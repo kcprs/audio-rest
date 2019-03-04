@@ -14,9 +14,8 @@ classdef TrackSpecPeaksTest < matlab.unittest.TestCase
                 getCosSig(l, f(:, 2), a(:, 2)) + ...
                 getCosSig(l, f(:, 3), a(:, 3));
 
-            spdParams.npks = 3;
             [freqEst, ampEst, ~, smpl] = ...
-                trackSpecPeaks(s, 1024, 256, spdParams);
+                trackSpecPeaks(s, 1024, 256, 3);
             testCase.verifyEqual(freqEst, f(smpl, :), 'RelTol', 0.01);
             testCase.verifyEqual(ampEst, a(smpl, :), 'RelTol', 0.01);
         end

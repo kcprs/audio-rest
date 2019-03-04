@@ -4,7 +4,8 @@ function [freqEst, ampEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
     %   returns frequency, amplitude and phase information about npks most
     %   prominent frequency components of the given signal sig, i.e. all
     %   spectral peaks with magnitude above the threshold trs in dBFS.
-    %   Analysis is done using fft of size nfft.
+    %   Analysis is done using fft of size nfft. Set npks to 0 to find all
+    %   peaks above threshold trs.
     %
     %   [freqEst, ampEst, phsEst] = FINDSPECPEAKS(sig, trs, npks, nfft)
     %   uses default value of fs = 44100.
@@ -23,13 +24,15 @@ function [freqEst, ampEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
     % Get magnitude and phase spectra
     [mag, phs] = getFT(sig, nfft, 'gausswin');
 
-    % Find npks highest peaks in magnitude spectrum
-    [peakMag, peakLoc] = findpeaks(mag(1:(nfft / 2 + 1)), ...
-        'SortStr', 'descend', 'MinPeakHeight', trs, 'NPeaks', npks);
-
-    % Reorder from peak height to frequency
-    [peakLoc, sortIndx] = sort(peakLoc);
-    peakMag = peakMag(sortIndx);
+    % Find highest peaks in magnitude spectrum
+    if npks == 0
+        [peakMag, peakLoc] = findpeaks(mag(1:(nfft / 2 + 1)), ...
+            'SortStr', 'descend', 'MinPeakHeight', trs, 'MinPeakWidth', 3);
+    else
+        [peakMag, peakLoc] = findpeaks(mag(1:(nfft / 2 + 1)), ...
+            'SortStr', 'descend', 'MinPeakHeight', trs, 'NPeaks', npks, ...
+            'MinPeakWidth', 3);
+    end
 
     % Interpolation method based on:
     % DAFX - Digital Audio Effects (2002), Chapter 10 - Spectral Processing
