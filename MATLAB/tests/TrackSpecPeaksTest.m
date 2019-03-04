@@ -19,7 +19,6 @@ classdef TrackSpecPeaksTest < matlab.unittest.TestCase
                 trackSpecPeaks(s, 1024, 256, spdParams);
             testCase.verifyEqual(freqEst, f(smpl, :), 'RelTol', 0.01);
             testCase.verifyEqual(ampEst, a(smpl, :), 'RelTol', 0.01);
-            % plotPeakTrackingGT(f, freqEst, a, ampEst, smpl);
         end
 
     end

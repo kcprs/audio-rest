@@ -22,9 +22,9 @@ function [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, spdArgs)
     % Unpack struct with spectral peak detection arguments
     [trs, nfft, npks, fs] = unpackSPDArgs(spdArgs);
 
-    % Calculate th number of frames that will fit in the the given signal
+    % Calculate number of frames that will fit in the the given signal
     numFrames = floor((length(sig) - frmLen) / hopLen) + 1;
-
+    
     freq = zeros(numFrames, npks);
     amp = zeros(numFrames, npks);
     phs = zeros(numFrames, npks);
@@ -32,12 +32,23 @@ function [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, spdArgs)
 
     % Get frequency, amplitude and phase estimates for each frame.
     % Save the centre sample of each frame in vector smpl.
-    for iter = 1:numFrames
-        frmStart = 1 + (iter - 1) * hopLen;
-        smpl(iter) = frmStart + ceil(frmLen / 2);
-        [freq(iter, :), amp(iter, :), phs(iter, :)] = ...
+    for frmIter = 1:numFrames
+        frmStart = 1 + (frmIter - 1) * hopLen;
+        smpl(frmIter) = frmStart + ceil(frmLen / 2);
+        [frmFreq, frmAmp, frmPhs] = ...
             findSpecPeaks(sig(frmStart:frmStart + frmLen - 1), ...
             trs, npks, nfft, fs);
+
+        % Peak continuation - connect closest peaks between frames
+        for pkIter = 1:npks
+            prevFrmIterMod = mod(frmIter - 2, numFrames) + 1;
+            [~, clstPkIndx] = min(abs(frmFreq - freq(prevFrmIterMod, pkIter)));
+            freq(frmIter, pkIter) = frmFreq(clstPkIndx);
+            frmFreq(clstPkIndx) = NaN;
+            amp(frmIter, pkIter) = frmAmp(clstPkIndx);
+            phs(frmIter, pkIter) = frmPhs(clstPkIndx);
+        end
+
     end
 
 end
