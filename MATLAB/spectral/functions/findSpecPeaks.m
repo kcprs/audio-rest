@@ -8,7 +8,7 @@ function [freqEst, ampEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
     %
     %   [freqEst, ampEst, phsEst] = FINDSPECPEAKS(sig, trs, npks, nfft)
     %   uses default value of fs = 44100.
-    % 
+    %
     %   [freqEst, ampEst, phsEst] = FINDSPECPEAKS(sig, trs, npks) uses
     %   default values of fs = 44100 and nfft = length(sig).
 
@@ -23,9 +23,13 @@ function [freqEst, ampEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
     % Get magnitude and phase spectra
     [mag, phs] = getFT(sig, nfft, 'gausswin');
 
-    % Find peaks in magnitude spectrum
+    % Find npks highest peaks in magnitude spectrum
     [peakMag, peakLoc] = findpeaks(mag(1:(nfft / 2 + 1)), ...
-        'MinPeakHeight', trs, 'NPeaks', npks);
+        'SortStr', 'descend', 'MinPeakHeight', trs, 'NPeaks', npks);
+
+    % Reorder from peak height to frequency
+    [peakLoc, sortIndx] = sort(peakLoc);
+    peakMag = peakMag(sortIndx);
 
     % Interpolation method based on:
     % DAFX - Digital Audio Effects (2002), Chapter 10 - Spectral Processing
@@ -65,7 +69,7 @@ function [freqEst, ampEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
 end
 
 function argUnwrap = unwrap2pi(arg)
-    %ARGUNWRAP Heler function for unwrapping phase spectra
+    %ARGUNWRAP Helper function for unwrapping phase spectra
     arg = arg - floor(arg / 2 / pi) * 2 * pi;
     argUnwrap = arg - arg >= pi * 2 * pi;
 end

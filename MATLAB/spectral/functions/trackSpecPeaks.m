@@ -11,16 +11,18 @@ function [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, spdArgs)
     %   consecutive frames. spdArgs is a struct containing arguments for
     %   spectral peak detection. Available fields for spdArgs are listed
     %   below:
-    %   
+    %
     %   field name | default value | description
     %   -----------|---------------|----------------------------------------
-    %    trs       | -20 (dBFS)   | Treshold magnitude for peak detection 
+    %    trs       | -Inf (dBFS)   | Treshold magnitude for peak detection
     %    nfft      | 2048          | FFT size
     %    npks      | 1000          | Number of peaks to be found
     %    fs        | 44100         | Sampling frequency
 
+    % Unpack struct with spectral peak detection arguments
     [trs, nfft, npks, fs] = unpackSPDArgs(spdArgs);
 
+    % Calculate th number of frames that will fit in the the given signal
     numFrames = floor((length(sig) - frmLen) / hopLen) + 1;
 
     freq = zeros(numFrames, npks);
@@ -28,11 +30,14 @@ function [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, spdArgs)
     phs = zeros(numFrames, npks);
     smpl = zeros(numFrames, 1);
 
-    for it = 1:numFrames
-        sInd = 1 + (it - 1) * hopLen;
-        smpl(it) = sInd + ceil(frmLen / 2);
-        [freq(it, :), amp(it, :), phs(it, :)] = ...
-            findSpecPeaks(sig(sInd:sInd + frmLen - 1), trs, npks, nfft, fs);
+    % Get frequency, amplitude and phase estimates for each frame.
+    % Save the centre sample of each frame in vector smpl.
+    for iter = 1:numFrames
+        frmStart = 1 + (iter - 1) * hopLen;
+        smpl(iter) = frmStart + ceil(frmLen / 2);
+        [freq(iter, :), amp(iter, :), phs(iter, :)] = ...
+            findSpecPeaks(sig(frmStart:frmStart + frmLen - 1), ...
+            trs, npks, nfft, fs);
     end
 
 end
@@ -43,7 +48,7 @@ function [trs, nfft, npks, fs] = unpackSPDArgs(spdArgs)
         trs = spdArgs.trs;
         spdArgs = rmfield(spdArgs, 'trs');
     else
-        trs = -20;
+        trs = -Inf;
     end
 
     if isfield(spdArgs, 'nfft')
@@ -57,7 +62,7 @@ function [trs, nfft, npks, fs] = unpackSPDArgs(spdArgs)
         npks = spdArgs.npks;
         spdArgs = rmfield(spdArgs, 'npks');
     else
-        npks = 1000;
+        npks = 10;
     end
 
     if isfield(spdArgs, 'fs')
@@ -67,6 +72,7 @@ function [trs, nfft, npks, fs] = unpackSPDArgs(spdArgs)
         fs = 44100;
     end
 
+    % Throw error if there are leftover fields in the given struct
     if numel(fieldnames(spdArgs)) ~= 0
         msg = "Unrecognised parameters passed to trackSpecPeak: ";
         fieldNames = strjoin(fieldnames(spdArgs), ', ');
