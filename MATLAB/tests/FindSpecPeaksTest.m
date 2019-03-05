@@ -100,7 +100,7 @@ classdef FindSpecPeaksTest < matlab.unittest.TestCase
             npks = 10;
             sig = zeros(l, 1);
             [freqEst, ~, ~] = findSpecPeaks(sig, -2, npks);
-            testCase.verifyEqual(freqEst, zeros(1, npks));
+            testCase.verifyEqual(freqEst, NaN(1, npks));
         end
 
         function testThreePeaks(testCase)

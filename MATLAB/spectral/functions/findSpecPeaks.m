@@ -64,11 +64,10 @@ function [freqEst, magEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
     % Calculate interpolated magnitude (magEst)
     magEst = peakMag - 0.25 * (leftMag - rightMag) .* (intpLoc - peakLoc);
 
-    % If fewer peaks detected than npks, pad with zeros
-    % to match expected size
-    freqEst = [freqEst, zeros(1, npks - length(freqEst))];
-    magEst = [magEst, zeros(1, npks - length(magEst))];
-    phsEst = [phsEst, zeros(1, npks - length(phsEst))];
+    % If fewer peaks detected than npks, pad with NaN to match expected size
+    freqEst = [freqEst, NaN(1, npks - length(freqEst))];
+    magEst = [magEst, NaN(1, npks - length(magEst))];
+    phsEst = [phsEst, NaN(1, npks - length(phsEst))];
 end
 
 function argUnwrap = unwrap2pi(arg)
