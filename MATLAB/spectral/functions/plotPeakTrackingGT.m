@@ -1,8 +1,4 @@
-function plotPeakTrackingGT(fgt, fEst, agt, aEst, smpl)
-    % Strip zeros - NaN will not show on the plot
-    fEst(fEst == 0) = NaN;
-    aEst(aEst == 0) = NaN;
-
+function plotPeakTrackingGT(fgt, fEst, mgt, mEst, smpl)
     subplot(2, 2, 1);
     semilogy(fgt, '--');
     hold on;
@@ -15,14 +11,14 @@ function plotPeakTrackingGT(fgt, fEst, agt, aEst, smpl)
     grid on;
 
     subplot(2, 2, 3);
-    plot(agt, '--');
+    plot(mgt, '--');
     hold on;
     set(gca, 'ColorOrderIndex', 1);
-    plot(smpl, aEst);
+    plot(smpl, mEst);
     hold off;
-    title('Amplitude Estimation');
+    title('Magnitude Estimation');
     xlabel('Time in samples');
-    ylabel('Amplitude of sinusoidal components');
+    ylabel('Magnitude of sinusoidal components in dBFS');
     grid on;
 
     subplot(2, 2, 2);
@@ -39,15 +35,13 @@ function plotPeakTrackingGT(fgt, fEst, agt, aEst, smpl)
     ytickformat(gca, 'percentage');
 
     subplot(2, 2, 4);
-    agtSmpl = agt(smpl, :);
-    agtSmpl = [agtSmpl, zeros(size(aEst, 1), ...
-                size(aEst, 2) - size(agtSmpl, 2))];
-    aRelErr = (aEst - agtSmpl) ./ agtSmpl;
-    aRelErr = 100 * aRelErr;
-    plot(smpl, aRelErr);
-    title('Amplitude Estimation - Relative Error');
+    mgtSmpl = mgt(smpl, :);
+    mgtSmpl = [mgtSmpl, zeros(size(mEst, 1), ...
+                size(mEst, 2) - size(mgtSmpl, 2))];
+    mErr = mEst - mgtSmpl;
+    plot(smpl, mErr);
+    title('Magnitude Estimation - Absolute Error');
     xlabel('Time in samples');
-    ylabel('Relative error');
+    ylabel('Absolute error (dBFS)');
     grid on;
-    ytickformat(gca, 'percentage');
 end

@@ -1,7 +1,4 @@
-function plotPeakTracking(fEst, aEst, smpl)
-    % Strip zeros - NaN will not show on the plot
-    fEst(fEst == 0) = NaN;
-    aEst(aEst == 0) = NaN;
+function plotPeakTracking(fEst, mEst, smpl)
 
     subplot(2, 1, 1);
     semilogy(smpl, fEst);
@@ -12,10 +9,10 @@ function plotPeakTracking(fEst, aEst, smpl)
     grid on;
 
     subplot(2, 1, 2);
-    plot(smpl, aEst);
+    plot(smpl, mEst);
     hold off;
-    title('Amplitude Estimation');
+    title('Magnitude Estimation');
     xlabel('Time in samples');
-    ylabel('Amplitude of sinusoidal components');
+    ylabel('Magnitude of sinusoidal components in dBFS');
     grid on;
 end

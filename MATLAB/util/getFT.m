@@ -3,7 +3,7 @@ function [magSpec, phsSpec] = getFT(sig, nfft, winType)
     %   [magSpec, phsSpec] = GETFT(sig, nfft, winType) returns magnitude and
     %   phase spectra of the given signal sig using FFT of size nfft.
     %   The signal is first windowed by a function specified by winType.
-    %   The magnitude is returned in dBFS and corresponds to the amplitude
+    %   The magnitude is returned in dBFS and corresponds to the magnitude
     %   of a sinusoid at given bin frequency.
     %
     %   [magSpec, phsSpec] = GETFT(sig, nfft) uses Hann windowing by default
@@ -48,7 +48,7 @@ function [magSpec, phsSpec] = getFT(sig, nfft, winType)
     phsSpec = angle(sigFT);
 
     % Compute magnitude spectrum of the given signal. Normalise so that
-    % magnitudes are independent of nfft and equal to amplitudes of
+    % magnitudes are independent of nfft and equal to magnitudes of
     % corresponding sinusoidal components in dBFS.
     winMag = abs(fft(win));
     magSpec = 20 * log10(2 * abs(sigFT) / winMag(1));

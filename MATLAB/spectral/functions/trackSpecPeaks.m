@@ -1,9 +1,9 @@
-function [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, npks, spdArgs)
+function [freq, mag, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, npks, spdArgs)
     %TRACKSPECPEAKS Track spectral peaks in given signal over time
-    %   [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, npks, spdArgs)
-    %   returns matrices containing frequency, amplitude and phase
+    %   [freq, mag, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, npks, spdArgs)
+    %   returns matrices containing frequency, magnitude and phase
     %   information of npks spectral peaks in signal sig over time. Matrices
-    %   freq, amp and phs are of size numFrames x npks, where numFrames is
+    %   freq, mag and phs are of size numFrames x npks, where numFrames is
     %   the number of frames analysed and npks is the number of spectral
     %   peaks detected. Vector smpl contains indexes of centre samples of
     %   frames that were analysed. Arguments frmLen and hopLen are
@@ -18,7 +18,7 @@ function [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, npks, spdA
     %    nfft      | 2048          | FFT size
     %    fs        | 44100         | Sampling frequency
     % 
-    %   [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen) uses
+    %   [freq, mag, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen) uses
     %   all default values for spdArgs.
 
     if nargin < 5
@@ -32,16 +32,16 @@ function [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, npks, spdA
     numFrames = floor((length(sig) - frmLen) / hopLen) + 1;
     
     freq = zeros(numFrames, npks);
-    amp = zeros(numFrames, npks);
+    mag = zeros(numFrames, npks);
     phs = zeros(numFrames, npks);
     smpl = zeros(numFrames, 1);
 
-    % Get frequency, amplitude and phase estimates for each frame.
+    % Get frequency, magnitude and phase estimates for each frame.
     % Save the centre sample of each frame in vector smpl.
     for frmIter = 1:numFrames
         frmStart = 1 + (frmIter - 1) * hopLen;
         smpl(frmIter) = frmStart + ceil(frmLen / 2);
-        [pkFreq, pkAmp, pkPhs] = ...
+        [pkFreq, pkMag, pkPhs] = ...
             findSpecPeaks(sig(frmStart:frmStart + frmLen - 1), ...
             trs, 0, nfft, fs);
 
@@ -56,7 +56,7 @@ function [freq, amp, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, npks, spdA
 
             freq(frmIter, pkIter) = pkFreq(clstPkIndx);
             pkFreq(clstPkIndx) = NaN;
-            amp(frmIter, pkIter) = pkAmp(clstPkIndx);
+            mag(frmIter, pkIter) = pkMag(clstPkIndx);
             phs(frmIter, pkIter) = pkPhs(clstPkIndx);
         end
 

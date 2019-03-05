@@ -38,11 +38,11 @@ for iter = 1:nComps
     arErrors(iter) = arFreqEst - freq;
 
     % Peak detection error without padding
-    pdFreqEst = findSpecPeak(sig);
+    pdFreqEst = findSpecPeaks(sig, -Inf, 1);
     pdErrors(iter) = pdFreqEst - freq;
 
     % Peak detection error with padding
-    pdpFreqEst = findSpecPeak(sig, nfft);
+    pdpFreqEst = findSpecPeaks(sig, -Inf, 1, nfft);
     pdpErrors(iter) = pdpFreqEst - freq;
 end
 

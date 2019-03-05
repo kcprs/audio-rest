@@ -1,16 +1,16 @@
-function [freqEst, ampEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
+function [freqEst, magEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
     %FINDSPECPEAKS Find multiple spectral peaks in the given signal
-    %   [freqEst, ampEst, phsEst] = FINDSPECPEAKS(sig, trs, npks, nfft, fs)
-    %   returns frequency, amplitude and phase information about npks most
+    %   [freqEst, magEst, phsEst] = FINDSPECPEAKS(sig, trs, npks, nfft, fs)
+    %   returns frequency, magnitude and phase information about npks most
     %   prominent frequency components of the given signal sig, i.e. all
     %   spectral peaks with magnitude above the threshold trs in dBFS.
     %   Analysis is done using fft of size nfft. Set npks to 0 to find all
     %   peaks above threshold trs.
     %
-    %   [freqEst, ampEst, phsEst] = FINDSPECPEAKS(sig, trs, npks, nfft)
+    %   [freqEst, magEst, phsEst] = FINDSPECPEAKS(sig, trs, npks, nfft)
     %   uses default value of fs = 44100.
     %
-    %   [freqEst, ampEst, phsEst] = FINDSPECPEAKS(sig, trs, npks) uses
+    %   [freqEst, magEst, phsEst] = FINDSPECPEAKS(sig, trs, npks) uses
     %   default values of fs = 44100 and nfft = length(sig).
 
     if nargin < 5
@@ -26,10 +26,10 @@ function [freqEst, ampEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
 
     % Find highest peaks in magnitude spectrum
     if npks == 0
-        [peakMag, peakLoc] = findpeaks(mag(1:(nfft / 2 + 1)), ...
+        [peakMag, peakLoc] = findpeaks(mag(1:(floor(nfft / 2) + 1)), ...
             'SortStr', 'descend', 'MinPeakHeight', trs, 'MinPeakWidth', 3);
     else
-        [peakMag, peakLoc] = findpeaks(mag(1:(nfft / 2 + 1)), ...
+        [peakMag, peakLoc] = findpeaks(mag(1:(floor(nfft / 2) + 1)), ...
             'SortStr', 'descend', 'MinPeakHeight', trs, 'NPeaks', npks, ...
             'MinPeakWidth', 3);
     end
@@ -52,7 +52,7 @@ function [freqEst, ampEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
     % Calculate corresponding frequencies
     freqEst = fs * (intpLoc - 1) / nfft;
 
-    % Calculate interpolated phase (intPhs)
+    % Calculate interpolated phase (phsEst)
     leftPhs = phs(floor(intpLoc));
     rightPhs = phs(floor(intpLoc + 1));
     intpFactor = intpLoc - peakLoc;
@@ -61,13 +61,13 @@ function [freqEst, ampEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
     diffPhs = unwrap2pi(rightPhs - leftPhs);
     phsEst = leftPhs + intpFactor .* diffPhs;
 
-    % Calculate interpolated amplitude (ampEst)
-    intpAdB = peakMag - 0.25 * (leftMag - rightMag) .* (intpLoc - peakLoc);
-    ampEst = 10.^(intpAdB / 20);
+    % Calculate interpolated magnitude (magEst)
+    magEst = peakMag - 0.25 * (leftMag - rightMag) .* (intpLoc - peakLoc);
 
-    % If fewer peaks detected than npks, add zeros to match expected size
+    % If fewer peaks detected than npks, pad with zeros
+    % to match expected size
     freqEst = [freqEst, zeros(1, npks - length(freqEst))];
-    ampEst = [ampEst, zeros(1, npks - length(ampEst))];
+    magEst = [magEst, zeros(1, npks - length(magEst))];
     phsEst = [phsEst, zeros(1, npks - length(phsEst))];
 end
 
