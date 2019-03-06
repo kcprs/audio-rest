@@ -1,7 +1,7 @@
 function plotPeakTracking(fEst, mEst, smpl)
 
     subplot(2, 1, 1);
-    semilogy(smpl, fEst);
+    plot(smpl, fEst);
     hold off;
     title('Frequency Estimation');
     xlabel('Time in samples');

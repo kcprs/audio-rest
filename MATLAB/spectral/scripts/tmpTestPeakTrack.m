@@ -20,7 +20,8 @@ else
         getCosSig(l, f(:, 3), m(:, 3));
 end
 
-[freqEst, magEst, phsEst, smpl] = trackSpecPeaks(s, frmLen, hopLen, numPks);
+trks = trackSpecPeaks(s, frmLen, hopLen, numPks);
+[freqEst, magEst, phsEst, smpl] = SinTrack.consolidateFMP(trks);
 
 if strcmp(source, 'flute')
     plotPeakTracking(freqEst, magEst, smpl);

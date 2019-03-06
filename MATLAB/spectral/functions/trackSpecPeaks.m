@@ -1,25 +1,21 @@
-function [freq, mag, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, npks, spdArgs)
+function [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, spdArgs)
     %TRACKSPECPEAKS Track spectral peaks in given signal over time
-    %   [freq, mag, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, npks, spdArgs)
-    %   returns matrices containing frequency, magnitude and phase
-    %   information of npks spectral peaks in signal sig over time. Matrices
-    %   freq, mag and phs are of size numFrames x npks, where numFrames is
-    %   the number of frames analysed and npks is the number of spectral
-    %   peaks detected. Vector smpl contains indexes of centre samples of
-    %   frames that were analysed. Arguments frmLen and hopLen are
-    %   respectively the length of analysis frames and of hop between
-    %   consecutive frames. spdArgs is a struct containing arguments for
-    %   spectral peak detection. Available fields for spdArgs are listed
-    %   below:
+    %   [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, spdArgs)
+    %   returns SinTrack objects containing frequency, magnitude and phase
+    %   information of numTrk spectral peaks in signal sig over time.
+    %   Arguments frmLen and hopLen are respectively the length of analysis
+    %   frames and of hop between consecutive frames. spdArgs is a struct
+    %   containing arguments for spectral peak detection. Available fields
+    %   for spdArgs are listed below:
     %
     %   field name | default value | description
     %   -----------|---------------|----------------------------------------
     %    trs       | -Inf (dBFS)   | Treshold magnitude for peak detection
     %    nfft      | 2048          | FFT size
     %    fs        | 44100         | Sampling frequency
-    % 
-    %   [freq, mag, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen) uses
-    %   all default values for spdArgs.
+    %
+    %   [trks] = trackSpecPeaks(sig, frmLen, hopLen) uses all default values
+    %   for spdArgs.
 
     if nargin < 5
         spdArgs = struct;
@@ -30,36 +26,34 @@ function [freq, mag, phs, smpl] = trackSpecPeaks(sig, frmLen, hopLen, npks, spdA
 
     % Calculate number of frames that will fit in the the given signal
     numFrames = floor((length(sig) - frmLen) / hopLen) + 1;
-    
-    freq = zeros(numFrames, npks);
-    mag = zeros(numFrames, npks);
-    phs = zeros(numFrames, npks);
-    smpl = zeros(numFrames, 1);
+
+    % Prepare vector of numTrk SinTrack objects
+    trks(1, numTrk) = SinTrack();
+
+    for iter = 1:numel(trks)
+        trks(iter).allocate(numFrames);
+    end
 
     % Get frequency, magnitude and phase estimates for each frame.
-    % Save the centre sample of each frame in vector smpl.
+    % Pass them to the peak continuation function, which assigns peaks to
+    % sinusoid tracks.
     for frmIter = 1:numFrames
+        % Update frame cursors
+        [trks.frmCursor] = deal(frmIter);
+
+        % Compute frame start sample index
         frmStart = 1 + (frmIter - 1) * hopLen;
-        smpl(frmIter) = frmStart + ceil(frmLen / 2);
+
+        % Compute index of centre sample in frame 
+        smpl = frmStart + ceil(frmLen / 2);
+
+        % Detect spectral peaks
         [pkFreq, pkMag, pkPhs] = ...
             findSpecPeaks(sig(frmStart:frmStart + frmLen - 1), ...
             trs, 0, nfft, fs);
 
-        % Peak continuation - connect closest peaks between frames
-        for pkIter = 1:npks
-            prevFrmIterMod = mod(frmIter - 2, numFrames) + 1;
-            [~, clstPkIndx] = min(abs(pkFreq - freq(prevFrmIterMod, pkIter)));
-
-            if isnan(pkFreq(clstPkIndx)) 
-                break;
-            end
-
-            freq(frmIter, pkIter) = pkFreq(clstPkIndx);
-            pkFreq(clstPkIndx) = NaN;
-            mag(frmIter, pkIter) = pkMag(clstPkIndx);
-            phs(frmIter, pkIter) = pkPhs(clstPkIndx);
-        end
-
+        % Assign spectral peaks to SinTracks
+        peakCont(trks, pkFreq, pkMag, pkPhs, smpl);
     end
 
 end

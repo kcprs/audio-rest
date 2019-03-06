@@ -14,8 +14,8 @@ classdef TrackSpecPeaksTest < matlab.unittest.TestCase
                 getCosSig(l, f(:, 2), m(:, 2)) + ...
                 getCosSig(l, f(:, 3), m(:, 3));
 
-            [freqEst, magEst, ~, smpl] = ...
-                trackSpecPeaks(s, 1024, 256, 3);
+            trks = trackSpecPeaks(s, 1024, 256, 3);
+            [freqEst, magEst, ~, smpl] = SinTrack.consolidateFMP(trks);
             testCase.verifyEqual(freqEst, f(smpl, :), 'RelTol', 0.01);
             testCase.verifyEqual(magEst, m(smpl, :), 'AbsTol', 1);
         end

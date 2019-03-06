@@ -1,9 +1,9 @@
 function plotPeakTrackingGT(fgt, fEst, mgt, mEst, smpl)
     subplot(2, 2, 1);
-    semilogy(fgt, '--');
+    plot(fgt, '--');
     hold on;
     set(gca, 'ColorOrderIndex', 1);
-    semilogy(smpl, fEst);
+    plot(smpl, fEst);
     hold off;
     title('Frequency Estimation');
     xlabel('Time in samples');
