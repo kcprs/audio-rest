@@ -1,10 +1,12 @@
+% FULLRESYNTHESIS Resynthesise given signal using sinusoidal modelling
+
 fs = 44100;
 frmLen = 1024;
 hopLen = 256;
-numPks = 3;
+numPks = 20;
 
-source = 'synth';
-% source = 'flute';
+% source = 'synth';
+source = 'flute';
 
 if strcmp(source, 'flute')
     s = audioread('audio/Flute.nonvib.ff.A4.wav');
