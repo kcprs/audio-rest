@@ -47,7 +47,7 @@ function [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, spdArgs)
         % Compute index of centre sample in frame 
         smpl = frmStart + ceil(frmLen / 2);
 
-        % Detect spectral peaks
+        % Detect spectral peaks in frame
         [pkFreq, pkMag, pkPhs] = ...
             findSpecPeaks(sig(frmStart:frmStart + frmLen - 1), ...
             trs, 0, nfft, fs);

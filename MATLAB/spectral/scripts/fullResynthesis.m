@@ -3,7 +3,7 @@
 fs = 44100;
 frmLen = 1024;
 hopLen = 256;
-numPks = 20;
+numTrk = 20;
 
 % source = 'synth';
 source = 'flute';
@@ -22,7 +22,7 @@ else
         getCosSig(l, f(:, 3), m(:, 3));
 end
 
-trks = trackSpecPeaks(s, frmLen, hopLen, numPks);
+trks = trackSpecPeaks(s, frmLen, hopLen, numTrk);
 [freqEst, magEst, phsEst, smpl] = SinTrack.consolidateFMP(trks);
 
 if strcmp(source, 'flute')

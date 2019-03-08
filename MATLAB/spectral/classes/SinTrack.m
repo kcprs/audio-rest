@@ -39,6 +39,15 @@ classdef SinTrack < handle
             obj.smpl(obj.frmCursor) = smpl;
         end
 
+        function reverse(obj, sigLen)
+            % REVERSE Reverse track information in time
+            obj.freq = flipud(obj.freq);
+            obj.mag = flipud(obj.mag);
+            obj.phs = -flipud(obj.phs);
+            obj.smpl = flipud(obj.smpl);
+            obj.smpl = sigLen - obj.smpl;
+        end
+
     end
 
     methods (Access = private)
