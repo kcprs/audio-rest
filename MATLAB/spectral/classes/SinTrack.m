@@ -45,7 +45,7 @@ classdef SinTrack < handle
             obj.mag = flipud(obj.mag);
             obj.phs = -flipud(obj.phs);
             obj.smpl = flipud(obj.smpl);
-            obj.smpl = sigLen - obj.smpl;
+            obj.smpl = sigLen - obj.smpl + 1;
         end
 
     end
