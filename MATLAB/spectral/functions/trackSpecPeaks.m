@@ -31,7 +31,7 @@ function [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, spdArgs)
     trks(1, numTrk) = SinTrack();
 
     for iter = 1:numel(trks)
-        trks(iter).allocate(numFrames);
+        trks(iter).allocateFrm(numFrames);
     end
 
     % Get frequency, magnitude and phase estimates for each frame.

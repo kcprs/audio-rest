@@ -2,21 +2,27 @@
 
 %% Set variable values
 fs = 44100;
-gapLen = 1000;
+gapLen = 10000;
 frmLen = 1024;
-sigLen = 4 * frmLen;
+sigLen = 6 * frmLen;
 hopLen = 256;
-numTrk = 1;
+numTrk = 50;
 
 % source = 'synth';
-% source = 'flute';
-source = 'sin';
+source = 'flute';
+% source = 'sin';
+% source = 'deathBirth';
 
 %% Prepare source signal
 if strcmp(source, 'flute')
     sig = audioread('audio/Flute.nonvib.ff.A4.wav');
 elseif strcmp(source, 'sin')
     sig = getCosSig(sigLen, 440);
+elseif strcmp(source, 'deathBirth')
+    sig = getCosSig(sigLen, 440, -6);
+    addSig = getCosSig(ceil(sigLen / 2), 880, -6);
+    sig(ceil(sigLen / 4):ceil(sigLen / 4) + length(addSig) - 1) = ...
+        sig(ceil(sigLen / 4):ceil(sigLen / 4) + length(addSig) - 1) + addSig;
 else
     f = [linspace(100, 2000, sigLen).', linspace(1000, 3000, sigLen).', ...
             linspace(14000, 12000, sigLen).'];
@@ -54,13 +60,16 @@ trksPost = trackSpecPeaks(sigPost, frmLen, hopLen, numTrk);
 trksGap(1, numTrk) = SinTrack();
 
 for trkIter = 1:numel(trksGap)
-    trksGap(trkIter).allocate(2);
+    trksGap(trkIter).allocateFrm(2);
 end
 
 % Select last peaks from pre- section and first peaks from post- section
 pkFreqGap = [freqPre(end, :); freqPost(1, :)];
+pkFreqGap(isnan(pkFreqGap)) = 0;
 pkMagGap = [magPre(end, :); magPost(1, :)];
+pkMagGap(isnan(pkMagGap)) = -Inf;
 pkPhsGap = [phsPre(end, :); phsPost(1, :)];
+pkPhsGap(isnan(pkPhsGap)) = 0;
 smplGap = [smplPre(end); gapEnd + smplPost(1)];
 
 % Apply peak continuation over the gap
@@ -98,7 +107,7 @@ sigRest(smplGap(1):smplGap(2)) = sigRest(smplGap(1):smplGap(2)) + sigGapXF;
 sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
-subplot(2, 1, 1);
+subplot(2, 2, 1);
 plot(sigPre, 'DisplayName', 'pre- section');
 hold on;
 plot([NaN(gapEnd, 1); sigPost], 'DisplayName', 'post- section');
@@ -106,8 +115,43 @@ plot([NaN(smplGap(1), 1); sigGap], ':', 'DisplayName', 'reconstruction', ...
     'Color', 'black');
 plot(smplGap, 0, 'x', 'DisplayName', 'transition');
 title('Damaged signal and reconstructed waveform')
+xlabel('Time in samples');
 legend;
 hold off;
-subplot(2, 1, 2);
-plot(sigRest, 'DisplayName', 'sigRest');
+
+subplot(2, 2, 3);
+plot(sigRest, 'DisplayName', 'Final restored signal');
+hold on;
+rectangle('Position', [gapStart, min(sigRest), gapLen, ...
+                        max(sigRest) - min(sigRest)], ...
+    'FaceColor', [1, 0, 0, 0.1], ...
+    'EdgeColor', 'none');
+hold off;
 title('Fully restored signal')
+xlabel('Time in samples');
+
+subplot(2, 2, 2);
+plot(smplPre, freqPre);
+hold on;
+set(gca, 'ColorOrderIndex', 1);
+plot(gapEnd + smplPost, freqPost);
+set(gca, 'ColorOrderIndex', 1);
+plot(smplGap, freqGap, ':');
+hold off;
+title('Sinusoidal tracks - frequency');
+ylabel('Frequency in Hz');
+xlabel('Time in samples');
+grid on;
+
+subplot(2, 2, 4);
+plot(smplPre, magPre);
+hold on;
+set(gca, 'ColorOrderIndex', 1);
+plot(gapEnd + smplPost, magPost);
+set(gca, 'ColorOrderIndex', 1);
+plot(smplGap, magGap, ':');
+hold off;
+title('Sinusoidal tracks - magnitude');
+ylabel('Magnitude in dBFS');
+xlabel('Time in samples');
+grid on;

@@ -49,8 +49,12 @@ function sig = getSineSig(len, freq, mag, phase, fs)
     sig = zeros(len, 1);
 
     for n = 1:len
-        sig(n) = 10^(mag(n) / 20) * sin(phase);
-        phase = getNextPhase(phase, freq(n), fs);
+        if isnan(freq(n))
+            sig(n) = 0;
+        else
+            sig(n) = 10^(mag(n) / 20) * sin(phase);
+            phase = getNextPhase(phase, freq(n), fs);
+        end
     end
 
 end

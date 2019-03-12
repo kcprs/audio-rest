@@ -11,19 +11,29 @@ classdef SinTrack < handle
 
     methods (Access = public)
 
-        function allocate(obj, numFrm)
-            % ALLOCATE Allocate frequency, magnitude, phase and smpl vectors
+        function allocateFrm(obj, numFrm)
+            % ALLOCATEFRM Allocate frequency, magnitude, phase & smpl vectors
             obj.freq = zeros(numFrm, 1);
             obj.mag = zeros(numFrm, 1);
             obj.phs = zeros(numFrm, 1);
             obj.smpl = zeros(numFrm, 1);
         end
 
-        function pkScore = getPkScore(obj, pkFreq)
+        function pkScore = getPkScore(obj, pkFreq, pkMag, maxJump)
             % GETPKSCORE Compute peak score for each peak in current frame
             % based on the previous peak in track
             [prevFreq, ~, ~] = obj.getPreviousFMP();
-            pkScore = abs(pkFreq - prevFreq);
+
+            if isnan(prevFreq)
+                % If new track, pick peak with largest magnitude
+                pkScore = 44100 - pkMag;
+            else
+                % Otherwise pick closest peak within maxJump range
+                freqDist = abs(pkFreq - prevFreq);
+                freqDist(freqDist > maxJump) = NaN;
+                pkScore = freqDist;
+            end
+
         end
 
         function setFMP(obj, freq, mag, phs)
@@ -60,9 +70,9 @@ classdef SinTrack < handle
                 prevM = obj.mag(obj.frmCursor - 1);
                 prevP = obj.phs(obj.frmCursor - 1);
             else
-                prevF = 0;
-                prevM = -Inf;
-                prevP = 0;
+                prevF = NaN;
+                prevM = NaN;
+                prevP = NaN;
             end
 
         end
