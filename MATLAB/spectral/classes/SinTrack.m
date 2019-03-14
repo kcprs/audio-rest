@@ -7,6 +7,8 @@ classdef SinTrack < handle
         phs; % Vector containing phase values at consecutive frames
         smpl; % Vector containing indexes of centre samples of frames
         frmCursor; % Cursor for iterating over frames
+        sinceBirthCntr; % Counter of frames since last track birth
+        minTrkLen; % Minimum length (in frames) of single continuous track
     end
 
     methods (Access = public)
@@ -17,6 +19,8 @@ classdef SinTrack < handle
             obj.mag = zeros(numFrm, 1);
             obj.phs = zeros(numFrm, 1);
             obj.smpl = zeros(numFrm, 1);
+            obj.sinceBirthCntr = 0;
+            obj.minTrkLen = 0;
         end
 
         function pkScore = getPkScore(obj, pkFreq, pkMag, maxJump)
@@ -36,12 +40,45 @@ classdef SinTrack < handle
 
         end
 
+        function setMinTrkLen(obj, minTrkLen)
+            % SETMINTRKLEN Set minimum length (in frames) for a track
+            obj.minTrkLen = minTrkLen;
+        end
+
         function setFMP(obj, freq, mag, phs)
             % SETFMP Set frequency, magnitude and phase values for
             % current frame
+
+            % Set values
             obj.freq(obj.frmCursor) = freq;
             obj.mag(obj.frmCursor) = mag;
             obj.phs(obj.frmCursor) = phs;
+
+            % Check if track dies in this frame
+            if isnan(freq) || obj.frmCursor == length(obj.freq)
+                % Track died - check if it was longer than minimum length
+                % If not, clear from current frame until most recent birth
+                if obj.sinceBirthCntr < obj.minTrkLen
+                    clrCursor = obj.frmCursor;
+
+                    while clrCursor > 0 && (~isnan(obj.freq(clrCursor)) ...
+                            || clrCursor == obj.frmCursor)
+                        obj.freq(clrCursor) = NaN;
+                        obj.mag(clrCursor) = NaN;
+                        obj.phs(clrCursor) = NaN;
+
+                        clrCursor = clrCursor - 1;
+                    end
+
+                end
+
+                % Reset counter
+                obj.sinceBirthCntr = 0;
+            else
+                % Otherwise increase counter
+                obj.sinceBirthCntr = obj.sinceBirthCntr + 1;
+            end
+
         end
 
         function saveSmpl(obj, smpl)

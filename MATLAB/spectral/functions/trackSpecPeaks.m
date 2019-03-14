@@ -1,6 +1,6 @@
-function [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, spdArgs)
+function [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, spdArgs)
     %TRACKSPECPEAKS Track spectral peaks in given signal over time
-    %   [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, spdArgs)
+    %   [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, spdArgs)
     %   returns SinTrack objects containing frequency, magnitude and phase
     %   information of numTrk spectral peaks in signal sig over time.
     %   Arguments frmLen and hopLen are respectively the length of analysis
@@ -14,10 +14,10 @@ function [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, spdArgs)
     %    nfft      | 2048          | FFT size
     %    fs        | 44100         | Sampling frequency
     %
-    %   [trks] = trackSpecPeaks(sig, frmLen, hopLen) uses all default values
-    %   for spdArgs.
+    %   [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen)
+    %   uses all default values for spdArgs.
 
-    if nargin < 5
+    if nargin < 6
         spdArgs = struct;
     end
 
@@ -32,6 +32,7 @@ function [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, spdArgs)
 
     for iter = 1:numel(trks)
         trks(iter).allocateFrm(numFrames);
+        trks(iter).setMinTrkLen(minTrkLen);
     end
 
     % Get frequency, magnitude and phase estimates for each frame.

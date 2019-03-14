@@ -7,6 +7,7 @@ frmLen = 1024;
 sigLen = 6 * frmLen;
 hopLen = 256;
 numTrk = 50;
+minTrkLen = 4;
 
 % source = 'synth';
 source = 'flute';
@@ -41,7 +42,7 @@ end
 % Pre-gap section
 sigPre = sigDmg(1:gapStart - 1);
 sigPre = flipud(sigPre);
-trksPre = trackSpecPeaks(sigPre, frmLen, hopLen, numTrk);
+trksPre = trackSpecPeaks(sigPre, frmLen, hopLen, numTrk, minTrkLen);
 sigPre = flipud(sigPre);
 
 for trkIter = 1:numTrk
@@ -52,7 +53,7 @@ end
 
 % Post-gap section
 sigPost = sigDmg(gapEnd + 1:end);
-trksPost = trackSpecPeaks(sigPost, frmLen, hopLen, numTrk);
+trksPost = trackSpecPeaks(sigPost, frmLen, hopLen, numTrk, minTrkLen);
 [freqPost, magPost, phsPost, smplPost] = SinTrack.consolidateFMP(trksPost);
 
 %% Do linear interpolation over gap by applying peak continuation algorithm
@@ -65,11 +66,8 @@ end
 
 % Select last peaks from pre- section and first peaks from post- section
 pkFreqGap = [freqPre(end, :); freqPost(1, :)];
-pkFreqGap(isnan(pkFreqGap)) = 0;
 pkMagGap = [magPre(end, :); magPost(1, :)];
-pkMagGap(isnan(pkMagGap)) = -Inf;
 pkPhsGap = [phsPre(end, :); phsPost(1, :)];
-pkPhsGap(isnan(pkPhsGap)) = 0;
 smplGap = [smplPre(end); gapEnd + smplPost(1)];
 
 % Apply peak continuation over the gap

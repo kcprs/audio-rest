@@ -115,8 +115,8 @@ classdef FindSpecPeaksTest < matlab.unittest.TestCase
                 getCosSig(l, f(3), m(3));
 
             [freqEst, magEst, ~] = findSpecPeaks(sig, thrs, 3, nfft);
-            [freqEst, I] = sort(freqEst);
-            magEst = magEst(I);
+            [freqEst, sortInd] = sort(freqEst);
+            magEst = magEst(sortInd);
             testCase.verifyEqual(freqEst, f, 'RelTol', 0.01);
             testCase.verifyEqual(magEst, m, 'AbsTol', 1);
         end
