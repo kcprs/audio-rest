@@ -1,4 +1,4 @@
-% FULLRESYNTHESIS Resynthesise given signal using sinusoidal modelling
+% FULLSINRESYNTH Resynthesise given signal using sinusoidal modelling
 
 fs = 44100;
 frmLen = 1024;

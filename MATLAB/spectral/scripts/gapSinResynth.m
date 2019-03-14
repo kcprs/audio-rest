@@ -1,4 +1,4 @@
-% GAPRESYNTHESIS Restore gap in given signal using sinusoidal modelling
+% GAPSINRESYNTH Restore gap in given signal using sinusoidal modelling
 
 %% Set variable values
 fs = 44100;
