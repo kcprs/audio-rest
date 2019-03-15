@@ -26,10 +26,12 @@ classdef SinTrack < handle
         function pkScore = getPkScore(obj, pkFreq, pkMag, maxJump)
             % GETPKSCORE Compute peak score for each peak in current frame
             % based on the previous peak in track
-            [prevFreq, ~, ~] = obj.getPreviousFMP();
+            [prevFreq, ~, ~] = obj.getRelIndFMP(-1);
 
             if isnan(prevFreq)
                 % If new track, pick peak with largest magnitude
+                % Shift by fs to let continuing tracks to be selected first
+                % since peaks are assigned from lowest to highest score.
                 pkScore = 44100 - pkMag;
             else
                 % Otherwise pick closest peak within maxJump range
@@ -99,13 +101,13 @@ classdef SinTrack < handle
 
     methods (Access = private)
 
-        function [prevF, prevM, prevP] = getPreviousFMP(obj)
+        function [prevF, prevM, prevP] = getRelIndFMP(obj, relInd)
             % GETPREVIOUSFMP Return frequency, magnitude and phase values
             % of the previous peak in track
-            if obj.frmCursor > 1
-                prevF = obj.freq(obj.frmCursor - 1);
-                prevM = obj.mag(obj.frmCursor - 1);
-                prevP = obj.phs(obj.frmCursor - 1);
+            if obj.frmCursor + relInd >= 1
+                prevF = obj.freq(obj.frmCursor + relInd);
+                prevM = obj.mag(obj.frmCursor + relInd);
+                prevP = obj.phs(obj.frmCursor + relInd);
             else
                 prevF = NaN;
                 prevM = NaN;
