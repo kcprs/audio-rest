@@ -1,4 +1,4 @@
-% TRKXTRP Extrapolate sinusoidal tracks
+% splines Interpolate sinusoidal tracks using splines
 
 %% Set variable values
 fs = 44100;
@@ -15,7 +15,7 @@ source = 'flute';
 
 %% Prepare source signal
 if strcmp(source, 'flute')
-    sig = audioread('audio/Flute.nonvib.ff.A4.wav');
+    sig = audioread('audio/Flute.vib.ff.A4.wav');
 elseif strcmp(source, 'sin')
     sig = getCosSig(sigLen, 440);
 else
