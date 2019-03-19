@@ -23,9 +23,8 @@ function [pred, A] = burgPredict(sig, ord, predStart, predLen, fitLen)
     % Find initial conditions
     zinit = filtic(e, A, flipud(fitSect));
 
-    % Prepare impulse input signal
-    in = zeros(abs(predLen), 1);
-    in(1) = 1;
+    % Prepare noise input signal
+    in = rand([abs(predLen), 1]);
 
     % Get prediction of missing signal
     pred = filter(e, A, in, zinit);

@@ -6,7 +6,7 @@ frmLen = 1024;
 gapLen = 10 * frmLen;
 sigLen = 16 * frmLen;
 hopLen = 256;
-numTrk = 4;
+numTrk = 10;
 minTrkLen = 4;
 
 source = 'flute';
@@ -91,38 +91,10 @@ sinPost = [flipud(sinPostBwd); sinPostFwd(2:end)];
 resPost = sigPost(1:frmLen) - sinPost;
 
 %% Morph between pre- and post- residuals over the gap
-numGapFrm = ceil(length(sinGap) / frmLen);
-resGap = zeros(numGapFrm * frmLen, 1);
+resGap = wfbar(resPre, resPost, gapLen);
 
-resPreMag = abs(fft(resPre));
-resPostMag = abs(fft(resPost));
-fade = [linspace(0, 1, frmLen / 2), linspace(1, 0, frmLen / 2)].';
-startFade = [ones(1, frmLen / 2), linspace(1, 0, frmLen / 2)].';
-endFade = [linspace(0, 1, frmLen / 2), ones(1, frmLen / 2)].';
-numIter = 2 * numGapFrm - 1;
-
-for iter = 1:numIter
-    weight = (iter - 1) / (numIter - 1);
-    resMag = (1 - weight) * resPreMag + weight * resPostMag;
-    resPhs = rand([frmLen, 1]) * 2 * pi;
-    res = real(ifft(resMag .* exp(1j * resPhs)));
-
-    if iter == 1
-        res = res .* startFade;
-    elseif iter == numIter
-        res = res .* endFade;
-    else
-        res = res .* fade;
-    end
-
-    resGap((iter - 1) * frmLen / 2 + 1:(iter - 1) * frmLen / 2 + frmLen) = ...
-        resGap((iter - 1) * frmLen / 2 + 1:(iter - 1) * frmLen / 2 + frmLen) + res;
-
-    plot(resGap);
-end
-
-%% Add reconstructed sinusoidal and residual 
-resGap = resGap(1:length(sinGap));
+%% Add reconstructed sinusoidal and residual
+resGap = [resPre(frmLen / 2:end); resGap; resPost(1:frmLen / 2 + 1)];
 sigGap = sinGap + resGap;
 
 %% Insert reconstructed signal into the gap
