@@ -64,8 +64,8 @@ phsPost = phsPost(:, sortIndPost);
 %% Match tracks across the gap 
 
 %% Interpolate
-dataRange = 10;
 numGapFrm = floor(gapLen / hopLen) + 3; % TODO: 3 is not general
+dataRange = numGapFrm;
 freqGap = zeros(numGapFrm, numTrk);
 magGap = zeros(numGapFrm, numTrk);
 
