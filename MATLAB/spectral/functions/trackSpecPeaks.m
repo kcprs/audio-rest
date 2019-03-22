@@ -1,8 +1,9 @@
-function [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, spdArgs)
+function [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, spdArgs)
     %TRACKSPECPEAKS Track spectral peaks in given signal over time
-    %   [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, spdArgs)
+    %   [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, spdArgs)
     %   returns SinTrack objects containing frequency, magnitude and phase
-    %   information of numTrk spectral peaks in signal sig over time.
+    %   information of numTrk spectral peaks in signal sig over time and
+    %   pitch vector containing pitch estimate at each analysis frame.
     %   Arguments frmLen and hopLen are respectively the length of analysis
     %   frames and of hop between consecutive frames. spdArgs is a struct
     %   containing arguments for spectral peak detection. Available fields
@@ -35,6 +36,9 @@ function [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, spdArgs
         trks(iter).setMinTrkLen(minTrkLen);
     end
 
+    % Prepare pitch vector
+    pitch = zeros(numFrames, 1);
+
     % Get frequency, magnitude and phase estimates for each frame.
     % Pass them to the peak continuation function, which assigns peaks to
     % sinusoid tracks.
@@ -55,6 +59,12 @@ function [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, spdArgs
 
         % Assign spectral peaks to SinTracks
         peakCont(trks, pkFreq, pkMag, pkPhs, smpl);
+
+        % Save pitch in frame based on freqs of 5 highest peaks
+        [~, highestPks] = sort(pkMag, 'desc');
+        pitchEstFreq = pkFreq(highestPks);
+        pitchEstFreq = pitchEstFreq(1:min(5, length(pitchEstFreq)));
+        pitch(frmIter) = estPitch(pitchEstFreq, 3);
     end
 
 end
