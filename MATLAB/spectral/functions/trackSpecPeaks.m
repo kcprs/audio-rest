@@ -49,7 +49,7 @@ function [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, 
         % Compute frame start sample index
         frmStart = 1 + (frmIter - 1) * hopLen;
 
-        % Compute index of centre sample in frame 
+        % Compute index of centre sample in frame
         smpl = frmStart + ceil(frmLen / 2);
 
         % Detect spectral peaks in frame
@@ -57,14 +57,15 @@ function [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, 
             findSpecPeaks(sig(frmStart:frmStart + frmLen - 1), ...
             trs, 0, nfft, fs);
 
-        % Assign spectral peaks to SinTracks
-        peakCont(trks, pkFreq, pkMag, pkPhs, smpl);
-
         % Save pitch in frame based on freqs of 5 highest peaks
         [~, highestPks] = sort(pkMag, 'desc');
         pitchEstFreq = pkFreq(highestPks);
         pitchEstFreq = pitchEstFreq(1:min(5, length(pitchEstFreq)));
-        pitch(frmIter) = estPitch(pitchEstFreq, 3);
+        pitchEst = estPitch(pitchEstFreq, 3);
+        pitch(frmIter) = pitchEst;
+
+        % Assign spectral peaks to SinTracks
+        peakCont(trks, pkFreq, pkMag, pkPhs, smpl, pitchEst);
     end
 
 end

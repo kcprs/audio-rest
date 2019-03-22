@@ -1,17 +1,21 @@
-function peakCont(trks, pkFreq, pkMag, pkPhs, smpl)
+function peakCont(trks, pkFreq, pkMag, pkPhs, smpl, pitchEst)
     % PEAKCONT Assign spectral peaks to best fitting SinTracks
 
     numTrk = numel(trks);
     numPk = length(pkFreq);
     pkScore = zeros(numTrk, numPk);
     trksDone = zeros(1, min(numTrk, numPk));
-    lowestFreq = min(pkFreq);
+
+    % If no pitch estimate given, use lowest peak frequency
+    if isnan(pitchEst)
+        pitchEst = min(pkFreq);
+    end
 
     % Compute peak closeness scores for each SinTrack
     % Save centre sample of current frame
     for trkIter = 1:numTrk
         pkScore(trkIter, :) = trks(trkIter).getPkScore(pkFreq, ...
-            pkMag, lowestFreq / 2);
+            pkMag, pitchEst / 2);
         trks(trkIter).saveSmpl(smpl);
     end
 

@@ -27,7 +27,7 @@ classdef PeakContTest < matlab.unittest.TestCase
             for iter = 1:size(pkFreq, 1)
                 [trks.frmCursor] = deal(iter);
                 peakCont(trks, pkFreq(iter, :), pkMag(iter, :), ...
-                    pkPhs(iter, :), iter);
+                    pkPhs(iter, :), iter, NaN);
             end
 
             [freq, mag, phs, ~] = SinTrack.consolidateFMP(trks);
@@ -66,7 +66,7 @@ classdef PeakContTest < matlab.unittest.TestCase
             for iter = 1:size(pkFreq, 1)
                 [trks.frmCursor] = deal(iter);
                 peakCont(trks, pkFreq{iter}, pkMag{iter}, ...
-                    pkPhs{iter}, iter);
+                    pkPhs{iter}, iter, NaN);
             end
 
             [freq, mag, phs, ~] = SinTrack.consolidateFMP(trks);

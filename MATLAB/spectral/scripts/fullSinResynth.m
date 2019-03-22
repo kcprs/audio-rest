@@ -3,7 +3,7 @@
 fs = 44100;
 frmLen = 1024;
 hopLen = 256;
-numTrk = 50;
+numTrk = 20;
 minTrkLen = 4;
 
 % source = 'synth';
