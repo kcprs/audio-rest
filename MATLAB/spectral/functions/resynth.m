@@ -1,8 +1,13 @@
 function sig = resynth(freqEst, magEst, initPhs, hopLen)
     %RESYNTH Resynthesise signal based on spectral peak tracks
+    %   sig = resynth(freqEst, magEst, initiPhs, hopLen) returns signal
+    %   resynthesised from frequency and magnitude estimate matrices freqEst
+    %   and magEst. Vector initPhs contains initial phases for each track.
+    %   Hop length between frames (in samples) is given by hopLen.
 
-    almostNegInf = -200;
+    almostNegInf = -200; % Approximation of negative infinity in dB
 
+    % Allocate matrices for sample-by-sample values of freq and mag
     freq = zeros((size(freqEst, 1) - 1) * hopLen + 1, size(freqEst, 2));
     mag = zeros((size(magEst, 1) - 1) * hopLen + 1, size(magEst, 2));
     initPhs(isnan(initPhs)) = 0;
@@ -13,7 +18,8 @@ function sig = resynth(freqEst, magEst, initPhs, hopLen)
 
         for pkIter = 1:size(freqEst, 2)
 
-            if ~isnan(freqEst(iter, pkIter)) && isnan(freqEst(iter + 1, pkIter))
+            if ~isnan(freqEst(iter, pkIter)) && ...
+                    isnan(freqEst(iter + 1, pkIter))
                 % Resynthesising a dying track
                 % Keep frequency, fade out magnitude
                 freq((iter - 1) * hopLen + 1:iter * hopLen + 1, pkIter) = ...
@@ -21,7 +27,8 @@ function sig = resynth(freqEst, magEst, initPhs, hopLen)
                 mag((iter - 1) * hopLen + 1:iter * hopLen + 1, pkIter) = ...
                     linspace(magEst(iter, pkIter), ...
                     almostNegInf, hopLen + 1).';
-            elseif isnan(freqEst(iter, pkIter)) && (~isnan(freqEst(iter + 1, pkIter)))
+            elseif isnan(freqEst(iter, pkIter)) && ...
+                    (~isnan(freqEst(iter + 1, pkIter)))
                 % Resynthesising a born track
                 % Use frequency from next frame, fade in magnitude
                 freq((iter - 1) * hopLen + 1:iter * hopLen + 1, pkIter) = ...
@@ -29,7 +36,8 @@ function sig = resynth(freqEst, magEst, initPhs, hopLen)
                 mag((iter - 1) * hopLen + 1:iter * hopLen + 1, pkIter) = ...
                     linspace(almostNegInf, magEst(iter + 1, pkIter), ...
                     hopLen + 1).';
-            elseif isnan(freqEst(iter, pkIter)) && isnan(freqEst(iter + 1, pkIter))
+            elseif isnan(freqEst(iter, pkIter)) && ...
+                    isnan(freqEst(iter + 1, pkIter))
                 % Continuing a dead track
                 % Skip frequency and magnitude information
                 freq((iter - 1) * hopLen + 1:iter * hopLen + 1, pkIter) = NaN;

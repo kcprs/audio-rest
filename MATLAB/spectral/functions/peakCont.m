@@ -1,5 +1,12 @@
 function peakCont(trks, pkFreq, pkMag, pkPhs, smpl, pitchEst)
     % PEAKCONT Assign spectral peaks to best fitting SinTracks
+    %   peakCont(trks, pkFreq, pkMag, pkPhs, smpl, pitchEst) assigns peaks
+    %   defined in vectors pkFreq, pkMag, pkPhs to SinTracks in vector trks
+    %   based on peak continuation rules. The argument smpl is the sample
+    %   index of the centre of the frame from which spectral peaks were
+    %   extracted. The argument pitchEst is the pitch estimate of sound in
+    %   the current frame and is used in the peak continuation process (set
+    %   to NaN if no pitch estimate is available).
 
     numTrk = numel(trks);
     numPk = length(pkFreq);
@@ -29,7 +36,7 @@ function peakCont(trks, pkFreq, pkMag, pkPhs, smpl, pitchEst)
             break;
         end
 
-        % Save peak values to its closest track
+        % Save peak values to the best fitting track
         trks(trkInd).setFMP(pkFreq(pkInd), pkMag(pkInd), pkPhs(pkInd));
 
         % Clear column and row corresponding to the selected track and peak,
@@ -41,9 +48,7 @@ function peakCont(trks, pkFreq, pkMag, pkPhs, smpl, pitchEst)
         trksDone(trkIter) = trkInd;
     end
 
-    % disp(['Tracks assigned: ', num2str(sum(trksDone ~= 0))]);
-
-    % Kill tracks for which peks could not be found
+    % Kill tracks for which peaks could not be found
     for trkIter = 1:numTrk
 
         if ~ismember(trkIter, trksDone)

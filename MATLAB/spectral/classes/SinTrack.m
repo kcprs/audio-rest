@@ -8,19 +8,19 @@ classdef SinTrack < handle
         smpl; % Vector containing indexes of centre samples of frames
         frmCursor; % Cursor for iterating over frames
         sinceBirthCntr; % Counter of frames since last track birth
-        minTrkLen; % Minimum length (in frames) of single continuous track
+        minTrjLen; % Min length (in frames) of single continuous trajectory
     end
 
     methods (Access = public)
 
-        function allocateFrm(obj, numFrm)
-            % ALLOCATEFRM Allocate frequency, magnitude, phase & smpl vectors
+        function initTrk(obj, numFrm)
+            % INITTRK Initialise track
             obj.freq = zeros(numFrm, 1);
             obj.mag = zeros(numFrm, 1);
             obj.phs = zeros(numFrm, 1);
             obj.smpl = zeros(numFrm, 1);
             obj.sinceBirthCntr = 0;
-            obj.minTrkLen = 0;
+            obj.minTrjLen = 0;
         end
 
         function pkScore = getPkScore(obj, pkFreq, pkMag, maxJump)
@@ -42,9 +42,9 @@ classdef SinTrack < handle
 
         end
 
-        function setMinTrkLen(obj, minTrkLen)
-            % SETMINTRKLEN Set minimum length (in frames) for a track
-            obj.minTrkLen = minTrkLen;
+        function setMinTrjLen(obj, minTrjLen)
+            % SETMINTRJLEN Set min length (in frames) for a track trajectory
+            obj.minTrjLen = minTrjLen;
         end
 
         function setFMP(obj, freq, mag, phs)
@@ -60,7 +60,7 @@ classdef SinTrack < handle
             if isnan(freq) || obj.frmCursor == length(obj.freq)
                 % Track died - check if it was longer than minimum length
                 % If not, clear from current frame until most recent birth
-                if obj.sinceBirthCntr < obj.minTrkLen
+                if obj.sinceBirthCntr < obj.minTrjLen
                     clrCursor = obj.frmCursor;
 
                     while clrCursor > 0 && (~isnan(obj.freq(clrCursor)) ...
@@ -102,8 +102,8 @@ classdef SinTrack < handle
     methods (Access = private)
 
         function [prevF, prevM, prevP] = getRelIndFMP(obj, relInd)
-            % GETPREVIOUSFMP Return frequency, magnitude and phase values
-            % of the previous peak in track
+            % GETRELINDFMP Return frequency, magnitude and phase values
+            % at index relInd relative to current frame
             if obj.frmCursor + relInd >= 1
                 prevF = obj.freq(obj.frmCursor + relInd);
                 prevM = obj.mag(obj.frmCursor + relInd);

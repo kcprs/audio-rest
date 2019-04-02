@@ -1,11 +1,12 @@
 function pitchEst = estPitch(pkFreqs, minHarm)
     %ESTPITCH Estimate pitch based on given spectral peaks
-    %   pitchEst = estPitch(pkFreqs, minHarm) returns pitch estimate pitchEst
-    %   in Hz based on spectral peak frequencies pkFreqs. Only those
-    %   frequencies are considered as pitch estimate candidates for which at
-    %   least minHarm potential harmonics are present in the vector freq.
+    %   pitchEst = estPitch(pkFreqs, minHarm) returns pitch estimate
+    %   pitchEst in Hz based on spectral peak frequencies pkFreqs. Only
+    %   those frequencies are considered as pitch estimate candidates for
+    %   which at least minHarm potential harmonics are present in the vector
+    %   pkFreqs.
 
-    % Find pitch candidates - given peak frequencies
+    % Find pitch candidates - all given peak frequencies
     % and all differences between them
     pitchCand = [pkFreqs, reshape(pkFreqs - pkFreqs.', 1, [])].';
 

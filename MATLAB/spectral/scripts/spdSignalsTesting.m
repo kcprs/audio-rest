@@ -1,5 +1,5 @@
 %SPDSIGNALSTESTING Evaluate spectral peak detection performance for
-%different input signals.
+% different input signals.
 
 %% Set variable values
 fs = 44100;

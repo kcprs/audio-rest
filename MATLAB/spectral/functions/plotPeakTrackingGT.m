@@ -1,4 +1,11 @@
 function plotPeakTrackingGT(fgt, fEst, mgt, mEst, smpl)
+    %PLOTPEAKTRACKINGGT Plot peak estimates and ground truth over time
+    %   plotPeakTrackingGT(fgt, fEst, mgt, mEst, smpl) plots peak tracking
+    %   information and ground truth information based on vectors fgt
+    %   (frequency ground truth), fEst (frequency estimates), mgt (magnitude 
+    %   ground truth), mEst (magnitude estimates) and smpl (peak locations
+    %   in time in samples).
+
     subplot(2, 2, 1);
     plot(fgt, '--');
     hold on;

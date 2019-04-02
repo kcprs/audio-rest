@@ -1,6 +1,6 @@
-function [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, spdArgs)
+function [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrjLen, spdArgs)
     %TRACKSPECPEAKS Track spectral peaks in given signal over time
-    %   [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, spdArgs)
+    %   [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrjLen, spdArgs)
     %   returns SinTrack objects containing frequency, magnitude and phase
     %   information of numTrk spectral peaks in signal sig over time and
     %   pitch vector containing pitch estimate at each analysis frame.
@@ -15,7 +15,7 @@ function [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, 
     %    nfft      | 2048          | FFT size
     %    fs        | 44100         | Sampling frequency
     %
-    %   [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen)
+    %   [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrjLen)
     %   uses all default values for spdArgs.
 
     if nargin < 6
@@ -32,8 +32,8 @@ function [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen, 
     trks(1, numTrk) = SinTrack();
 
     for iter = 1:numel(trks)
-        trks(iter).allocateFrm(numFrames);
-        trks(iter).setMinTrkLen(minTrkLen);
+        trks(iter).initTrk(numFrames);
+        trks(iter).setMinTrjLen(minTrjLen);
     end
 
     % Prepare pitch vector

@@ -1,4 +1,5 @@
-% RESIDRESYNTH Resynthesis of the residual in spectral modelling synthesis
+% GAPSINRESRESYNTH Restore gap in the given signal with sinusoidal and
+% residual resynthesis
 
 %% Set variable values
 fs = 44100;
@@ -7,7 +8,7 @@ gapLen = 10 * frmLen;
 sigLen = 16 * frmLen;
 hopLen = 256;
 numTrk = 10;
-minTrkLen = 4;
+minTrjLen = 4;
 
 source = 'flute';
 % source = 'sin';
@@ -26,7 +27,7 @@ end
 % Pre-gap section
 sigPre = sigDmg(1:gapStart - 1);
 sigPre = flipud(sigPre);
-trksPre = trackSpecPeaks(sigPre, frmLen, hopLen, numTrk, minTrkLen);
+trksPre = trackSpecPeaks(sigPre, frmLen, hopLen, numTrk, minTrjLen);
 sigPre = flipud(sigPre);
 
 for trkIter = 1:numTrk
@@ -37,7 +38,7 @@ end
 
 % Post-gap section
 sigPost = sigDmg(gapEnd + 1:end);
-trksPost = trackSpecPeaks(sigPost, frmLen, hopLen, numTrk, minTrkLen);
+trksPost = trackSpecPeaks(sigPost, frmLen, hopLen, numTrk, minTrjLen);
 [freqPost, magPost, phsPost, smplPost] = SinTrack.consolidateFMP(trksPost);
 
 %% Do linear interpolation over gap by applying peak continuation algorithm
@@ -45,7 +46,7 @@ trksPost = trackSpecPeaks(sigPost, frmLen, hopLen, numTrk, minTrkLen);
 trksGap(1, numTrk) = SinTrack();
 
 for trkIter = 1:numel(trksGap)
-    trksGap(trkIter).allocateFrm(2);
+    trksGap(trkIter).initTrk(2);
 end
 
 % Select last peaks from pre- section and first peaks from post- section

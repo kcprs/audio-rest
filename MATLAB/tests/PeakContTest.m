@@ -9,7 +9,7 @@ classdef PeakContTest < matlab.unittest.TestCase
             trks(1, numTrk) = SinTrack();
 
             for iter = 1:numel(trks)
-                trks(iter).allocateFrm(numFrm);
+                trks(iter).initTrk(numFrm);
             end
 
             pkFreq = [101, 104, 107, 110, 112; ...
@@ -48,7 +48,7 @@ classdef PeakContTest < matlab.unittest.TestCase
             trks(1, numTrk) = SinTrack();
 
             for iter = 1:numel(trks)
-                trks(iter).allocateFrm(numFrm);
+                trks(iter).initTrk(numFrm);
             end
 
             pkFreq = {[101, 104, 107]; ...

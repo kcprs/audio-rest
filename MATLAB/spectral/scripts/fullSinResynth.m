@@ -4,7 +4,7 @@ fs = 44100;
 frmLen = 1024;
 hopLen = 256;
 numTrk = 20;
-minTrkLen = 4;
+minTrjLen = 4;
 
 % source = 'synth';
 % source = 'flute';
@@ -27,7 +27,7 @@ else
 end
 
 % spdArgs.trs = -80;
-[trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen);%, spdArgs);
+[trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrjLen);%, spdArgs);
 [freqEst, magEst, phsEst, smpl] = SinTrack.consolidateFMP(trks);
 
 if strcmp(source, 'synth')

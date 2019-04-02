@@ -39,4 +39,4 @@ for iter = 1:numHop
     plot(output(1:cursor + frmLen));
 end
 
-soundsc(output, fs);
+% soundsc(output, fs);
