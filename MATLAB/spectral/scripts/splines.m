@@ -8,7 +8,7 @@ sigLen = 8 * frmLen;
 hopLen = 256;
 numTrk = 16;
 minTrkLen = 4;
-almostNegInf = -100;
+almostNegInf = -200;
 
 % source = 'synth';
 source = 'flute';
@@ -16,7 +16,8 @@ source = 'flute';
 
 %% Prepare source signal
 if strcmp(source, 'flute')
-    sig = audioread('audio/Flute.vib.ff.A4.wav');
+    sig = audioread('audio/Flute.nonvib.ff.A4.wav');
+    sig = sig(1:frmLen * floor(length(sig)/frmLen));
 elseif strcmp(source, 'sin')
     sig = getCosSig(sigLen, 440);
 else
@@ -109,8 +110,8 @@ end
 %% Interpolate
 numGapFrm = floor(gapLen / hopLen) + 3; % TODO: 3 is not general
 dataRange = numGapFrm;
-freqGap = zeros(numGapFrm, numHarm);
-magGap = zeros(numGapFrm, numHarm);
+freqGap = NaN(numGapFrm, numHarm);
+magGap = NaN(numGapFrm, numHarm);
 
 for trkIter = 1:numHarm
     freqData = [freqPre(end - dataRange + 1:end, trkIter); ...
@@ -133,6 +134,63 @@ freqGap = [freqPre(end, :); freqGap; freqPost(1, :)];
 magGap = [magPre(end, :); magGap; magPost(1, :)];
 
 smplGap = smplPre(end):hopLen:smplPost(1);
+
+%% Synthesise sinusoidal gap signal
+sigGapLen = smplGap(end) - smplGap(1) + 1;
+sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen);
+
+%% Resynthesise sinusoidal and residual of last frame of pre- section
+% Build the signal from the middle outwards since phase is known for
+% The middle of the frame
+% TODO: Take spectrum changes into account
+sinPreFwd = resynth([freqPre(end, :); freqPre(end, :)], ...
+    [magPre(end, :); magPre(end, :)], phsPre(end, :), frmLen / 2);
+sinPreBwd = resynth([freqPre(end, :); freqPre(end, :)], ...
+    [magPre(end, :); magPre(end, :)], -phsPre(end, :), frmLen / 2 - 1);
+sinPre = [flipud(sinPreBwd); sinPreFwd(2:end)];
+
+resPre = sigPre(end - frmLen + 1:end) - sinPre;
+
+%% Resynthesise sinusoidal and residual of first frame of post- section
+% Build the signal from the middle outwards since phase is known for
+% The middle of the frame
+% TODO: Take spectrum changes into account
+sinPostFwd = resynth([freqPost(1, :); freqPost(1, :)], ...
+    [magPost(1, :); magPost(1, :)], phsPost(1, :), frmLen / 2 - 1);
+sinPostBwd = resynth([freqPost(1, :); freqPost(1, :)], ...
+    [magPost(1, :); magPost(1, :)], -phsPost(1, :), frmLen / 2);
+sinPost = [flipud(sinPostBwd); sinPostFwd(2:end)];
+
+resPost = sigPost(1:frmLen) - sinPost;
+
+%% Morph between pre- and post- residuals over the gap
+resGap = wfbar(resPre, resPost, gapLen);
+
+%% Add reconstructed sinusoidal and residual
+resGap = [resPre(frmLen / 2:end); resGap; resPost(1:frmLen / 2)];
+sigGap = sinGap + resGap;
+
+%% Insert reconstructed signal into the gap
+% Prepare cross-fades
+xfPre = linspace(1, 0, frmLen / 2).';
+xfPost = linspace(0, 1, frmLen / 2).';
+
+% Apply cross-fades
+sigPreXF = sigPre;
+sigPreXF(end - frmLen / 2 + 1:end) = ...
+    sigPreXF(end - frmLen / 2 + 1:end) .* xfPre;
+sigPostXF = sigPost;
+sigPostXF(1:frmLen / 2) = sigPostXF(1:frmLen / 2) .* xfPost;
+sigGapXF = sigGap;
+sigGapXF(1:frmLen / 2) = sigGapXF(1:frmLen / 2) .* (1 - xfPre);
+sigGapXF(end - frmLen / 2 + 1:end) = ...
+    sigGapXF(end - frmLen / 2 + 1:end) .* (1 - xfPost);
+
+% Put everything together
+sigRest = zeros(size(sig));
+sigRest(1:gapStart - 1) = sigPreXF;
+sigRest(smplGap(1):smplGap(end)) = sigRest(smplGap(1):smplGap(end)) + sigGapXF;
+sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
 subplot(2, 1, 1);

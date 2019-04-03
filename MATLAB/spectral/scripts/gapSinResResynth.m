@@ -62,7 +62,7 @@ for frmIter = 1:2
         pkPhsGap(frmIter, :), smplGap(frmIter));
 end
 
-%% Synthesise gap signal
+%% Synthesise sinusoidal gap signal
 [freqGap, magGap, phsGap, ~] = SinTrack.consolidateFMP(trksGap);
 sigGapLen = smplGap(2) - smplGap(1) + 1;
 sinGap = resynth(freqGap, magGap, phsGap(1, :), sigGapLen - 1);
