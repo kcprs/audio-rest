@@ -1,4 +1,4 @@
-% splines Interpolate sinusoidal tracks using splines
+% SPLINES Interpolate sinusoidal tracks using splines
 
 %% Set variable values
 fs = 44100;
@@ -8,6 +8,7 @@ sigLen = 8 * frmLen;
 hopLen = 256;
 numTrk = 16;
 minTrkLen = 4;
+almostNegInf = -100;
 
 % source = 'synth';
 source = 'flute';
@@ -45,39 +46,87 @@ end
 
 [freqPre, magPre, phsPre, smplPre] = SinTrack.consolidateFMP(trksPre);
 
-[~, sortIndPre] = sort(freqPre(end, :));
-freqPre = freqPre(:, sortIndPre);
-magPre = magPre(:, sortIndPre);
-phsPre = phsPre(:, sortIndPre);
-
 % Post-gap section
 sigPost = sigDmg(gapEnd + 1:end);
 trksPost = trackSpecPeaks(sigPost, frmLen, hopLen, numTrk, minTrkLen);
 [freqPost, magPost, phsPost, smplPost] = SinTrack.consolidateFMP(trksPost);
 smplPost = gapEnd + smplPost;
 
-[~, sortIndPost] = sort(freqPost(1, :));
-freqPost = freqPost(:, sortIndPost);
-magPost = magPost(:, sortIndPost);
-phsPost = phsPost(:, sortIndPost);
+%% Match tracks across the gap
+% Reorder based on harmonics
+maxHarmPre = round(max(freqPre(end, :)) / trksPre(1).pitchEst(end));
+maxHarmPost = round(max(freqPost(1, :)) / trksPost(1).pitchEst(1));
 
-%% Match tracks across the gap 
+numHarm = max(maxHarmPre, maxHarmPost);
+
+freqHarmPre = NaN(size(freqPre, 1), numHarm);
+magHarmPre = NaN(size(magPre, 1), numHarm);
+phsHarmPre = NaN(size(phsPre, 1), numHarm);
+
+freqHarmPost = NaN(size(freqPost, 1), numHarm);
+magHarmPost = NaN(size(magPost, 1), numHarm);
+phsHarmPost = NaN(size(phsPost, 1), numHarm);
+
+for trkIter = 1:numTrk
+    harmNumPre = trksPre(trkIter).getHarmNum(-1);
+    harmNumPost = trksPost(trkIter).getHarmNum(1);
+
+    if harmNumPre >= 1
+        freqHarmPre(:, harmNumPre) = freqPre(:, trkIter);
+        magHarmPre(:, harmNumPre) = magPre(:, trkIter);
+        phsHarmPre(:, harmNumPre) = phsPre(:, trkIter);
+    end
+
+    if harmNumPost >= 1
+        freqHarmPost(:, harmNumPost) = freqPost(:, trkIter);
+        magHarmPost(:, harmNumPost) = magPost(:, trkIter);
+        phsHarmPost(:, harmNumPost) = phsPost(:, trkIter);
+    end
+
+end
+
+freqPre = freqHarmPre;
+magPre = magHarmPre;
+phsPre = phsHarmPre;
+
+freqPost = freqHarmPost;
+magPost = magHarmPost;
+phsPost = phsHarmPost;
+
+% Add matching information for harmonics only present at one side of the gap
+for harmIter = 1:numHarm
+
+    if isnan(freqPre(end, harmIter))
+        freqPre(end, harmIter) = freqPost(1, harmIter);
+        magPre(end, harmIter) = almostNegInf;
+    elseif isnan(freqPost(1, harmIter))
+        freqPost(1, harmIter) = freqPre(end, harmIter);
+        magPost(1, harmIter) = almostNegInf;
+    end
+
+end
 
 %% Interpolate
 numGapFrm = floor(gapLen / hopLen) + 3; % TODO: 3 is not general
 dataRange = numGapFrm;
-freqGap = zeros(numGapFrm, numTrk);
-magGap = zeros(numGapFrm, numTrk);
+freqGap = zeros(numGapFrm, numHarm);
+magGap = zeros(numGapFrm, numHarm);
 
-for trkIter = 1:numTrk
+for trkIter = 1:numHarm
     freqData = [freqPre(end - dataRange + 1:end, trkIter); ...
                 freqPost(1:dataRange, trkIter)];
-    magData = [magPre(end - dataRange+ 1:end, trkIter); ...
+
+    if all(isnan(freqData))
+        continue;
+    end
+
+    magData = [magPre(end - dataRange + 1:end, trkIter); ...
                 magPost(1:dataRange, trkIter)];
+
     dataInd = [1:dataRange, dataRange + numGapFrm + (1:dataRange)];
     queryInd = dataRange + (1:numGapFrm);
-    freqGap(:, trkIter) = interp1(dataInd, freqData, queryInd, 'spline');
-    magGap(:, trkIter) = interp1(dataInd, magData, queryInd, 'spline');
+    freqGap(:, trkIter) = interp1(dataInd, freqData, queryInd, 'makima');
+    magGap(:, trkIter) = interp1(dataInd, magData, queryInd, 'makima');
 end
 
 freqGap = [freqPre(end, :); freqGap; freqPost(1, :)];
