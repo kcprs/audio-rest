@@ -24,6 +24,7 @@ function peakCont(trks, pkFreq, pkMag, pkPhs, smpl, pitchEst)
         pkScore(trkIter, :) = trks(trkIter).getPkScore(pkFreq, ...
             pkMag, pitchEst / 2);
         trks(trkIter).saveSmpl(smpl);
+        trks(trkIter).savePitch(pitchEst);
     end
 
     % Assign peaks to SinTracks by finding lowest closeness scores

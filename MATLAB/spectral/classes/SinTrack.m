@@ -9,6 +9,7 @@ classdef SinTrack < handle
         frmCursor; % Cursor for iterating over frames
         sinceBirthCntr; % Counter of frames since last track birth
         minTrjLen; % Min length (in frames) of single continuous trajectory
+        pitchEst; % Vector containing pitch estimate values at each frame
     end
 
     methods (Access = public)
@@ -19,6 +20,7 @@ classdef SinTrack < handle
             obj.mag = zeros(numFrm, 1);
             obj.phs = zeros(numFrm, 1);
             obj.smpl = zeros(numFrm, 1);
+            obj.pitchEst = zeros(numFrm, 1);
             obj.sinceBirthCntr = 0;
             obj.minTrjLen = 0;
         end
@@ -88,6 +90,11 @@ classdef SinTrack < handle
             obj.smpl(obj.frmCursor) = smpl;
         end
 
+        function savePitch(obj, pitch)
+            % SAVEPITCH Save pitch estimate for current frame
+            obj.pitchEst(obj.frmCursor) = pitch;
+        end
+
         function reverse(obj, sigLen)
             % REVERSE Reverse track information in time
             obj.freq = flipud(obj.freq);
@@ -95,6 +102,19 @@ classdef SinTrack < handle
             obj.phs = -flipud(obj.phs);
             obj.smpl = flipud(obj.smpl);
             obj.smpl = sigLen - obj.smpl + 1;
+            obj.pitchEst = flipud(obj.pitchEst);
+        end
+
+        function harmNum = getHarmNum(obj, frmInd)
+            % GETHARNUM Returns N, where the frequency stored in this track
+            % at frame frmInd is the Nth harmonic of pitch estimate at this
+            % frame. Use frmInd < 1 to select last frame.
+
+            if frmInd < 1
+                frmInd = length(obj.freq);
+            end
+
+            harmNum = round(obj.freq(frmInd) / obj.pitchEst(frmInd));
         end
 
     end
