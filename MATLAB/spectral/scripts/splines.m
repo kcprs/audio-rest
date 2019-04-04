@@ -4,14 +4,14 @@
 fs = 44100;
 frmLen = 1024;
 gapLen = 10 * frmLen;
-sigLen = 8 * frmLen;
+sigLen = 50 * frmLen;
 hopLen = 256;
-numTrk = 16;
+numTrk = 80;
 minTrkLen = 4;
 almostNegInf = -200;
 
-% source = 'synth';
-source = 'flute';
+source = 'saw';
+% source = 'flute';
 % source = 'sin';
 
 %% Prepare source signal
@@ -21,14 +21,10 @@ if strcmp(source, 'flute')
 elseif strcmp(source, 'sin')
     sig = getCosSig(sigLen, 440);
 else
-    f = [linspace(100, 2000, sigLen).', linspace(1000, 3000, sigLen).', ...
-            linspace(14000, 12000, sigLen).'];
-    m = [linspace(-14, 0, sigLen).', linspace(0, -6, sigLen).', ...
-            -6 + getCosSig(sigLen, 1.3, -10)];
+    f = logspace(log10(220), log10(440), sigLen).';
+    m = linspace(-14, 0, sigLen).';
 
-    sig = getCosSig(sigLen, f(:, 1), m(:, 1)) + ...
-        getCosSig(sigLen, f(:, 2), m(:, 2)) + ...
-        getCosSig(sigLen, f(:, 3), m(:, 3));
+    sig = getSawSig(sigLen, f, m);
 end
 
 %% Damage the source signal
@@ -139,36 +135,37 @@ smplGap = smplPre(end):hopLen:smplPost(1);
 sigGapLen = smplGap(end) - smplGap(1) + 1;
 sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen);
 
-%% Resynthesise sinusoidal and residual of last frame of pre- section
-% Build the signal from the middle outwards since phase is known for
-% The middle of the frame
-% TODO: Take spectrum changes into account
-sinPreFwd = resynth([freqPre(end, :); freqPre(end, :)], ...
-    [magPre(end, :); magPre(end, :)], phsPre(end, :), frmLen / 2);
-sinPreBwd = resynth([freqPre(end, :); freqPre(end, :)], ...
-    [magPre(end, :); magPre(end, :)], -phsPre(end, :), frmLen / 2 - 1);
-sinPre = [flipud(sinPreBwd); sinPreFwd(2:end)];
+% %% Resynthesise sinusoidal and residual of last frame of pre- section
+% % Build the signal from the middle outwards since phase is known for
+% % The middle of the frame
+% % TODO: Take spectrum changes into account
+% sinPreFwd = resynth([freqPre(end, :); freqPre(end, :)], ...
+%     [magPre(end, :); magPre(end, :)], phsPre(end, :), frmLen / 2);
+% sinPreBwd = resynth([freqPre(end, :); freqPre(end, :)], ...
+%     [magPre(end, :); magPre(end, :)], -phsPre(end, :), frmLen / 2 - 1);
+% sinPre = [flipud(sinPreBwd); sinPreFwd(2:end)];
 
-resPre = sigPre(end - frmLen + 1:end) - sinPre;
+% resPre = sigPre(end - frmLen + 1:end) - sinPre;
 
-%% Resynthesise sinusoidal and residual of first frame of post- section
-% Build the signal from the middle outwards since phase is known for
-% The middle of the frame
-% TODO: Take spectrum changes into account
-sinPostFwd = resynth([freqPost(1, :); freqPost(1, :)], ...
-    [magPost(1, :); magPost(1, :)], phsPost(1, :), frmLen / 2 - 1);
-sinPostBwd = resynth([freqPost(1, :); freqPost(1, :)], ...
-    [magPost(1, :); magPost(1, :)], -phsPost(1, :), frmLen / 2);
-sinPost = [flipud(sinPostBwd); sinPostFwd(2:end)];
+% %% Resynthesise sinusoidal and residual of first frame of post- section
+% % Build the signal from the middle outwards since phase is known for
+% % The middle of the frame
+% % TODO: Take spectrum changes into account
+% sinPostFwd = resynth([freqPost(1, :); freqPost(1, :)], ...
+%     [magPost(1, :); magPost(1, :)], phsPost(1, :), frmLen / 2 - 1);
+% sinPostBwd = resynth([freqPost(1, :); freqPost(1, :)], ...
+%     [magPost(1, :); magPost(1, :)], -phsPost(1, :), frmLen / 2);
+% sinPost = [flipud(sinPostBwd); sinPostFwd(2:end)];
 
-resPost = sigPost(1:frmLen) - sinPost;
+% resPost = sigPost(1:frmLen) - sinPost;
 
-%% Morph between pre- and post- residuals over the gap
-resGap = wfbar(resPre, resPost, gapLen);
+% %% Morph between pre- and post- residuals over the gap
+% resGap = wfbar(resPre, resPost, gapLen);
 
-%% Add reconstructed sinusoidal and residual
-resGap = [resPre(frmLen / 2:end); resGap; resPost(1:frmLen / 2)];
-sigGap = sinGap + resGap;
+% %% Add reconstructed sinusoidal and residual
+% resGap = [resPre(frmLen / 2:end); resGap; resPost(1:frmLen / 2)];
+% sigGap = sinGap + resGap;
+sigGap = sinGap;
 
 %% Insert reconstructed signal into the gap
 % Prepare cross-fades
@@ -193,7 +190,30 @@ sigRest(smplGap(1):smplGap(end)) = sigRest(smplGap(1):smplGap(end)) + sigGapXF;
 sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
-subplot(2, 1, 1);
+subplot(2, 2, 1);
+plot(sigPre, 'DisplayName', 'pre- section');
+hold on;
+plot([NaN(gapEnd, 1); sigPost], 'DisplayName', 'post- section');
+plot([NaN(smplGap(1), 1); sigGap], ':', 'DisplayName', 'reconstruction', ...
+    'Color', 'black');
+plot([smplGap(1), smplGap(end)], 0, 'x', 'DisplayName', 'transition');
+title('Damaged signal and reconstructed waveform')
+xlabel('Time in samples');
+legend;
+hold off;
+
+subplot(2, 2, 3);
+plot(sigRest, 'DisplayName', 'Final restored signal');
+hold on;
+rectangle('Position', [gapStart, min(sigRest), gapLen, ...
+                        max(sigRest) - min(sigRest)], ...
+    'FaceColor', [1, 0, 0, 0.1], ...
+    'EdgeColor', 'none');
+hold off;
+title('Fully restored signal')
+xlabel('Time in samples');
+
+subplot(2, 2, 2);
 plot(smplPre, freqPre);
 hold on;
 set(gca, 'ColorOrderIndex', 1);
@@ -206,7 +226,7 @@ ylabel('Frequency in Hz');
 xlabel('Time in samples');
 grid on;
 
-subplot(2, 1, 2);
+subplot(2, 2, 4);
 plot(smplPre, magPre);
 hold on;
 set(gca, 'ColorOrderIndex', 1);
