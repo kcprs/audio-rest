@@ -10,16 +10,20 @@ numTrk = 80;
 minTrkLen = 4;
 almostNegInf = -200;
 
-source = 'saw';
+% source = 'saw';
 % source = 'flute';
+source = 'piano';
 % source = 'sin';
 
 %% Prepare source signal
 if strcmp(source, 'flute')
-    sig = audioread('audio/Flute.nonvib.ff.A4.wav');
-    sig = sig(1:frmLen * floor(length(sig)/frmLen));
+    % sig = audioread('audio/Flute.vib.ff.A4.wav');
+elseif strcmp(source, 'piano')
+    sig = audioread('audio/PianoScale.wav');
 elseif strcmp(source, 'sin')
-    sig = getCosSig(sigLen, 440);
+    f = logspace(log10(300), log10(600), sigLen).' + 5 * getSineSig(sigLen, 10);
+    sig = getCosSig(sigLen, f);
+    sig = sig + getCosSig(sigLen, 4 * f);
 else
     f = logspace(log10(220), log10(440), sigLen).';
     m = linspace(-14, 0, sigLen).';
@@ -28,7 +32,11 @@ else
 end
 
 %% Damage the source signal
-[sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen);
+if strcmp(source, 'piano')
+    [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen, 80000);
+else
+    [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen);
+end
 
 %% Analyse pre- and post-gap sections
 % Pre-gap section
@@ -133,16 +141,16 @@ smplGap = smplPre(end):hopLen:smplPost(1);
 
 %% Synthesise sinusoidal gap signal
 sigGapLen = smplGap(end) - smplGap(1) + 1;
-sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen);
+sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen, phsPost(1, :));
 
 % %% Resynthesise sinusoidal and residual of last frame of pre- section
 % % Build the signal from the middle outwards since phase is known for
 % % The middle of the frame
 % % TODO: Take spectrum changes into account
 % sinPreFwd = resynth([freqPre(end, :); freqPre(end, :)], ...
-%     [magPre(end, :); magPre(end, :)], phsPre(end, :), frmLen / 2);
+    %     [magPre(end, :); magPre(end, :)], phsPre(end, :), frmLen / 2);
 % sinPreBwd = resynth([freqPre(end, :); freqPre(end, :)], ...
-%     [magPre(end, :); magPre(end, :)], -phsPre(end, :), frmLen / 2 - 1);
+    %     [magPre(end, :); magPre(end, :)], -phsPre(end, :), frmLen / 2 - 1);
 % sinPre = [flipud(sinPreBwd); sinPreFwd(2:end)];
 
 % resPre = sigPre(end - frmLen + 1:end) - sinPre;
@@ -152,9 +160,9 @@ sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen);
 % % The middle of the frame
 % % TODO: Take spectrum changes into account
 % sinPostFwd = resynth([freqPost(1, :); freqPost(1, :)], ...
-%     [magPost(1, :); magPost(1, :)], phsPost(1, :), frmLen / 2 - 1);
+    %     [magPost(1, :); magPost(1, :)], phsPost(1, :), frmLen / 2 - 1);
 % sinPostBwd = resynth([freqPost(1, :); freqPost(1, :)], ...
-%     [magPost(1, :); magPost(1, :)], -phsPost(1, :), frmLen / 2);
+    %     [magPost(1, :); magPost(1, :)], -phsPost(1, :), frmLen / 2);
 % sinPost = [flipud(sinPostBwd); sinPostFwd(2:end)];
 
 % resPost = sigPost(1:frmLen) - sinPost;
