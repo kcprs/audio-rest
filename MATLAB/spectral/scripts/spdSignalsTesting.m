@@ -29,7 +29,7 @@ else
             sinPhs(iter));
     end
 
-    sig = sig + 10^(noiseMag / 20) * (2 * rand(sigLen, 1) - 1);
+    sig = sig + 10^(noiseMag / 20) * randn(sigLen, 1);
 end
 
 %% Find spectral peaks

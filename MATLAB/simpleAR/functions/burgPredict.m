@@ -21,13 +21,13 @@ function [pred, A] = burgPredict(sig, ord, predStart, predLen, fitLen)
     [A, e] = arburg(fitSect, ord);
 
     % Find initial conditions
-    zinit = filtic(e, A, flipud(fitSect));
-
+    zinit = filtic(1, A, flipud(fitSect));
+    
     % Prepare noise input signal
-    in = rand([abs(predLen), 1]);
+    in = sqrt(e) * randn([abs(predLen), 1]);
 
     % Get prediction of missing signal
-    pred = filter(e, A, in, zinit);
+    pred = filter(1, A, in, zinit);
 
     % Flip prediction if direction is backwards
     if predLen < 0
