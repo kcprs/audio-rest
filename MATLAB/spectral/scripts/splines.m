@@ -3,7 +3,7 @@
 %% Set variable values
 fs = 44100;
 frmLen = 1024;
-gapLen = 10 * frmLen;
+gapLen = 20 * frmLen;
 sigLen = 100 * frmLen;
 hopLen = 256;
 numTrk = 40;
@@ -11,16 +11,27 @@ minTrkLen = 4;
 resOrdAR = 100;
 almostNegInf = -200;
 
-% source = 'saw';
-source = 'flute';
-% source = 'piano';
-% source = 'sin';
+% source = "saw";
+% source = "sin";
+% source = "audio/Cello.arco.mf.sulC.A2.wav";
+% source = "audio/Flute.nonvib.ff.A4.wav";
+% source = "audio/Flute.vib.ff.A4.wav";
+% source = "audio/Guitar.mf.sulD.A3.wav";
+% source = "audio/Guitar.mf.sulD.D3.wav";
+% source = "audio/Horn.mf.A2.wav";
+% source = "audio/Horn.mf.A4.wav";
+% source = "audio/PianoScale.wav";
+% source = "audio/Trumpet.novib.mf.A4.wav";
+source = "audio/Trumpet.novib.mf.D4.wav";
+% source = "audio/Trumpet.vib.mf.A4.wav";
+% source = "audio/Trumpet.vib.mf.D4.wav";
+% source = "audio/Violin.arco.ff.sulG.A3.wav";
+% source = "audio/Violin.arco.ff.sulG.A4.wav";
+% source = "audio/Violin.arco.mf.sulA.A4.wav";
 
 %% Prepare source signal
-if strcmp(source, 'flute')
-    sig = audioread('audio/Flute.nonvib.ff.A4.wav');
-elseif strcmp(source, 'piano')
-    sig = audioread('audio/PianoScale.wav');
+if contains(source, "audio/")
+    sig = audioread(source);
 elseif strcmp(source, 'sin')
     f = logspace(log10(300), log10(600), sigLen).' + 5 * getSineSig(sigLen, 10);
     sig = getCosSig(sigLen, f, -6);
@@ -36,7 +47,9 @@ else
 end
 
 %% Damage the source signal
-if strcmp(source, 'piano')
+if strcmp(source, 'audio/PianoScale.wav')
+    [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen, 80000);
+elseif contains(source, "Guitar")
     [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen, 80000);
 else
     [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen);
@@ -109,7 +122,7 @@ for harmIter = 1:numHarm
         freqPre(end, harmIter) = freqPost(1, harmIter);
         magPre(end, harmIter) = almostNegInf;
     end
-    
+
     if isnan(freqPost(1, harmIter))
         freqPost(1, harmIter) = freqPre(end, harmIter);
         magPost(1, harmIter) = almostNegInf;
@@ -154,9 +167,9 @@ sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen, phsPost(1, :));
 % The middle of the frame
 % TODO: Take spectrum changes into account
 sinPreFwd = resynth([freqPre(end, :); freqPre(end, :)], ...
-        [magPre(end, :); magPre(end, :)], phsPre(end, :), frmLen / 2);
+    [magPre(end, :); magPre(end, :)], phsPre(end, :), frmLen / 2);
 sinPreBwd = resynth([freqPre(end, :); freqPre(end, :)], ...
-        [magPre(end, :); magPre(end, :)], -phsPre(end, :), frmLen / 2 - 1);
+    [magPre(end, :); magPre(end, :)], -phsPre(end, :), frmLen / 2 - 1);
 sinPre = [flipud(sinPreBwd); sinPreFwd(2:end)];
 
 resPre = sigPre(end - frmLen + 1:end) - sinPre;
@@ -166,9 +179,9 @@ resPre = sigPre(end - frmLen + 1:end) - sinPre;
 % The middle of the frame
 % TODO: Take spectrum changes into account
 sinPostFwd = resynth([freqPost(1, :); freqPost(1, :)], ...
-        [magPost(1, :); magPost(1, :)], phsPost(1, :), frmLen / 2 - 1);
+    [magPost(1, :); magPost(1, :)], phsPost(1, :), frmLen / 2 - 1);
 sinPostBwd = resynth([freqPost(1, :); freqPost(1, :)], ...
-        [magPost(1, :); magPost(1, :)], -phsPost(1, :), frmLen / 2);
+    [magPost(1, :); magPost(1, :)], -phsPost(1, :), frmLen / 2);
 sinPost = [flipud(sinPostBwd); sinPostFwd(2:end)];
 
 resPost = sigPost(1:frmLen) - sinPost;

@@ -1,5 +1,9 @@
 # Use SoX (http://sox.sourceforge.net/) to conform audio samples to the required format
 
+# Make file extensions consistent
+Get-ChildItem "*.aiff" | Rename-Item -NewName {$_.Name -replace ".aiff", ".aif"}
+
+# Get all .aif files
 $files = Get-ChildItem "*.aif"
 
 foreach ($file in $files) {
