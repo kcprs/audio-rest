@@ -17,12 +17,20 @@ function [pred, A] = burgPredict(sig, ord, predStart, predLen, fitLen)
     % Select signal section for model fitting
     fitSect = sig(predStart - fitLen:predStart - 1);
 
+    % Burg of order > 1 seems to return NaN when passed a constant signal.
+    % Manually check if fitSection is constant.
+    if all(fitSect == fitSect(1))
+        pred = fitSect(1) * ones(abs(predLen), 1);
+        A = NaN;
+        return;
+    end
+
     % Fit the model
     [A, e] = arburg(fitSect, ord);
 
     % Find initial conditions
     zinit = filtic(1, A, flipud(fitSect));
-    
+
     % Prepare noise input signal
     in = sqrt(e) * randn([abs(predLen), 1]);
 

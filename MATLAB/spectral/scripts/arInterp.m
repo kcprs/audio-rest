@@ -1,14 +1,16 @@
-% SPLINES Interpolate sinusoidal tracks using AR Modelling
+% ARINTERP Interpolate sinusoidal tracks using AR Modelling
 
 %% Set variable values
 fs = 44100;
 frmLen = 1024;
-gapLen = 20 * frmLen;
+gapLen = 50 * frmLen;
 sigLen = 100 * frmLen;
 hopLen = 256;
 numTrk = 20;
 minTrkLen = 4;
 resOrdAR = 100;
+pitchOrdAR = 4;
+magOrdAR = 1;
 almostNegInf = -200;
 
 % source = "saw";
@@ -22,8 +24,8 @@ almostNegInf = -200;
 % source = "audio/Horn.mf.A4.wav";
 % source = "audio/PianoScale.wav";
 % source = "audio/Trumpet.novib.mf.A4.wav";
-source = "audio/Trumpet.novib.mf.D4.wav";
-% source = "audio/Trumpet.vib.mf.A4.wav";
+% source = "audio/Trumpet.novib.mf.D4.wav";
+source = "audio/Trumpet.vib.mf.A4.wav";
 % source = "audio/Trumpet.vib.mf.D4.wav";
 % source = "audio/Violin.arco.ff.sulG.A3.wav";
 % source = "audio/Violin.arco.ff.sulG.A4.wav";
@@ -67,15 +69,17 @@ for trkIter = 1:numTrk
 end
 
 [freqPre, magPre, phsPre, smplPre] = SinTrack.consolidateFMP(trksPre);
+pitchPre = trksPre(1).pitchEst;
 
 % Post-gap section
 sigPost = sigDmg(gapEnd + 1:end);
 trksPost = trackSpecPeaks(sigPost, frmLen, hopLen, numTrk, minTrkLen);
 [freqPost, magPost, phsPost, smplPost] = SinTrack.consolidateFMP(trksPost);
+pitchPost = trksPost(1).pitchEst;
 smplPost = gapEnd + smplPost;
 
 %% Match tracks across the gap
-% Reorder based on harmonics
+% Reorder tracks based on harmonics
 maxHarmPre = round(max(freqPre(end, :)) / trksPre(1).pitchEst(end));
 maxHarmPost = round(max(freqPost(1, :)) / trksPost(1).pitchEst(1));
 
@@ -115,61 +119,70 @@ freqPost = freqHarmPost;
 magPost = magHarmPost;
 phsPost = phsHarmPost;
 
-% Add matching information for harmonics only present at one side of the gap
-stabilityBotch = 3; % TODO
+% Add matching magnitude information for harmonics only present at one
+% side of the gap
+
 for harmIter = 1:numHarm
 
-    if any(isnan(freqPre(end - stabilityBotch:end, harmIter)))
-        freqPre(end - stabilityBotch:end, harmIter) = freqPost(1, harmIter);
-        magPre(end - stabilityBotch:end, harmIter) = almostNegInf;
-    end
-
-    if any(isnan(freqPost(1:stabilityBotch, harmIter)))
-        freqPost(1:stabilityBotch, harmIter) = freqPre(end, harmIter);
-        magPost(1:stabilityBotch, harmIter) = almostNegInf;
-    end
-
-end
-
-%% Interpolate
-numGapFrm = floor(gapLen / hopLen) + 3; % TODO: 3 is not general
-dataRange = numGapFrm;
-freqGap = NaN(numGapFrm, numHarm);
-magGap = NaN(numGapFrm, numHarm);
-
-for trkIter = 1:numHarm
-    freqDataPre = freqPre(end - dataRange + 1:end, trkIter);
-    freqDataPost = freqPost(1:dataRange, trkIter);
-
-    if all(isnan([freqDataPre; freqDataPost]))
+    if all(isnan(magPre(end - magOrdAR:end, harmIter))) && ...
+            all(isnan(magPost(1:magOrdAR + 1, harmIter)))
         continue;
     end
 
-    magDataPre = magPre(end - dataRange + 1:end, trkIter);
-    magDataPost = magPost(1:dataRange, trkIter);
-
-    queryInd = dataRange + (1:numGapFrm);
-    dataIndPre = 1:dataRange;
-    dataIndPost = dataRange + numGapFrm + (1:dataRange);
-
-    if any(isnan(freqDataPre))
-        firstUsable = find(isnan(freqDataPre), 1, 'last') + 1;
-        freqDataPre = freqDataPre(firstUsable:end);
-        magDataPre = magDataPre(firstUsable:end);
-        dataIndPre = dataIndPre(firstUsable:end);
+    if any(isnan(magPre(end - magOrdAR:end, harmIter)))
+        magPre(end - magOrdAR:end, harmIter) = almostNegInf;
     end
 
-    if any(isnan(freqDataPost))
-        lastUsable = find(isnan(freqDataPost), 1, 'first') - 1;
-        freqDataPost = freqDataPost(1:lastUsable);
-        magDataPost = magDataPost(1:lastUsable);
-        dataIndPost = dataIndPost(1:lastUsable);
+    if any(isnan(magPost(1:magOrdAR + 1, harmIter)))
+        magPost(1:magOrdAR + 1, harmIter) = almostNegInf;
     end
 
-    freqGap(:, trkIter) = wfbar(freqDataPre, freqDataPost, numGapFrm, 1);
-    magGap(:, trkIter) = wfbar(magDataPre, magDataPost, numGapFrm, 1);
 end
 
+%% Interpolate pitch -> frequencies and magnitudes
+numGapFrm = floor(gapLen / hopLen) + 3; % TODO: 3 is not general
+
+% Find first & last frame with pitch within semitone up or down
+firstUsablePre = find(abs(log2(pitchPre / pitchPre(end))) > 1/12, 1, 'last') + 1;
+lastUsablePost = find(abs(log2(pitchPost / pitchPost(1))) > 1/12, 1, 'first') - 1;
+
+dataRangePre = length(pitchPre) - firstUsablePre;
+dataRangePost = lastUsablePost;
+
+queryInd = dataRangePre + (1:numGapFrm);
+dataIndPre = 1:dataRangePre;
+dataIndPost = dataRangePre + numGapFrm + (1:dataRangePost);
+
+pitchDataPre = pitchPre(end - dataRangePre + 1:end);
+pitchDataPost = pitchPost(1:dataRangePost);
+pitchGap = wfbar(pitchDataPre, pitchDataPost, numGapFrm, pitchOrdAR);
+
+freqGap = NaN(numGapFrm, numHarm);
+magGap = NaN(numGapFrm, numHarm);
+
+for harmIter = 1:numHarm
+    magDataPre = magPre(end - dataRangePre + 1:end, harmIter);
+    magDataPost = magPost(1:dataRangePost, harmIter);
+
+    if all(isnan([magDataPre; magDataPost]))
+        continue;
+    end
+
+    if any(isnan(magDataPre))
+        firstUsable = find(isnan(magDataPre), 1, 'last') + 1;
+        magDataPre = magDataPre(firstUsable:end);
+    end
+
+    if any(isnan(magDataPost))
+        lastUsable = find(isnan(magDataPost), 1, 'first') - 1;
+        magDataPost = magDataPost(1:lastUsable);
+    end
+
+    freqGap(:, harmIter) = pitchGap * harmIter;
+    magGap(:, harmIter) = wfbar(magDataPre, magDataPost, numGapFrm, magOrdAR);
+end
+
+pitchGap = [pitchPre(end); pitchGap; pitchPost(1)];
 freqGap = [freqPre(end, :); freqGap; freqPost(1, :)];
 magGap = [magPre(end, :); magGap; magPost(1, :)];
 
@@ -233,13 +246,14 @@ sigRest(smplGap(1):smplGap(end)) = sigRest(smplGap(1):smplGap(end)) + sigGapXF;
 sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
+figure(1);
 subplot(2, 2, 1);
 plot(sigPre, 'DisplayName', 'pre- section');
 hold on;
 plot([NaN(gapEnd, 1); sigPost], 'DisplayName', 'post- section');
 plot([NaN(smplGap(1), 1); sigGap], ':', 'DisplayName', 'reconstruction', ...
     'Color', 'black');
-plot([smplGap(1), smplGap(end)], 0, 'x', 'DisplayName', 'transition');
+plot([smplGap(1), smplGap(end)], [0, 0], 'x', 'DisplayName', 'transitions');
 title('Damaged signal and reconstructed waveform')
 xlabel('Time in samples');
 legend;
@@ -281,3 +295,18 @@ title('Sinusoidal tracks - magnitude');
 ylabel('Magnitude in dBFS');
 xlabel('Time in samples');
 grid on;
+
+% figure(2);
+% plot(smplPre, pitchPre);
+% hold on;
+% set(gca, 'ColorOrderIndex', 1);
+% plot(smplPost, pitchPost);
+% set(gca, 'ColorOrderIndex', 1);
+% plot(smplGap, pitchGap, ':');
+% plot([smplPre(firstUsablePre), smplPost(lastUsablePost)], ...
+%     [pitchPre(firstUsablePre), pitchPost(lastUsablePost)], 'x');
+% hold off;
+% title('Pitch estimate over time');
+% ylabel('Pitch in Hz');
+% xlabel('Time in samples');
+% grid on;
