@@ -111,7 +111,7 @@ hold on;
 plot([NaN(gapEnd, 1); sigPost], 'DisplayName', 'post- section');
 plot([NaN(smplGap(1), 1); sigGap], ':', 'DisplayName', 'reconstruction', ...
     'Color', 'black');
-plot(smplGap, 0, 'x', 'DisplayName', 'transition');
+plot([smplGap(1), smplGap(end)], [0, 0], 'x', 'DisplayName', 'transitions');
 title('Damaged signal and reconstructed waveform')
 xlabel('Time in samples');
 legend;
