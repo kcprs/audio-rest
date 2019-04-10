@@ -25,6 +25,10 @@ function [pred, A] = burgPredict(sig, ord, predStart, predLen, fitLen)
         return;
     end
 
+    % Remove DC offset and store its value
+    dcOffset = mean(fitSect);
+    fitSect = fitSect - dcOffset;
+
     % Fit the model
     [A, e] = arburg(fitSect, ord);
 
@@ -41,5 +45,8 @@ function [pred, A] = burgPredict(sig, ord, predStart, predLen, fitLen)
     if predLen < 0
         pred = flipud(pred);
     end
+
+    % Add DC offset back
+    pred = pred + dcOffset;
 
 end

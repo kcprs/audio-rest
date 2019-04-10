@@ -3,21 +3,21 @@
 %% Set variable values
 fs = 44100;
 frmLen = 1024;
-gapLen = 20 * frmLen;
+gapLen = 50 * frmLen;
 sigLen = 100 * frmLen;
 hopLen = 256;
-numTrk = 20;
+numTrk = 40;
 minTrkLen = 10;
 resOrdAR = 100;
 pitchOrdAR = 2;
-magOrdAR = 1;
+magOrdAR = 2;
 almostNegInf = -100;
 
 % source = "saw";
-source = "sin";
+% source = "sin";
 % source = "audio/Cello.arco.mf.sulC.A2.wav";
 % source = "audio/Flute.nonvib.ff.A4.wav";
-% source = "audio/Flute.vib.ff.A4.wav";
+source = "audio/Flute.vib.ff.A4.wav";
 % source = "audio/Guitar.mf.sulD.A3.wav";
 % source = "audio/Guitar.mf.sulD.D3.wav";
 % source = "audio/Horn.mf.A2.wav";
