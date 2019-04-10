@@ -3,7 +3,7 @@
 %% Set variable values
 fs = 44100;
 frmLen = 1024;
-gapLen = 50 * frmLen;
+gapLen = 10 * frmLen;
 sigLen = 100 * frmLen;
 hopLen = 256;
 numTrk = 40;
@@ -137,7 +137,7 @@ for harmIter = 1:numHarm
         magPre(end - magOrdAR:end, harmIter) = almostNegInf;
         harmRatiosPre(harmIter) = harmRatiosPost(harmIter);
     end
-    
+
     if any(isnan(magPost(1:magOrdAR + 1, harmIter)))
         magPost(1:magOrdAR + 1, harmIter) = almostNegInf;
         harmRatiosPost(harmIter) = harmRatiosPre(harmIter);
@@ -236,9 +236,29 @@ resPost = sigPost(1:frmLen) - sinPost;
 
 %% Morph between pre- and post- residuals over the gap
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
+resGap = [resPre(frmLen / 2:end); resGap; resPost(1:frmLen / 2)];
+
+%% Apply magnitude variation based on magnitude of fundamental
+ampResFrm = 10.^(magGap(:, 1) / 20);
+
+% Normalise and cross-fade so that start and end amplitude is 1
+ampResPre = ampResFrm / ampResFrm(1);
+ampResPost = ampResFrm / ampResFrm(end);
+fade = linspace(0, 1, length(ampResFrm)).';
+ampResFrm = ampResPre .* (1 - fade) + ampResPost .* fade;
+
+% Extend to a sample-by-sample vector
+ampRes = zeros(size(resGap));
+
+for iter = 1:length(ampResFrm) - 1
+    ampRes((iter - 1) * hopLen + 1:iter * hopLen + 1) = ...
+        linspace(ampResFrm(iter), ampResFrm(iter + 1), hopLen + 1);
+end
+
+% Apply sample-by-sample vector
+resGap = resGap .* ampRes;
 
 %% Add reconstructed sinusoidal and residual
-resGap = [resPre(frmLen / 2:end); resGap; resPost(1:frmLen / 2)];
 sigGap = sinGap + resGap;
 
 %% Insert reconstructed signal into the gap
@@ -322,7 +342,7 @@ plot(smplPost, pitchPost);
 set(gca, 'ColorOrderIndex', 1);
 plot(smplGap, pitchGap, ':');
 plot([smplPre(firstUsablePre), smplPost(lastUsablePost)], ...
-        [pitchPre(firstUsablePre), pitchPost(lastUsablePost)], 'x');
+    [pitchPre(firstUsablePre), pitchPost(lastUsablePost)], 'x');
 hold off;
 title('Pitch estimate over time');
 ylabel('Pitch in Hz');
