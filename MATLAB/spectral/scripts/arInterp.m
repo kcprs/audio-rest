@@ -14,9 +14,9 @@ magOrdAR = 1;
 almostNegInf = -100;
 
 % source = "saw";
-% source = "sin";
+source = "sin";
 % source = "audio/Cello.arco.mf.sulC.A2.wav";
-source = "audio/Flute.nonvib.ff.A4.wav";
+% source = "audio/Flute.nonvib.ff.A4.wav";
 % source = "audio/Flute.vib.ff.A4.wav";
 % source = "audio/Guitar.mf.sulD.A3.wav";
 % source = "audio/Guitar.mf.sulD.D3.wav";
@@ -35,12 +35,12 @@ source = "audio/Flute.nonvib.ff.A4.wav";
 if contains(source, "audio/")
     sig = audioread(source);
 elseif strcmp(source, 'sin')
-    f = logspace(log10(300), log10(600), sigLen).' + 5 * getSineSig(sigLen, 10);
+    f = 440 + 2 * getSineSig(sigLen, 8);
     sig = getCosSig(sigLen, f, -6);
     sig = sig + getCosSig(sigLen, 3 * f, -6);
-    sig = sig + getCosSig(sigLen, 4 * f, -12);
-    sig = sig + getCosSig(sigLen, 6 * f, -14);
-    sig = sig + 0.1 * randn(size(sig));
+    sig = sig + getCosSig(sigLen, 6 * f, -12);
+    sig = sig + getCosSig(sigLen, 7 * f, -14);
+    % sig = sig + 0.1 * randn(size(sig));
 else
     f = logspace(log10(220), log10(440), sigLen).';
     m = linspace(-14, 0, sigLen).';
@@ -151,6 +151,14 @@ numGapFrm = floor(gapLen / hopLen) + 3; % TODO: 3 is not general
 % Find first & last frame with pitch within semitone up or down
 firstUsablePre = find(abs(log2(pitchPre / pitchPre(end))) > 1/12, 1, 'last') + 1;
 lastUsablePost = find(abs(log2(pitchPost / pitchPost(1))) > 1/12, 1, 'first') - 1;
+
+if isempty(firstUsablePre)
+    firstUsablePre = 1;
+end
+
+if isempty(lastUsablePost)
+    lastUsablePost = length(pitchPost);
+end
 
 dataRangePre = length(pitchPre) - firstUsablePre;
 dataRangePost = lastUsablePost;
