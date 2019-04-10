@@ -3,20 +3,20 @@
 %% Set variable values
 fs = 44100;
 frmLen = 1024;
-gapLen = 50 * frmLen;
+gapLen = 20 * frmLen;
 sigLen = 100 * frmLen;
 hopLen = 256;
 numTrk = 20;
-minTrkLen = 4;
+minTrkLen = 10;
 resOrdAR = 100;
-pitchOrdAR = 4;
+pitchOrdAR = 2;
 magOrdAR = 1;
-almostNegInf = -200;
+almostNegInf = -100;
 
 % source = "saw";
 % source = "sin";
 % source = "audio/Cello.arco.mf.sulC.A2.wav";
-% source = "audio/Flute.nonvib.ff.A4.wav";
+source = "audio/Flute.nonvib.ff.A4.wav";
 % source = "audio/Flute.vib.ff.A4.wav";
 % source = "audio/Guitar.mf.sulD.A3.wav";
 % source = "audio/Guitar.mf.sulD.D3.wav";
@@ -25,7 +25,7 @@ almostNegInf = -200;
 % source = "audio/PianoScale.wav";
 % source = "audio/Trumpet.novib.mf.A4.wav";
 % source = "audio/Trumpet.novib.mf.D4.wav";
-source = "audio/Trumpet.vib.mf.A4.wav";
+% source = "audio/Trumpet.vib.mf.A4.wav";
 % source = "audio/Trumpet.vib.mf.D4.wav";
 % source = "audio/Violin.arco.ff.sulG.A3.wav";
 % source = "audio/Violin.arco.ff.sulG.A4.wav";
@@ -80,31 +80,35 @@ smplPost = gapEnd + smplPost;
 
 %% Match tracks across the gap
 % Reorder tracks based on harmonics
-maxHarmPre = round(max(freqPre(end, :)) / trksPre(1).pitchEst(end));
-maxHarmPost = round(max(freqPost(1, :)) / trksPost(1).pitchEst(1));
+maxHarmPre = round(max(freqPre(end, :)) / pitchPre(end));
+maxHarmPost = round(max(freqPost(1, :)) / pitchPost(1));
 
 numHarm = max(maxHarmPre, maxHarmPost);
 
 freqHarmPre = NaN(size(freqPre, 1), numHarm);
+harmRatiosPre = NaN(1, numHarm);
 magHarmPre = NaN(size(magPre, 1), numHarm);
 phsHarmPre = NaN(size(phsPre, 1), numHarm);
 
 freqHarmPost = NaN(size(freqPost, 1), numHarm);
+harmRatiosPost = NaN(1, numHarm);
 magHarmPost = NaN(size(magPost, 1), numHarm);
 phsHarmPost = NaN(size(phsPost, 1), numHarm);
 
 for trkIter = 1:numTrk
-    harmNumPre = trksPre(trkIter).getHarmNum(-1);
-    harmNumPost = trksPost(trkIter).getHarmNum(1);
+    [harmNumPre, harmRatioPre] = trksPre(trkIter).getHarmNum(-1);
+    [harmNumPost, harmRatioPost] = trksPost(trkIter).getHarmNum(1);
 
     if harmNumPre >= 1
         freqHarmPre(:, harmNumPre) = freqPre(:, trkIter);
+        harmRatiosPre(harmNumPre) = harmRatioPre;
         magHarmPre(:, harmNumPre) = magPre(:, trkIter);
         phsHarmPre(:, harmNumPre) = phsPre(:, trkIter);
     end
 
     if harmNumPost >= 1
         freqHarmPost(:, harmNumPost) = freqPost(:, trkIter);
+        harmRatiosPost(harmNumPost) = harmRatioPost;
         magHarmPost(:, harmNumPost) = magPost(:, trkIter);
         phsHarmPost(:, harmNumPost) = phsPost(:, trkIter);
     end
@@ -119,7 +123,7 @@ freqPost = freqHarmPost;
 magPost = magHarmPost;
 phsPost = phsHarmPost;
 
-% Add matching magnitude information for harmonics only present at one
+% Add matching information for harmonics only present at one
 % side of the gap
 
 for harmIter = 1:numHarm
@@ -131,10 +135,12 @@ for harmIter = 1:numHarm
 
     if any(isnan(magPre(end - magOrdAR:end, harmIter)))
         magPre(end - magOrdAR:end, harmIter) = almostNegInf;
+        harmRatiosPre(harmIter) = harmRatiosPost(harmIter);
     end
-
+    
     if any(isnan(magPost(1:magOrdAR + 1, harmIter)))
         magPost(1:magOrdAR + 1, harmIter) = almostNegInf;
+        harmRatiosPost(harmIter) = harmRatiosPre(harmIter);
     end
 
 end
@@ -160,6 +166,10 @@ pitchGap = wfbar(pitchDataPre, pitchDataPost, numGapFrm, pitchOrdAR);
 freqGap = NaN(numGapFrm, numHarm);
 magGap = NaN(numGapFrm, numHarm);
 
+% Interpolate harmonic structure
+fade = linspace(0, 1, numGapFrm).';
+harmRatios = harmRatiosPre + fade .* (harmRatiosPost - harmRatiosPre);
+
 for harmIter = 1:numHarm
     magDataPre = magPre(end - dataRangePre + 1:end, harmIter);
     magDataPost = magPost(1:dataRangePost, harmIter);
@@ -178,7 +188,7 @@ for harmIter = 1:numHarm
         magDataPost = magDataPost(1:lastUsable);
     end
 
-    freqGap(:, harmIter) = pitchGap * harmIter;
+    freqGap(:, harmIter) = pitchGap .* harmRatios(:, harmIter);
     magGap(:, harmIter) = wfbar(magDataPre, magDataPost, numGapFrm, magOrdAR);
 end
 
@@ -296,17 +306,17 @@ ylabel('Magnitude in dBFS');
 xlabel('Time in samples');
 grid on;
 
-% figure(2);
-% plot(smplPre, pitchPre);
-% hold on;
-% set(gca, 'ColorOrderIndex', 1);
-% plot(smplPost, pitchPost);
-% set(gca, 'ColorOrderIndex', 1);
-% plot(smplGap, pitchGap, ':');
-% plot([smplPre(firstUsablePre), smplPost(lastUsablePost)], ...
-%     [pitchPre(firstUsablePre), pitchPost(lastUsablePost)], 'x');
-% hold off;
-% title('Pitch estimate over time');
-% ylabel('Pitch in Hz');
-% xlabel('Time in samples');
-% grid on;
+figure(2);
+plot(smplPre, pitchPre);
+hold on;
+set(gca, 'ColorOrderIndex', 1);
+plot(smplPost, pitchPost);
+set(gca, 'ColorOrderIndex', 1);
+plot(smplGap, pitchGap, ':');
+plot([smplPre(firstUsablePre), smplPost(lastUsablePost)], ...
+        [pitchPre(firstUsablePre), pitchPost(lastUsablePost)], 'x');
+hold off;
+title('Pitch estimate over time');
+ylabel('Pitch in Hz');
+xlabel('Time in samples');
+grid on;

@@ -105,16 +105,16 @@ classdef SinTrack < handle
             obj.pitchEst = flipud(obj.pitchEst);
         end
 
-        function harmNum = getHarmNum(obj, frmInd)
-            % GETHARNUM Returns N, where the frequency stored in this track
-            % at frame frmInd is the Nth harmonic of pitch estimate at this
-            % frame. Use frmInd < 1 to select last frame.
+        function [harmNum, exactRatio] = getHarmNum(obj, frmInd)
+            % GETHARNUM Returns index in the harmonic series relative to
+            % estimated pitch.
 
             if frmInd < 1
                 frmInd = length(obj.freq);
             end
 
-            harmNum = round(obj.freq(frmInd) / obj.pitchEst(frmInd));
+            exactRatio = obj.freq(frmInd) / obj.pitchEst(frmInd);
+            harmNum = round(exactRatio);
         end
 
     end
