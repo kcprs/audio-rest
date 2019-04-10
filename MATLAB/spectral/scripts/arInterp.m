@@ -10,14 +10,14 @@ numTrk = 40;
 minTrkLen = 10;
 resOrdAR = 100;
 pitchOrdAR = 2;
-magOrdAR = 2;
+magOrdAR = 1;
 almostNegInf = -100;
 
 % source = "saw";
 % source = "sin";
 % source = "audio/Cello.arco.mf.sulC.A2.wav";
-% source = "audio/Flute.nonvib.ff.A4.wav";
-source = "audio/Flute.vib.ff.A4.wav";
+source = "audio/Flute.nonvib.ff.A4.wav";
+% source = "audio/Flute.vib.ff.A4.wav";
 % source = "audio/Guitar.mf.sulD.A3.wav";
 % source = "audio/Guitar.mf.sulD.D3.wav";
 % source = "audio/Horn.mf.A2.wav";
@@ -238,25 +238,17 @@ resPost = sigPost(1:frmLen) - sinPost;
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
 resGap = [resPre(frmLen / 2:end); resGap; resPost(1:frmLen / 2)];
 
-%% Apply magnitude variation based on magnitude of fundamental
-ampResFrm = 10.^(magGap(:, 1) / 20);
+%% Apply magnitude variation based on amp envelope of sinusoidal
+[env, ~] = envelope(sinGap, hopLen, 'peak');
 
 % Normalise and cross-fade so that start and end amplitude is 1
-ampResPre = ampResFrm / ampResFrm(1);
-ampResPost = ampResFrm / ampResFrm(end);
-fade = linspace(0, 1, length(ampResFrm)).';
-ampResFrm = ampResPre .* (1 - fade) + ampResPost .* fade;
+envPre = env / env(1);
+envPost = env / env(end);
+fade = linspace(0, 1, length(env)).';
+envNorm = envPre .* (1 - fade) + envPost .* fade;
 
-% Extend to a sample-by-sample vector
-ampRes = zeros(size(resGap));
-
-for iter = 1:length(ampResFrm) - 1
-    ampRes((iter - 1) * hopLen + 1:iter * hopLen + 1) = ...
-        linspace(ampResFrm(iter), ampResFrm(iter + 1), hopLen + 1);
-end
-
-% Apply sample-by-sample vector
-resGap = resGap .* ampRes;
+% Apply envelope
+resGap = resGap .* envNorm;
 
 %% Add reconstructed sinusoidal and residual
 sigGap = sinGap + resGap;
