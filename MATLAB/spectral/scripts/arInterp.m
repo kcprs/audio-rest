@@ -2,8 +2,8 @@
 
 %% Set variable values
 fs = 44100;
-frmLen = 1024;
-gapLen = 40 * frmLen;
+frmLen = 2048;
+gapLen = 10 * frmLen;
 sigLen = 100 * frmLen;
 hopLen = 256;
 numTrk = 80;
@@ -154,7 +154,7 @@ for harmIter = 1:numHarm
 end
 
 %% Interpolate pitch -> frequencies and magnitudes
-numGapFrm = floor(gapLen / hopLen) + 3; % TODO: 3 is not general
+numGapFrm = floor((gapLen + frmLen) / hopLen) - 1;
 
 % Find first & last frame with pitch within semitone up or down
 firstUsablePre = find(abs(log2(pitchPre / pitchPre(end))) > 1/12, 1, 'last') + 1;
@@ -260,16 +260,20 @@ resPost = sigPost(1:frmLen) - sinPost;
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
 
 % Apply interpolated gap envelope to residual
-resRelStrength = linspace(envGapInitdb, envGapEnddb, numGapFrm).';
+numResFrm = numGapFrm - frmLen/hopLen + 2;
+envGapdB = 20 * log10(envGap);
+envGapdB = envGapdB(frmLen/(2 * hopLen) + 1: end - frmLen/(2 * hopLen));
+resRelStrength = linspace(envGapInitdb, envGapEnddb, numResFrm + 2).';
+resRelStrength = resRelStrength(2:end-1);
 resAmpFrm = 10.^((envGapdB - resRelStrength) / 20);
-resAmp = NaN(size(resGap));
+resAmp = resAmpFrm(1) * ones(size(resGap));
 
-for iter = 1:(numGapFrm - 1)
+for iter = 1:(numResFrm - 1)
     resAmp((iter - 1) * hopLen + 1:iter * hopLen + 1) = ...
         linspace(resAmpFrm(iter), resAmpFrm(iter + 1), hopLen + 1).';
 end
 
-resAmp = resAmp(hopLen + 1:end - hopLen - 1); %TODO: Check if size adjustment is ok
+resAmp = resAmp(1:end - 1); %TODO: Check if size adjustment is ok
 resGap = resGap .* resAmp;
 resGap = [resPre(frmLen / 2:end); resGap; resPost(1:frmLen / 2)];
 
