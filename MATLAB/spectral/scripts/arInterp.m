@@ -3,7 +3,7 @@
 %% Set variable values
 fs = 44100;
 frmLen = 1024;
-gapLen = 30 * frmLen;
+gapLen = 40 * frmLen;
 sigLen = 100 * frmLen;
 hopLen = 256;
 numTrk = 80;
@@ -11,9 +11,9 @@ minTrkLen = 10;
 resOrdAR = 100;
 pitchOrdAR = 2;
 magOrdAR = 2;
-envOrdAR = 4;
+envOrdAR = 2;
 almostNegInf = -100;
-envWeight = 0.5;
+envWeight = 1;
 
 % source = "saw";
 % source = "sin";
@@ -72,7 +72,8 @@ end
 
 [freqPre, magPre, phsPre, smplPre] = SinTrack.consolidateFMP(trksPre);
 pitchPre = trksPre(1).pitchEst;
-[envPre, ~] = envelope(sigPre, hopLen, 'peak');
+[envPreUpper, envPreLower] = envelope(sigPre, hopLen, 'peak');
+envPre = (envPreUpper - envPreLower) / 2;
 envPre = envPre(smplPre);
 
 % Post-gap section
@@ -80,7 +81,8 @@ sigPost = sigDmg(gapEnd + 1:end);
 trksPost = trackSpecPeaks(sigPost, frmLen, hopLen, numTrk, minTrkLen);
 [freqPost, magPost, phsPost, smplPost] = SinTrack.consolidateFMP(trksPost);
 pitchPost = trksPost(1).pitchEst;
-[envPost, ~] = envelope(sigPost, hopLen, 'peak');
+[envPostUpper, envPostLower] = envelope(sigPost, hopLen, 'peak');
+envPost = (envPostUpper - envPostLower) / 2;
 envPost = envPost(smplPost);
 smplPost = gapEnd + smplPost;
 
@@ -256,19 +258,20 @@ resPost = sigPost(1:frmLen) - sinPost;
 
 %% Morph between pre- and post- residuals over the gap
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
+
+% Apply interpolated gap envelope to residual
+resRelStrength = linspace(envGapInitdb, envGapEnddb, numGapFrm).';
+resAmpFrm = 10.^((envGapdB - resRelStrength) / 20);
+resAmp = NaN(size(resGap));
+
+for iter = 1:(numGapFrm - 1)
+    resAmp((iter - 1) * hopLen + 1:iter * hopLen + 1) = ...
+        linspace(resAmpFrm(iter), resAmpFrm(iter + 1), hopLen + 1).';
+end
+
+resAmp = resAmp(hopLen + 1:end - hopLen - 1); %TODO: Check if size adjustment is ok
+resGap = resGap .* resAmp;
 resGap = [resPre(frmLen / 2:end); resGap; resPost(1:frmLen / 2)];
-
-%% Apply magnitude variation based on amp envelope of sinusoidal
-[envSinGap, ~] = envelope(sinGap, hopLen, 'peak');
-
-% Normalise and cross-fade so that start and end amplitude is 1
-envGapPre = envSinGap / envSinGap(1);
-envGapPost = envSinGap / envSinGap(end);
-fade = linspace(0, 1, length(envSinGap)).';
-envNorm = envGapPre .* (1 - fade) + envGapPost .* fade;
-
-% Apply envelope
-resGap = resGap .* envNorm;
 
 %% Add reconstructed sinusoidal and residual
 sigGap = sinGap + resGap;
