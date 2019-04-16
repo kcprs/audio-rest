@@ -77,8 +77,23 @@ function sig = resynth(freqEst, magEst, initPhs, hopLen, endPhs)
     sig = zeros(size(freq, 1), 1);
 
     for iter = 1:size(freq, 2)
-        sig = sig + getCosSig(size(freq, 1), freq(:, iter), ...
+        % subplot(2, 1, 1);
+        newSig = getCosSig(size(freq, 1), freq(:, iter), ...
             mag(:, iter), initPhs(iter));
+        % plot(newSig);
+        % title(['Signal from track ', num2str(iter)]);
+        % xlabel('Time in samples');
+        % ylabel('Amplitude');
+
+        sig = sig + newSig;
+        % subplot(2, 1, 2);
+        % plot(sig);
+        % title('Sum of signals');
+        % xlabel('Time in samples');
+        % ylabel('Amplitude');
+
+        % filename = strcat("anim/frame", num2str(iter), ".png");
+        % saveas(gcf, filename);
     end
 
 end

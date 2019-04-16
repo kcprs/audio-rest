@@ -19,6 +19,7 @@ function setup(basePath)
     addpath([basePath, '\\spectral\\functions']);
     addpath([basePath, '\\spectral\\classes']);
     addpath([basePath, '\\comparisons\\scripts']);
+    addpath([basePath, '\\plotting']);
 
     disp('Setup complete.');
 end

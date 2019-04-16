@@ -29,6 +29,7 @@ source = "audio/Flute.vib.ff.A4.wav";
 % source = "audio/Violin.arco.ff.sulG.A3.wav";
 % source = "audio/Violin.arco.ff.sulG.A4.wav";
 % source = "audio/Violin.arco.mf.sulA.A4.wav";
+% source = "audio/Violin.5th.wav";
 
 %% Prepare source signal
 if contains(source, "audio/")
@@ -252,7 +253,9 @@ plot(smplPost, freqPost);
 set(gca, 'ColorOrderIndex', 1);
 plot(smplGap, freqGap, ':');
 hold off;
-title('Sinusoidal tracks - frequency');
+title(['Sine tracks - frequency (gap len: ', num2str(gapLen), ...
+         ', poly order: ', num2str(polyOrd), ', fitRange: ', ...
+         num2str(dataRange), ')']);
 ylabel('Frequency in Hz');
 xlabel('Time in samples');
 grid on;
@@ -265,7 +268,9 @@ plot(smplPost, magPost);
 set(gca, 'ColorOrderIndex', 1);
 plot(smplGap, magGap, ':');
 hold off;
-title('Sinusoidal tracks - magnitude');
+title(['Sine tracks - magnitude (gap len: ', num2str(gapLen), ...
+         ', poly order: ', num2str(polyOrd), ', fitRange: ', ...
+         num2str(dataRange), ')']);
 ylabel('Magnitude in dBFS');
 xlabel('Time in samples');
 grid on;

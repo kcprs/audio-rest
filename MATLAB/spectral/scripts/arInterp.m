@@ -32,16 +32,18 @@ source = "audio/Flute.vib.ff.A4.wav";
 % source = "audio/Violin.arco.ff.sulG.A3.wav";
 % source = "audio/Violin.arco.ff.sulG.A4.wav";
 % source = "audio/Violin.arco.mf.sulA.A4.wav";
+% source = "audio/Violin.5th.wav";
 
 %% Prepare source signal
 if contains(source, "audio/")
     sig = audioread(source);
 elseif strcmp(source, 'sin')
-    f = 440 + 2 * getSineSig(sigLen, 8);
-    sig = getCosSig(sigLen, f, -6);
-    sig = sig + getCosSig(sigLen, 3 * f, -6);
-    sig = sig + getCosSig(sigLen, 6 * f, -12);
-    sig = sig + getCosSig(sigLen, 7 * f, -14);
+    f = 440; % + 2 * getSineSig(sigLen, 8);
+    sig = getCosSig(sigLen, f, -9);
+    sig = sig + getCosSig(sigLen, 2 * f, -12, pi);
+    sig = sig + getCosSig(sigLen, 3 * f, -15, pi / 2);
+    sig = sig + getCosSig(sigLen, 4 * f, -18, 0.75 * pi);
+    sig = sig + getCosSig(sigLen, 5 * f, -21);
     % sig = sig + 0.1 * randn(size(sig));
 else
     f = logspace(log10(220), log10(440), sigLen).';
@@ -260,11 +262,11 @@ resPost = sigPost(1:frmLen) - sinPost;
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
 
 % Apply interpolated gap envelope to residual
-numResFrm = numGapFrm - frmLen/hopLen + 2;
+numResFrm = numGapFrm - frmLen / hopLen + 2;
 envGapdB = 20 * log10(envGap);
-envGapdB = envGapdB(frmLen/(2 * hopLen) + 1: end - frmLen/(2 * hopLen));
+envGapdB = envGapdB(frmLen / (2 * hopLen) + 1:end - frmLen / (2 * hopLen));
 resRelStrength = linspace(envGapInitdb, envGapEnddb, numResFrm + 2).';
-resRelStrength = resRelStrength(2:end-1);
+resRelStrength = resRelStrength(2:end - 1);
 resAmpFrm = 10.^((envGapdB - resRelStrength) / 20);
 resAmp = resAmpFrm(1) * ones(size(resGap));
 
@@ -335,7 +337,7 @@ plot(smplPost, freqPost);
 set(gca, 'ColorOrderIndex', 1);
 plot(smplGap, freqGap, ':');
 hold off;
-title('Sinusoidal tracks - frequency');
+title(['Sinusoidal tracks - frequency (gap len: ', num2str(gapLen), ')']);
 ylabel('Frequency in Hz');
 xlabel('Time in samples');
 grid on;
@@ -348,7 +350,7 @@ plot(smplPost, magPost);
 set(gca, 'ColorOrderIndex', 1);
 plot(smplGap, magGap, ':');
 hold off;
-title('Sinusoidal tracks - magnitude');
+title(['Sinusoidal tracks - magnitude (gap len: ', num2str(gapLen), ')']);
 ylabel('Magnitude in dBFS');
 xlabel('Time in samples');
 grid on;
@@ -364,7 +366,8 @@ plot(smplGap, pitchGap, ':');
 plot([smplPre(firstUsablePre), smplPost(lastUsablePost)], ...
     [pitchPre(firstUsablePre), pitchPost(lastUsablePost)], 'x');
 hold off;
-title('Pitch estimate over time');
+title(['Pitch trajectory (gap len: ', num2str(gapLen), ...
+        ', amp envelope interp: AR, ord ', num2str(envOrdAR), ')']);
 ylabel('Pitch in Hz');
 xlabel('Time in samples');
 grid on;
@@ -379,6 +382,7 @@ plot(smplGap, envGap, ':');
 plot([smplPre(firstUsablePre), smplPost(lastUsablePost)], ...
     [envPre(firstUsablePre), envPost(lastUsablePost)], 'x');
 hold off;
-title('Global envelope over time');
+title(['Global envelope over time (gap len: ', num2str(gapLen), ...
+        ', amp envelope interp: AR, ord ', num2str(envOrdAR), ')']);
 xlabel('Time in samples');
 grid on;
