@@ -2,52 +2,76 @@ fs = 44100;
 frmLen = 2048;
 hopLen = 256;
 overlap = frmLen - hopLen;
-specType = 'power';
-% specType = 'psd';
 ylimkHz = [0, 20];
 
 % sig = audioread("audio/fluteOrigTrim.wav");
 % sigRest = audioread("audio/fluteWithResTrim.wav");
-sig = getCosSig(fs, 200 * fs / frmLen);
-sigRest = getSineSig(fs, 200 * fs / frmLen);
+sig = getCosSig(fs, 100 * fs / frmLen);
+sigRest = getCosSig(fs, 100 * fs / frmLen, 0, pi);
+% sig = randn([fs, 1]);
+% sigRest = randn([fs, 1]);
 
 % plot the first spectrogram
 subplot(2, 2, 1);
-spectrogram(sig, hann(frmLen), overlap, frmLen, fs, 'yaxis', specType);
+spectrogram(sig, hann(frmLen), overlap, frmLen, fs, 'yaxis');
 title('Original signal');
 ylim(ylimkHz);
 
 % plot the second spectrogram
 subplot(2, 2, 3);
-spectrogram(sigRest, hann(frmLen), overlap, frmLen, fs, 'yaxis', specType);
+spectrogram(sigRest, hann(frmLen), overlap, frmLen, fs, 'yaxis');
 title('Restoration');
 ylim(ylimkHz);
 
 % plot their difference
 subplot(2, 2, 2);
-[~, ~, ~, pSig] = spectrogram(sig, hann(frmLen), overlap, frmLen, fs, specType);
-[~, f, t, pSigRest] = spectrogram(sigRest, hann(frmLen), overlap, frmLen, fs, specType);
+[~, ~, ~, pSig] = spectrogram(sig, hann(frmLen), overlap, frmLen, fs);
+[~, f, t, pSigRest] = spectrogram(sigRest, hann(frmLen), overlap, frmLen, fs);
 
-pDiff = diffSpectrogram(t, f, pSig, pSigRest, false, 'yaxis', specType, -Inf);
-title('Power Difference (original - restoration)');
+pDiff = diffSpectrogram(t, f, pSigRest, pSig, false, 'yaxis', 'psd', -Inf);
+title('PSD Difference (restoration - original)');
 ylim(ylimkHz);
+xlimSpgm = xlim;
 
 subplot(2, 2, 4);
-
-if strcmp(specType, 'power')
-    pDiffErr = sum(abs(pDiff), 1);
-else
-    winFreqSpan = fs / frmLen;
-    pDiffErr = sum(abs(pDiff), 1) * winFreqSpan;
-end
+pDiffMean = mean(pDiff, 1);
 
 tms = t * 1000;
-plot(tms, pDiffErr);
-title('Total power error over all frequencies');
+plot(tms, pDiffMean);
+title('Average PSD error per FFT bin');
 xlabel("Time (ms)");
-ylabel("Power (dB)");
+ylabel("Power/frequency (dB/Hz)");
+xlim(xlimSpgm);
 grid;
 
+%% Compare with code below to check if pDiffMean is calculated correctly
+% subplot(2, 2, 3);
+% powf = 10 * log10(sum(abs(pSig), 1) * fs / frmLen);
+
+% plot(tms, powf);
+% title('Power calc in freq domain');
+% xlabel("Time (ms)");
+% ylabel("Power (dB)");
+% grid;
+
+% subplot(2, 2, 1);
+% powt = zeros(length(t), 1);
+% frmCurs = 1;
+% powCurs = 1;
+
+% while frmCurs + frmLen < length(sig)
+%     powt(powCurs) = 10 * log10(sum(sig(frmCurs:frmCurs + frmLen).^2) / frmLen);
+%     frmCurs = frmCurs + hopLen;
+%     powCurs = powCurs + 1;
+% end
+
+% plot(tms, powt);
+% title('Power calc in time domain');
+% xlabel("Time (ms)");
+% ylabel("Power (dB)");
+% grid;
+
+% Code below adapted from MATLAB'S pspectrogram.m file (lines 152 - 171)
 function pDiff = diffSpectrogram(t, f, p1, p2, isFsnormalized, faxisloc, esttype, threshold)
 
     if strcmpi(esttype, 'power')
