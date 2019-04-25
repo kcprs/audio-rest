@@ -20,13 +20,13 @@ envWeight = 1;
 % source = "sin";
 % source = "audio/Cello.arco.mf.sulC.A2.wav";
 % source = "audio/Flute.nonvib.ff.A4.wav";
-% source = "audio/Flute.vib.ff.A4.wav";
+source = "audio/Flute.vib.ff.A4.wav";
 % source = "audio/Guitar.mf.sulD.A3.wav";
 % source = "audio/Guitar.mf.sulD.D3.wav";
 % source = "audio/Horn.mf.A2.wav";
 % source = "audio/Horn.mf.A4.wav";
 % source = "audio/PianoScale.wav";
-source = "audio/Trumpet.novib.mf.A4.wav";
+% source = "audio/Trumpet.novib.mf.A4.wav";
 % source = "audio/Trumpet.novib.mf.D4.wav";
 % source = "audio/Trumpet.vib.mf.A4.wav";
 % source = "audio/Trumpet.vib.mf.D4.wav";
@@ -39,16 +39,16 @@ source = "audio/Trumpet.novib.mf.A4.wav";
 if contains(source, "audio/")
     sig = audioread(source);
 elseif strcmp(source, 'sin')
-    f = 440; % + 2 * getSineSig(sigLen, 8);
-    sig = getCosSig(sigLen, f, -9);
-    sig = sig + getCosSig(sigLen, 2 * f, -12, pi);
-    sig = sig + getCosSig(sigLen, 3 * f, -15, pi / 2);
-    sig = sig + getCosSig(sigLen, 4 * f, -18, 0.75 * pi);
-    sig = sig + getCosSig(sigLen, 5 * f, -21);
-    % sig = sig + 0.1 * randn(size(sig));
+    f = 100; % + 2 * getSineSig(sigLen, 8);
+    sig = getCosSig(sigLen, f, -6);
+    % sig = sig + getCosSig(sigLen, 2 * f, -12, pi);
+    % sig = sig + getCosSig(sigLen, 3 * f, -15, pi / 2);
+    % sig = sig + getCosSig(sigLen, 4 * f, -18, 0.75 * pi);
+    % sig = sig + getCosSig(sigLen, 5 * f, -21);
+    % sig = sig + 0.1 * randn(size(sig)) ./ 6;
 else
-    f = logspace(log10(220), log10(440), sigLen).';
-    m = linspace(-14, 0, sigLen).';
+    f = 440;%logspace(log10(220), log10(440), sigLen).';
+    m = -6;%linspace(-14, 0, sigLen).';
 
     sig = getSawSig(sigLen, f, m);
 end
@@ -78,6 +78,7 @@ pitchPre = trksPre(1).pitchEst;
 [envPreUpper, envPreLower] = envelope(sigPre, hopLen, 'peak');
 envPre = (envPreUpper - envPreLower) / 2;
 envPre = envPre(smplPre);
+envPredB = 20 * log10(abs(envPre));
 
 % Post-gap section
 sigPost = sigDmg(gapEnd + 1:end);
@@ -87,6 +88,7 @@ pitchPost = trksPost(1).pitchEst;
 [envPostUpper, envPostLower] = envelope(sigPost, hopLen, 'peak');
 envPost = (envPostUpper - envPostLower) / 2;
 envPost = envPost(smplPost);
+envPostdB = 20 * log10(abs(envPost));
 smplPost = gapEnd + smplPost;
 
 %% Match tracks across the gap
@@ -160,31 +162,45 @@ end
 numGapFrm = floor((gapLen + frmLen) / hopLen) - 1;
 
 % Find first & last frame with pitch within semitone up or down
-firstUsablePre = find(abs(log2(pitchPre / pitchPre(end))) > 1/12, 1, 'last') + 1;
-lastUsablePost = find(abs(log2(pitchPost / pitchPost(1))) > 1/12, 1, 'first') - 1;
+firstUsablePitchPre = find(abs(log2(pitchPre / pitchPre(end))) > 1/12, 1, 'last') + 1;
+lastUsablePitchPost = find(abs(log2(pitchPost / pitchPost(1))) > 1/12, 1, 'first') - 1;
 
-if isempty(firstUsablePre)
-    firstUsablePre = 1;
+if isempty(firstUsablePitchPre)
+    firstUsablePitchPre = 1;
 end
 
-if isempty(lastUsablePost)
-    lastUsablePost = length(pitchPost);
+if isempty(lastUsablePitchPost)
+    lastUsablePitchPost = length(pitchPost);
 end
 
-dataRangePre = length(pitchPre) - firstUsablePre;
-dataRangePost = lastUsablePost;
+dataRangePitchPre = length(pitchPre) - firstUsablePitchPre;
+dataRangePitchPost = lastUsablePitchPost;
 
-pitchDataPre = pitchPre(end - dataRangePre + 1:end);
-pitchDataPost = pitchPost(1:dataRangePost);
+pitchDataPre = pitchPre(end - dataRangePitchPre + 1:end);
+pitchDataPost = pitchPost(1:dataRangePitchPost);
 pitchGap = wfbar(pitchDataPre, pitchDataPost, numGapFrm, pitchOrdAR);
 
 %% Interpolate amplitude envelope
-envDataPre = envPre(end - dataRangePre + 1:end);
-envDataPost = envPost(1:dataRangePost);
-envGap = wfbar(envDataPre, envDataPost, numGapFrm, envOrdAR);
-envGapdB = 20 * log10(envGap);
-envGapInitdb = 20 * log10(envPre(end));
-envGapEnddb = 20 * log10(envPost(1));
+% Find first & last frame with amplitude within 10 dB range
+firstUsableEnvPre = find(abs(envPredB - envPredB(end)) > 10, 1, 'last') + 1;
+lastUsableEnvPost = find(abs(envPostdB - envPostdB(1)) > 10, 1, 'first') - 1;
+
+if isempty(firstUsableEnvPre)
+    firstUsableEnvPre = 1;
+end
+
+if isempty(lastUsableEnvPost)
+    lastUsableEnvPost = length(envPostdB);
+end
+
+dataRangeEnvPre = length(envPredB) - firstUsableEnvPre;
+dataRangeEnvPost = lastUsableEnvPost;
+
+envDataPre = envPredB(end - dataRangeEnvPre + 1:end);
+envDataPost = envPostdB(1:dataRangeEnvPost);
+envGapdB = wfbar(envDataPre, envDataPost, numGapFrm, envOrdAR);
+envGapInitdb = envPredB(end);
+envGapEnddb = envPostdB(1);
 
 %% Interpolate harmonic structure
 fade = linspace(0, 1, numGapFrm).';
@@ -194,8 +210,8 @@ freqGap = NaN(numGapFrm, numHarm);
 magGap = NaN(numGapFrm, numHarm);
 
 for harmIter = 1:numHarm
-    magDataPre = magPre(end - dataRangePre + 1:end, harmIter);
-    magDataPost = magPost(1:dataRangePost, harmIter);
+    magDataPre = magPre(end - dataRangeEnvPre + 1:end, harmIter);
+    magDataPost = magPost(1:dataRangeEnvPost, harmIter);
 
     if all(isnan([magDataPre; magDataPost]))
         continue;
@@ -227,11 +243,11 @@ end
 pitchGap = [pitchPre(end); pitchGap; pitchPost(1)];
 freqGap = [freqPre(end, :); freqGap; freqPost(1, :)];
 magGap = [magPre(end, :); magGap; magPost(1, :)];
-envGap = [envPre(end); envGap; envPost(1)];
+envGapdB = [envPredB(end); envGapdB; envPostdB(1)];
 
 smplGap = smplPre(end):hopLen:smplPost(1);
 
-%% Synthesise sinusoidal gap signal
+% Synthesise sinusoidal gap signal
 sigGapLen = smplGap(end) - smplGap(1) + 1;
 sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen, phsPost(1, :));
 
@@ -248,11 +264,10 @@ resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
 
 % Apply interpolated gap envelope to residual
 numResFrm = numGapFrm - frmLen / hopLen + 2;
-envGapdB = 20 * log10(envGap);
-envGapdB = envGapdB(frmLen / (2 * hopLen) + 1:end - frmLen / (2 * hopLen));
+envGapdBCut = envGapdB(frmLen / (2 * hopLen) + 1:end - frmLen / (2 * hopLen));
 resRelStrength = linspace(envGapInitdb, envGapEnddb, numResFrm + 2).';
 resRelStrength = resRelStrength(2:end - 1);
-resAmpFrm = 10.^((envGapdB - resRelStrength) / 20);
+resAmpFrm = 10.^((envGapdBCut - resRelStrength) / 20);
 resAmp = resAmpFrm(1) * ones(size(resGap));
 
 for iter = 1:(numResFrm - 1)
@@ -348,8 +363,8 @@ set(gca, 'ColorOrderIndex', 1);
 plot(smplPost, pitchPost);
 set(gca, 'ColorOrderIndex', 1);
 plot(smplGap, pitchGap, ':');
-plot([smplPre(firstUsablePre), smplPost(lastUsablePost)], ...
-    [pitchPre(firstUsablePre), pitchPost(lastUsablePost)], 'x');
+plot([smplPre(firstUsablePitchPre), smplPost(lastUsablePitchPost)], ...
+    [pitchPre(firstUsablePitchPre), pitchPost(lastUsablePitchPost)], 'x');
 hold off;
 title(['Pitch trajectory (gap len: ', num2str(gapLen), ...
         ', amp envelope interp: AR, ord ', num2str(envOrdAR), ')']);
@@ -358,14 +373,14 @@ xlabel('Time in samples');
 grid on;
 
 subplot(2, 1, 2);
-plot(smplPre, envPre);
+plot(smplPre, envPredB);
 hold on;
 set(gca, 'ColorOrderIndex', 1);
-plot(smplPost, envPost);
+plot(smplPost, envPostdB);
 set(gca, 'ColorOrderIndex', 1);
-plot(smplGap, envGap, ':');
-plot([smplPre(firstUsablePre), smplPost(lastUsablePost)], ...
-    [envPre(firstUsablePre), envPost(lastUsablePost)], 'x');
+plot(smplGap, envGapdB, ':');
+plot([smplPre(firstUsableEnvPre), smplPost(lastUsableEnvPost)], ...
+    [envPredB(firstUsableEnvPre), envPostdB(lastUsableEnvPost)], 'x');
 hold off;
 title(['Global envelope over time (gap len: ', num2str(gapLen), ...
         ', amp envelope interp: AR, ord ', num2str(envOrdAR), ')']);
