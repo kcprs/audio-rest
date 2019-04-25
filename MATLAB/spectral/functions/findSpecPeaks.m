@@ -1,28 +1,20 @@
-function [freqEst, magEst, phsEst] = findSpecPeaks(sig, trs, npks, nfft, fs)
+function [freqEst, magEst, phsEst] = findSpecPeaks(sig, trs, npks, fs)
     %FINDSPECPEAKS Find multiple spectral peaks in the given signal
-    %   [freqEst, magEst, phsEst] = FINDSPECPEAKS(sig, trs, npks, nfft, fs)
+    %   [freqEst, magEst, phsEst] = FINDSPECPEAKS(sig, trs, npks, fs)
     %   returns frequency, magnitude and phase information about npks most
     %   prominent frequency components of the given signal sig, i.e. all
     %   spectral peaks with magnitude above the threshold trs in dBFS.
-    %   Analysis is done using fft of size nfft. Set npks to 0 to find all
-    %   peaks above threshold trs.
-    %
-    %   [freqEst, magEst, phsEst] = FINDSPECPEAKS(sig, trs, npks, nfft)
-    %   uses default value of fs = 44100.
+    %   Set npks to 0 to find all peaks above threshold trs.
     %
     %   [freqEst, magEst, phsEst] = FINDSPECPEAKS(sig, trs, npks) uses
-    %   default values of fs = 44100 and nfft = length(sig).
+    %   default value of fs = 44100.
 
-    if nargin < 5
+    if nargin < 4
         fs = 44100;
     end
 
-    if nargin < 4
-        nfft = length(sig);
-    end
-
     % Get magnitude and phase spectra
-    [mag, phs] = getFT(sig, nfft, 'gausswin');
+    [mag, phs, nfft] = getFT(sig);
 
     % Find highest peaks in magnitude spectrum
     if npks == 0

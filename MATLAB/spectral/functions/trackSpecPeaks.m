@@ -54,8 +54,7 @@ function [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrjLen, 
 
         % Detect spectral peaks in frame
         [pkFreq, pkMag, pkPhs] = ...
-            findSpecPeaks(sig(frmStart:frmStart + frmLen - 1), ...
-            trs, 0, nfft, fs);
+            findSpecPeaks(sig(frmStart:frmStart + frmLen - 1), trs, 0);
 
         % Save pitch in frame based on freqs of 5 highest peaks
         [~, highestPks] = sort(pkMag, 'desc');

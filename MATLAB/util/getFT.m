@@ -1,34 +1,24 @@
-function [magSpec, phsSpec] = getFT(sig, nfft, winType)
+function [magSpec, phsSpec, nfft] = getFT(sig, nfft)
     %GETFT Compute magnitude and phase spectra of a signal
-    %   [magSpec, phsSpec] = GETFT(sig, nfft, winType) returns magnitude and
+    %   [magSpec, phsSpec, nfft] = GETFT(sig, nfft) returns magnitude and
     %   phase spectra of the given signal sig using FFT of size nfft.
-    %   The signal is first windowed by a function specified by winType.
+    %   The signal is first windowed by a Hann function specified by winType.
     %   The magnitude is returned in dBFS and corresponds to the magnitude
-    %   of a sinusoid at given bin frequency.
+    %   of a sinusoid at a given bin frequency.
     %
-    %   [magSpec, phsSpec] = GETFT(sig, nfft) uses Hann windowing by default
-    %
-    %   [magSpec, phsSpec] = GETFT(sig) uses Hann windowing and
-    %   nfft = length(sig)
-
-    if nargin < 3
-        winType = 'hann';
-    end
+    %   [magSpec, phsSpec, nfft] = GETFT(sig) uses function getNFFT() to
+    %   determine the optimal nfft, based on precision requirements set
+    %   in getNFFT.m
 
     sigLen = length(sig);
 
     if nargin < 2
-        nfft = sigLen;
+        nfft = getNFFT(sigLen);
     end
 
     % Prepare window
     winLen = min(sigLen, nfft);
-
-    if strcmp(winType, 'gausswin')
-        win = gausswin(winLen) .* kaiser(winLen);
-    else
-        win = hann(winLen);
-    end
+    win = hann(winLen);
 
     % Add padding or remove samples to get fft of requested size.
     % Window the signal.
