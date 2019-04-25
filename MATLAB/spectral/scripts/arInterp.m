@@ -3,7 +3,7 @@
 %% Set variable values
 fs = 44100;
 frmLen = 2048;
-gapLen = 10 * frmLen;
+gapLen = 20 * frmLen;
 sigLen = 100 * frmLen;
 hopLen = 256;
 numTrk = 80;
@@ -234,31 +234,15 @@ smplGap = smplPre(end):hopLen:smplPost(1);
 sigGapLen = smplGap(end) - smplGap(1) + 1;
 sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen, phsPost(1, :));
 
-%% Resynthesise sinusoidal and residual of last frame of pre- section
-% Build the signal from the middle outwards since phase is known for
-% The middle of the frame
-% TODO: Take spectrum changes into account
-sinPreFwd = resynth([freqPre(end, :); freqPre(end, :)], ...
-    [magPre(end, :); magPre(end, :)], phsPre(end, :), frmLen / 2);
-sinPreBwd = resynth([freqPre(end, :); freqPre(end, :)], ...
-    [magPre(end, :); magPre(end, :)], -phsPre(end, :), frmLen / 2 - 1);
-sinPre = [flipud(sinPreBwd); sinPreFwd(2:end)];
+% Synthesise residual of last frame of pre- section
+resPre = getResidual(sigPre(end - frmLen + 1:end), freqPre(end, :), ...
+    magPre(end, :), phsPre(end, :));
 
-resPre = sigPre(end - frmLen + 1:end) - sinPre;
+% Synthesise residual of first frame of post- section
+resPost = getResidual(sigPost(1:frmLen), freqPost(1, :), magPost(1, :), ...
+    phsPost(1, :));
 
-%% Resynthesise sinusoidal and residual of first frame of post- section
-% Build the signal from the middle outwards since phase is known for
-% The middle of the frame
-% TODO: Take spectrum changes into account
-sinPostFwd = resynth([freqPost(1, :); freqPost(1, :)], ...
-    [magPost(1, :); magPost(1, :)], phsPost(1, :), frmLen / 2 - 1);
-sinPostBwd = resynth([freqPost(1, :); freqPost(1, :)], ...
-    [magPost(1, :); magPost(1, :)], -phsPost(1, :), frmLen / 2);
-sinPost = [flipud(sinPostBwd); sinPostFwd(2:end)];
-
-resPost = sigPost(1:frmLen) - sinPost;
-
-%% Morph between pre- and post- residuals over the gap
+% Morph between pre- and post- residuals over the gap
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
 
 % Apply interpolated gap envelope to residual
