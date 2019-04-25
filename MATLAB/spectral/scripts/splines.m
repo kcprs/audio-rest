@@ -1,7 +1,8 @@
 % SPLINES Interpolate sinusoidal tracks using splines
 
 %% Set variable values
-fs = 44100;
+global fsGlobal
+fs = fsGlobal;
 frmLen = 1024;
 gapLen = 20 * frmLen;
 sigLen = 100 * frmLen;

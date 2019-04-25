@@ -2,7 +2,8 @@
 %two varieties of spectral peak detection
 
 %% Set variable values
-fs = 44100;
+global fsGlobal
+fs = fsGlobal;
 freq = 1000;
 nfft = 2048;
 

@@ -13,7 +13,6 @@ function [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrjLen, 
     %   -----------|---------------|----------------------------------------
     %    trs       | -Inf (dBFS)   | Treshold magnitude for peak detection
     %    nfft      | 2048          | FFT size
-    %    fs        | 44100         | Sampling frequency
     %
     %   [trks] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrjLen)
     %   uses all default values for spdArgs.
@@ -23,7 +22,7 @@ function [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrjLen, 
     end
 
     % Unpack struct with spectral peak detection arguments
-    [trs, nfft, fs] = unpackSPDArgs(spdArgs);
+    [trs, nfft] = unpackSPDArgs(spdArgs);
 
     % Calculate number of frames that will fit in the the given signal
     numFrames = floor((length(sig) - frmLen) / hopLen) + 1;
@@ -69,7 +68,7 @@ function [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrjLen, 
 
 end
 
-function [trs, nfft, fs] = unpackSPDArgs(spdArgs)
+function [trs, nfft] = unpackSPDArgs(spdArgs)
 
     if isfield(spdArgs, 'trs')
         trs = spdArgs.trs;
@@ -83,13 +82,6 @@ function [trs, nfft, fs] = unpackSPDArgs(spdArgs)
         spdArgs = rmfield(spdArgs, 'nfft');
     else
         nfft = 2048;
-    end
-
-    if isfield(spdArgs, 'fs')
-        fs = spdArgs.fs;
-        spdArgs = rmfield(spdArgs, 'fs');
-    else
-        fs = 44100;
     end
 
     % Throw error if there are leftover fields in the given struct

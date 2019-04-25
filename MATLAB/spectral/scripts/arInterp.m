@@ -1,7 +1,8 @@
 % ARINTERP Interpolate sinusoidal tracks using AR Modelling
 
 %% Set variable values
-fs = 44100;
+global fsGlobal
+fs = fsGlobal;
 frmLen = 2048;
 gapLen = 10 * frmLen;
 sigLen = 100 * frmLen;

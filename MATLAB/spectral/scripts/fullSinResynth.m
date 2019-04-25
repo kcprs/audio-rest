@@ -1,6 +1,6 @@
 % FULLSINRESYNTH Resynthesise given signal using sinusoidal modelling
-
-fs = 44100;
+global fsGlobal
+fs = fsGlobal;
 frmLen = 1024;
 hopLen = 256;
 numTrk = 20;

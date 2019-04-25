@@ -2,7 +2,8 @@
 % different input signals.
 
 %% Set variable values
-fs = 44100;
+global fsGlobal
+fs = fsGlobal;
 nfft = 2048;
 npks = 5;
 sigType = 'sin + noise';

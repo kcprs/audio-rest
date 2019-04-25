@@ -7,16 +7,18 @@ function sig = getSineSig(len, freq, mag, phase, fs)
     %   value at each index to the frequency or magnitude at the
     %   corresponding sample of the generated signal.
     %
-    %   sig = GETSINESIG(len, freq, mag, phase) uses default fs = 44100.
+    %   sig = GETSINESIG(len, freq, mag, phase) uses global fs value.
     %
     %   sig = GETSINESIG(len, freq, mag) uses default values: phase = 0
-    %   and fs = 44100.
+    %   and global fs value.
     %
     %   sig = GETSINESIG(len, freq) uses default values: mag = 0, phase = 0
-    %   and fs = 44100.
+    %   and global fs value.
 
+    global fsGlobal
+    
     if nargin < 5
-        fs = 44100;
+        fs = fsGlobal;
     end
 
     if nargin < 4

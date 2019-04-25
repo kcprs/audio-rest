@@ -7,13 +7,15 @@ function sig = getSawSig(len, freq, mag, fs)
     %   frequency or magnitude at the corresponding sample of the generated
     %   signal.
     %
-    %   sig = GETSAWSIG(len, freq, mag) uses default fs = 44100.
+    %   sig = GETSAWSIG(len, freq, mag) uses global fs value.
     %
     %   sig = GETSAWSIG(len, freq) uses default values: mag = 0, phase = 0
-    %   and fs = 44100.
+    %   and global fs value.
 
+    global fsGlobal
+    
     if nargin < 4
-        fs = 44100;
+        fs = fsGlobal;
     end
 
     if nargin < 3

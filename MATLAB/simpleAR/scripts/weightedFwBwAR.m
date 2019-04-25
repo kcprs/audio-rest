@@ -2,7 +2,8 @@
 % predictor
 
 %% Set up variable values
-fs = 44100;
+global fsGlobal
+fs = fsGlobal;
 f0 = 100;
 f1 = 1000;
 ord = 2;

@@ -1,4 +1,3 @@
-fs = 44100;
 sig = audioread("audio/Flute.nonvib.ff.A4.wav");
 
 [sigDmg, gapStart, gapEnd] = makeGap(sig, 1000);

@@ -1,7 +1,8 @@
 %SIMPLEAR Fix a gap in a signal using a simple, one-directional AR predictor
 
 %% Set up variable values
-fs = 44100;
+global fsGlobal
+fs = fsGlobal;
 f0 = 100;
 f1 = 1000;
 ord = 2;

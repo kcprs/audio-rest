@@ -1,4 +1,5 @@
-fs = 44100;
+global fsGlobal
+fs = fsGlobal;
 frmLen = 2048;
 hopLen = 256;
 numFrm = 100;

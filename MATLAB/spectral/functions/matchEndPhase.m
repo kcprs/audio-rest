@@ -5,7 +5,8 @@ function freqMtch = matchEndPhase(freq, initPhs, endPhs)
     %   frequency values) so that if resynthesis starts with initial phase
     %   initPhs, the phase of the last sample will be endPhs.
 
-    fs = 44100; %TODO
+    global fsGlobal
+    fs = fsGlobal;
     w = 2 * pi * freq / fs;
     curEndPhs = initPhs + sum(w);
 

@@ -1,7 +1,8 @@
 % GAPSINRESYNTH Restore gap in given signal using sinusoidal modelling
 
 %% Set variable values
-fs = 44100;
+global fsGlobal
+fs = fsGlobal;
 gapLen = 10000;
 frmLen = 1024;
 sigLen = 6 * frmLen;

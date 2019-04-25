@@ -4,11 +4,13 @@ function nextPhase = getNextPhase(curPhase, freq, fs)
     %   next samplein a sinusoidal signal based on the current
     %   phase curPhase, sine frequency freq and sampling frequency fs.
     % 
-    %   nextPhase = GETNEXTPHASE(curPhase, freq) uses default sampling
-    %   frequency value of fs = 44100.
+    %   nextPhase = GETNEXTPHASE(curPhase, freq) uses global sampling
+    %   frequency value.
 
+    global fsGlobal
+    
     if nargin < 3
-        fs = 44100;
+        fs = fsGlobal;
     end
 
     nextPhase = mod(curPhase + 2 * pi * freq / fs, 2 * pi);

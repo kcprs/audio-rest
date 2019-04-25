@@ -22,4 +22,8 @@ function setup(basePath)
     addpath([basePath, '\\plotting']);
 
     disp('Setup complete.');
+
+    % Set global variables
+    global fsGlobal
+    fsGlobal = 44100;
 end

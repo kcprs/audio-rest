@@ -2,7 +2,8 @@
 % residual resynthesis
 
 %% Set variable values
-fs = 44100;
+global fsGlobal
+fs = fsGlobal;
 frmLen = 1024;
 gapLen = 10 * frmLen;
 sigLen = 16 * frmLen;
