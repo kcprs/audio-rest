@@ -1,28 +1,28 @@
-function sig = getCosSig(len, freq, mag, phs, fs)
+function sig = getCosSig(len, freq, mag, initPhs, fs)
     %GETCOSSIG Generate a cosine wave
-    %   sig = GETCOSSIG(len, freq, mag, phs, fs) returns cosine wave of
+    %   sig = GETCOSSIG(len, freq, mag, initPhs, fs) returns cosine wave of
     %   frequency freq, magnitude mag (in dBFS), with specified initial
     %   phase and at a specifed sampling frequency fs. Arguments freq and
     %   mag can either be scalars or vectors of length len, mapping the
     %   value at each index to the frequency or magnitude at the
     %   corresponding sample of the generated signal.
     %
-    %   sig = GETCOSSIG(len, freq, mag, phs) uses global fs.
+    %   sig = GETCOSSIG(len, freq, mag, initPhs) uses global fs.
     %
     %   sig = GETCOSSIG(len, freq, mag) uses default values: phase = 0
     %   and global fs.
     %
     %   sig = GETCOSSIG(len, freq) uses default values: mag = 0, phase = 0
     %   and global fs.
-    
+
     global fsGlobal
-    
+
     if nargin < 5
         fs = fsGlobal;
     end
 
     if nargin < 4
-        phs = 0;
+        initPhs = 0;
     end
 
     if nargin < 3
@@ -46,16 +46,14 @@ function sig = getCosSig(len, freq, mag, phs, fs)
     if length(mag) == 1
         mag = ones(len, 1) * mag;
     end
-
+    
+    % Compute phase at each sample
+    delPhs = getDelPhs(freq, fs);
+    delPhs = delPhs(:); % Ensure vertical vector
+    delPhs = [0; delPhs(1:end - 1)];
+    phs = initPhs + cumsum(delPhs);
+    
     % Generate signal
-    sig = zeros(len, 1);
+    sig = 10.^(mag ./ 20) .* cos(phs);
 
-    for n = 1:len
-        if isnan(freq(n))
-            sig(n) = 0;
-        else
-            sig(n) = 10^(mag(n) / 20) * cos(phs);
-            phs = getNextPhase(phs, freq(n), fs);
-        end
-    end
 end
