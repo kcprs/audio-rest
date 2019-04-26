@@ -25,7 +25,8 @@ function setupSub(basePath)
     % Define paths to add
     pathsAdded = [basePath + "\\functions";
             basePath + "\\scripts";
-            basePath + "\\util"];
+            basePath + "\\util";
+            basePath + "\\audio"];
 
     % Add required subfolders to path
     for iter = 1:length(pathsAdded)
