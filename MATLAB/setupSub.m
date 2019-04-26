@@ -26,7 +26,8 @@ function setupSub(basePath)
     pathsAdded = [basePath + "\\functions";
             basePath + "\\scripts";
             basePath + "\\util";
-            basePath + "\\audio"];
+            basePath + "\\audio";
+            basePath + "\\plotGen"];
 
     % Add required subfolders to path
     for iter = 1:length(pathsAdded)
