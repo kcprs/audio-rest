@@ -2,7 +2,7 @@ function setup(basePath)
     %SETUP Prepare current MATLAB workspace for work with this package
     %   SETUP() - Use this if the MATLAB folder from this package is
     %   the current working directory.
-    % 
+    %
     %   SETUP(basePath) - Use this if the folder called MATLAB is not
     %   the current working directory. Argument basePath should be the path
     %   to the MATLAB folder in this package.
@@ -11,19 +11,32 @@ function setup(basePath)
         basePath = '.';
     end
 
-    % Add required subfolders to path
-    addpath([basePath, '\\util']);
-    addpath([basePath, '\\simpleAR\\scripts']);
-    addpath([basePath, '\\simpleAR\\functions']);
-    addpath([basePath, '\\spectral\\scripts']);
-    addpath([basePath, '\\spectral\\functions']);
-    addpath([basePath, '\\spectral\\classes']);
-    addpath([basePath, '\\comparisons\\scripts']);
-    addpath([basePath, '\\plotting']);
-
-    disp('Setup complete.');
-
     % Set global variables
     global fsGlobal
     fsGlobal = 44100;
+
+    global pathsAdded
+
+    % Remove paths added by another setup
+    for iter = 1:length(pathsAdded)
+        rmpath(pathsAdded(iter))
+    end
+
+    % Define paths to add
+    pathsAdded = [basePath + "\\util";
+            basePath + "\\simpleAR\\scripts";
+            basePath + "\\simpleAR\\functions";
+            basePath + "\\spectral\\scripts";
+            basePath + "\\spectral\\functions";
+            basePath + "\\spectral\\classes";
+            basePath + "\\comparisons\\scripts";
+            basePath + "\\plotting"];
+
+    % Add required subfolders to path
+    for iter = 1:length(pathsAdded)
+        addpath(pathsAdded(iter))
+    end
+
+    disp('Setup complete.');
+
 end

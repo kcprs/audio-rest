@@ -5,9 +5,9 @@ param (
 # MATLAB command to be ran
 $command = @"
 addpath('.\MATLAB');
-setup('.\MATLAB');
+setupSub('.\MATLAB\submission');
 import matlab.unittest.TestSuite;
-result = run(TestSuite.fromFolder('.\MATLAB\tests'));
+result = run(TestSuite.fromFolder('.\MATLAB\submission\tests'));
 "@
 
 # Additional command for exiting MATLAB
