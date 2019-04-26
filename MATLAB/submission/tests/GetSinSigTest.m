@@ -11,7 +11,7 @@ classdef GetSinSigTest < matlab.unittest.TestCase
 
             actual = getSinSig(len, freq);
             expected = sin(2 * pi * ((1:len)' - 1) * freq / fs);
-            testCase.verifyEqual(actual, expected, 'AbsTol', 1.0e-13);
+            testCase.verifyEqual(actual, expected, 'AbsTol', 1.0e-12);
         end
 
         function testShortSinPhase(testCase)
@@ -22,7 +22,7 @@ classdef GetSinSigTest < matlab.unittest.TestCase
             for iter = 1:length(phases) 
                 actual = getSinSig(4, 1, 0, phases(iter), 4);
                 
-                testCase.verifyEqual(actual, expected, 'AbsTol', 1.0e-13);
+                testCase.verifyEqual(actual, expected, 'AbsTol', 1.0e-12);
                 expected = circshift(expected, -1);
             end
         end
@@ -36,7 +36,7 @@ classdef GetSinSigTest < matlab.unittest.TestCase
             actual = getSinSig(len, ones(len, 1) * freq, 0, 0);
             expected = sin(2 * pi * ((1:len) - 1)' * freq / fs);
 
-            testCase.verifyEqual(actual, expected, 'AbsTol', 1.0e-13);
+            testCase.verifyEqual(actual, expected, 'AbsTol', 1.0e-12);
         end
 
         function testVectorMag(testCase)
@@ -52,7 +52,7 @@ classdef GetSinSigTest < matlab.unittest.TestCase
             expected = 10.^(mag(indx) / 20) .* ...
                 sin(2 * pi * (indx - 1) * freq / fs);
 
-            testCase.verifyEqual(actual, expected, 'AbsTol', 1.0e-13);
+            testCase.verifyEqual(actual, expected, 'AbsTol', 1.0e-12);
         end
 
         function testEndPhase(testCase)
@@ -70,7 +70,7 @@ classdef GetSinSigTest < matlab.unittest.TestCase
                 actual = pi - actual;
             end
 
-            testCase.verifyEqual(actual, expected);
+            testCase.verifyEqual(actual, expected,'AbsTol', 1.0e-12);
         end
 
     end

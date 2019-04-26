@@ -1,13 +1,13 @@
-function sig = getCosSig(len, freq, mag, phase, fs)
+function sig = getCosSig(len, freq, mag, phs, fs)
     %GETCOSSIG Generate a cosine wave
-    %   sig = GETCOSSIG(len, freq, mag, phase, fs) returns cosine wave of
+    %   sig = GETCOSSIG(len, freq, mag, phs, fs) returns cosine wave of
     %   frequency freq, magnitude mag (in dBFS), with specified initial
     %   phase and at a specifed sampling frequency fs. Arguments freq and
     %   mag can either be scalars or vectors of length len, mapping the
     %   value at each index to the frequency or magnitude at the
     %   corresponding sample of the generated signal.
     %
-    %   sig = GETCOSSIG(len, freq, mag, phase) uses global fs.
+    %   sig = GETCOSSIG(len, freq, mag, phs) uses global fs.
     %
     %   sig = GETCOSSIG(len, freq, mag) uses default values: phase = 0
     %   and global fs.
@@ -22,7 +22,7 @@ function sig = getCosSig(len, freq, mag, phase, fs)
     end
 
     if nargin < 4
-        phase = 0;
+        phs = 0;
     end
 
     if nargin < 3
@@ -54,8 +54,8 @@ function sig = getCosSig(len, freq, mag, phase, fs)
         if isnan(freq(n))
             sig(n) = 0;
         else
-            sig(n) = 10^(mag(n) / 20) * cos(phase);
-            phase = getNextPhase(phase, freq(n), fs);
+            sig(n) = 10^(mag(n) / 20) * cos(phs);
+            phs = getNextPhase(phs, freq(n), fs);
         end
     end
 end
