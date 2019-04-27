@@ -8,9 +8,9 @@ global fsGlobal
 fs = fsGlobal;
 
 % Uncomment below to set audio source and corresponding variables
-% source = "flute";
 source = "sine";
 % source = "sweep";
+% source = "flute";
 
 % Uncomment below to set prediction direction
 prDir = "fwd";
@@ -20,27 +20,28 @@ sigLen = 4000; % Total length of damaged signal in samples
 gapLen = 1000; % Length of gap in samples
 fitLen = 512; % Length of fitting section in samples
 
-%% Prepare the damaged signal
+% Set source-specific variable values
 switch source
-    case "sine"
-        f0 = 100;
-        arOrd = 2;
-
-        sig = getSinSig(sigLen, f0);
-    case "sweep"
-        f0 = 200;
-        f1 = 400;
-        arOrd = 2;
-
-        sig = getSweepSig(sigLen, f0, f1);
-    case "flute"
-        sigStart = 20000;
-        arOrd = 200;
-
-        sig = audioread("Flute.nonvib.ff.A4.wav");
-        sig = sig(sigStart:sigStart + sigLen - 1);
+case "sine"
+    f0 = 100;
+    arOrd = 2;
+    
+    sig = getSinSig(sigLen, f0);
+case "sweep"
+    f0 = 200;
+    f1 = 400;
+    arOrd = 2;
+    
+    sig = getSweepSig(sigLen, f0, f1);
+case "flute"
+    sigStart = 20000;
+    arOrd = 200;
+    
+    sig = audioread("Flute.nonvib.ff.A4.wav");
+    sig = sig(sigStart:sigStart + sigLen - 1);
 end
 
+%% Damage the signal
 [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen);
 
 %% Restoration
