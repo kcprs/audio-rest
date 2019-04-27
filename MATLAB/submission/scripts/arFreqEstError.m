@@ -1,6 +1,9 @@
 %ARFREQESTERROR Investigate frequency estimate error in Burg AR method
 % Plot estimation error against fitting section length
 
+% NOTE: Before running this script, call setup() to add required folders
+% to MATLAB path and set global variable values.
+
 %% Set variable values
 global fsGlobal
 fs = fsGlobal;
@@ -104,12 +107,12 @@ grid on;
 set(gca, 'YMinorTick','on', 'YMinorGrid', 'on');
 
 % Save figures
-filenameFreq = ['arFreqEstError_cos_', num2str(freq), '_Hz'];
-savefig(['figures\\arModelling\\', filenameFreq]);
-saveas(freqEstFig, ['figures\\arModelling\\', filenameFreq, '.png']);
-saveas(freqEstFig, ['figures\\arModelling\\', filenameFreq, '.eps'], 'epsc');
+% filenameFreq = ['arFreqEstError_cos_', num2str(freq), '_Hz'];
+% savefig(['figures\\arModelling\\', filenameFreq]);
+% saveas(freqEstFig, ['figures\\arModelling\\', filenameFreq, '.png']);
+% saveas(freqEstFig, ['figures\\arModelling\\', filenameFreq, '.eps'], 'epsc');
 
-filenameRad = ['arPoleModulus_cos_', num2str(freq), '_Hz'];
-savefig(['figures\\arModelling\\', filenameRad]);
-saveas(modFig, ['figures\\arModelling\\', filenameRad, '.png']);
-saveas(modFig, ['figures\\arModelling\\', filenameRad, '.eps'], 'epsc');
+% filenameRad = ['arPoleModulus_cos_', num2str(freq), '_Hz'];
+% savefig(['figures\\arModelling\\', filenameRad]);
+% saveas(modFig, ['figures\\arModelling\\', filenameRad, '.png']);
+% saveas(modFig, ['figures\\arModelling\\', filenameRad, '.eps'], 'epsc');

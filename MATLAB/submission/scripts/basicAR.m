@@ -1,7 +1,7 @@
 %BASICAR Fix a gap in a signal using a simple, one-directional AR predictor
 
-% NOTE: Before running this script, call setup() to add required folders to
-% MATLAB path and set global variable values.
+% NOTE: Before running this script, call setup() to add required folders
+% to MATLAB path and set global variable values.
 
 %% Set up variable values
 global fsGlobal
@@ -56,33 +56,31 @@ end
 
 pred = burgPredict(sigDmg, arOrd, predStart, predLen, fitLen);
 
-% Replace gap with predicted signal
-sigDmg(gapStart:gapStart + gapLen - 1) = pred;
-
 %% Plotting
+% Pad prediction so that the plot is continuous
+predPad = [sigDmg(gapStart - 1); pred; sigDmg(gapEnd + 1)];
+
 % Convert from samples to ms
 t = 1000 * (1:length(sig)) / fs;
 
+% Plot original signal with gap in the middle
+sigNaN = sig;
+sigNaN(gapStart:gapEnd) = NaN;
+plot(t, sigNaN);
+hold on;
+
 % Plot the original signal within the gap
-plot(t(gapStart:gapEnd), sig(gapStart:gapEnd), '--', 'Color', ...
-    [180, 180, 180] / 256);
+plot(t(gapStart - 1:gapEnd + 1), sig(gapStart - 1:gapEnd + 1), '--', ...
+    'Color', [170, 170, 170] / 256);
 
 % Plot the restored signal with legend
-hold on;
-set(gca, 'ColorOrderIndex', 1);
-
-description = ['arOrd = ', num2str(arOrd), ...
+description = ['Reconstruction: arOrd = ', num2str(arOrd), ...
                 ', gapLen = ', num2str(gapLen), ...
                 ', fitLen = ', num2str(fitLen), ...
                 ', fs = ', num2str(fs), ...
                 ', dir = ', prDir];
-p1 = plot(t, sigDmg, 'DisplayName', join(description, ''));
-
-% Mark gap area
-recHeight = 1.1 * max([abs(sig); abs(pred)]);
-rectangle('Position', [t(gapStart), -recHeight, t(gapLen), 2 * recHeight], ...
-    'FaceColor', 'none', 'EdgeColor', [219, 61, 21] / 256, ...
-    'LineStyle', '--');
+p1 = plot(t(gapStart - 1:gapEnd + 1), predPad, ...
+    'DisplayName', join(description, ''), 'Color', [219, 61, 21] / 256);
 
 % Mark fitting area
 if strcmp(prDir, 'bwd')
@@ -91,9 +89,8 @@ else
     fitStart = predStart - fitLen;
 end
 
-rectangle('Position', [t(fitStart), -recHeight, t(fitLen), 2 * recHeight], ...
-    'FaceColor', 'none', 'EdgeColor', [96, 186, 27] / 256, ...
-    'LineStyle', '--');
+plot(t(fitStart:fitStart + fitLen), sig(fitStart:fitStart + fitLen), ...
+    'Color', [31, 140, 12] / 256);
 hold off;
 
 % Add title, legend, etc.
@@ -107,25 +104,30 @@ switch source
         sigDescription = 'audio: Flute.nonvib.ff.A4.wav';
 end
 
-title(['Reconstruction with One-Sided Burg AR Model - ', sigDescription]);
-legend(p1, 'Location', 'southoutside');
+% title(['Reconstruction with One-Sided Burg AR Model - ', sigDescription]);
+% legend(p1, 'Location', 'southoutside');
 ylabel("Amplitude");
+% ylim([-1.5; 1.5]);
 xlabel("Time (ms)");
 grid on;
 
 % Save figure
 switch source
     case "sine"
-        filename = ['basicAR_sine_', num2str(f0), '_fitLen_', ...
-                    num2str(fitLen)];
+        filename = ['basicAR_sine_', num2str(f0), '_arOrd_', ...
+                    num2str(arOrd), '_fitLen_', num2str(fitLen)];
     case "sweep"
         filename = ['basicAR_sweep_', num2str(f0), '-', num2str(f1), ...
-                    '_fitLen_', num2str(fitLen)];
+                    '_arOrd_', num2str(arOrd), '_fitLen_', num2str(fitLen)];
     case "flute"
         filename = ['basicAR_flute_arOrd_', num2str(arOrd), '_fitLen_', ...
                     num2str(fitLen)];
 end
 
+% figPos = get(gcf, 'Position');
+% figPos(4) = 0.7 * figPos(4);
+% set(gcf, 'Position', figPos);
 % savefig(['figures\\arModelling\\', filename]);
 % saveas(gcf, ['figures\\arModelling\\', filename, '.png']);
 % saveas(gcf, ['figures\\arModelling\\', filename, '.eps'], 'epsc');
+% close(gcf);
