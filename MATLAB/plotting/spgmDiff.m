@@ -7,10 +7,10 @@ ylimkHz = [0, 20];
 
 % sig = audioread("audio/fluteOrigTrim.wav");
 % sigRest = audioread("audio/fluteWithResTrim.wav");
-sig = getCosSig(fs, 100 * fs / frmLen);
-sigRest = getCosSig(fs, 100 * fs / frmLen, 0, pi);
-% sig = randn([fs, 1]);
-% sigRest = randn([fs, 1]);
+% sig = getCosSig(fs, 100 * fs / frmLen);
+% sigRest = getCosSig(fs, 100 * fs / frmLen, 0, pi);
+sig = randn([fs, 1]);
+sigRest = randn([fs, 1]);
 
 % plot the first spectrogram
 subplot(2, 2, 1);
@@ -36,7 +36,6 @@ xlimSpgm = xlim;
 
 subplot(2, 2, 4);
 pDiffMean = mean(pDiff, 1);
-
 tms = t * 1000;
 plot(tms, pDiffMean);
 title('Average PSD error per FFT bin');
@@ -44,6 +43,23 @@ xlabel("Time (ms)");
 ylabel("Power/frequency (dB/Hz)");
 xlim(xlimSpgm);
 grid;
+
+% tms = t * 1000;
+% logDist = logSpectralDistance(pSig, pSigRest);
+% plot(tms, logDist);
+% title('Log-spectral distance');
+% xlabel("Time (ms)");
+% ylabel("Log-spectral distance (dB)");
+% xlim(xlimSpgm);
+% grid;
+
+% tms = t * 1000;
+% isDist = itakuraSaitoDistance(pSig, pSigRest);
+% plot(tms, isDist);
+% title('Itakura-Saito distance');
+% xlabel("Time (ms)");
+% xlim(xlimSpgm);
+% grid;
 
 %% Compare with code below to check if pDiffMean is calculated correctly
 % subplot(2, 2, 3);
@@ -110,4 +126,14 @@ function pDiff = diffSpectrogram(t, f, p1, p2, isFsnormalized, faxisloc, esttype
     mapb = [linspace(lowCl(3), midCl(3), 50).'; linspace(midCl(3), hiCl(3), 50).'];
     map = [mapr, mapg, mapb];
     set(gca, 'colormap', map);
+end
+
+function result = logSpectralDistance(p1, p2)
+    % https://en.wikipedia.org/wiki/Log-spectral_distance
+    result = sqrt(1 / (2 * pi) * sum((10 * log10(p1 ./ p2)).^2, 1));
+end
+
+function result = itakuraSaitoDistance(p1, p2)
+    % https://en.wikipedia.org/wiki/Itakura%E2%80%93Saito_distance
+    result = 1 / (2 * pi) * sum(p1 ./ p2 - log10(p1 ./ p2) - 1, 1);
 end
