@@ -108,11 +108,11 @@ set(gca, 'YMinorTick','on', 'YMinorGrid', 'on');
 
 % Save figures
 % filenameFreq = ['arFreqEstError_cos_', num2str(freq), '_Hz'];
-% savefig(['figures\\arModelling\\', filenameFreq]);
+% savefig(freqEstFig, ['figures\\arModelling\\', filenameFreq, '.fig']);
 % saveas(freqEstFig, ['figures\\arModelling\\', filenameFreq, '.png']);
 % saveas(freqEstFig, ['figures\\arModelling\\', filenameFreq, '.eps'], 'epsc');
 
 % filenameRad = ['arPoleModulus_cos_', num2str(freq), '_Hz'];
-% savefig(['figures\\arModelling\\', filenameRad]);
+% savefig(freqEstFig, ['figures\\arModelling\\', filenameRad, .fig]);
 % saveas(modFig, ['figures\\arModelling\\', filenameRad, '.png']);
 % saveas(modFig, ['figures\\arModelling\\', filenameRad, '.eps'], 'epsc');
