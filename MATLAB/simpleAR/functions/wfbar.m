@@ -14,7 +14,7 @@ function pred = wfbar(pre, post, gapLen, ord, rmDC)
     %% Restoration
     % Predict the missing signal forward
     predFwd = burgPredict(pre, ord, length(pre) + 1, gapLen, ...
-        length(pre), rmDc);
+        length(pre), rmDC);
 
     % Predict the missing signal backward
     predBwd = burgPredict(post, ord, 0, -gapLen, length(post), rmDC);
