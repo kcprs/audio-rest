@@ -74,6 +74,8 @@ for trkIter = 1:numTrk
 end
 
 [freqPre, magPre, phsPre, smplPre] = SinTrack.consolidateFMP(trksPre);
+% [pitchPreAsync, indx] = pitch(sigPre, fs, 'Method', 'SRH');
+% pitchPre = spline(indx, pitchPreAsync, smplPre);
 pitchPre = trksPre(1).pitchEst;
 [envPreUpper, envPreLower] = envelope(sigPre, hopLen, 'peak');
 envPre = (envPreUpper - envPreLower) / 2;
@@ -84,6 +86,8 @@ envPredB = 20 * log10(abs(envPre));
 sigPost = sigDmg(gapEnd + 1:end);
 trksPost = trackSpecPeaks(sigPost, frmLen, hopLen, numTrk, minTrkLen);
 [freqPost, magPost, phsPost, smplPost] = SinTrack.consolidateFMP(trksPost);
+% [pitchPostAsync, indx] = pitch(sigPost, fs);
+% pitchPost = spline(indx, pitchPostAsync, smplPost);
 pitchPost = trksPost(1).pitchEst;
 [envPostUpper, envPostLower] = envelope(sigPost, hopLen, 'peak');
 envPost = (envPostUpper - envPostLower) / 2;
