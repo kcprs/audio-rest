@@ -17,7 +17,7 @@ classdef GetCosSigTest < matlab.unittest.TestCase
         function testShortCosPhase(testCase)
             % Test phase argument on a simple example
             phases = [0, 0.5 * pi, pi, -0.5 * pi];
-            expected = [1; 0; -1; 0;];
+            expected = [1; 0; -1; 0; ];
 
             for iter = 1:length(phases)
                 actual = getCosSig(4, 1, 0, phases(iter), 4);
@@ -61,17 +61,23 @@ classdef GetCosSigTest < matlab.unittest.TestCase
             global fsGlobal
             fs = fsGlobal;
             len = 1000;
-            freq = linspace(10, 20, len);
-            sig = getCosSig(len, freq);
-            w = 2 * pi * freq / fs;
-            expected = mod(sum(w(1:end - 1)), 2 * pi);
-            actual = acos(sig(end));
+            numTests = 100;
+            startFreq = linspace(100, 10000, numTests);
 
-            if sig(end) > sig(end - 1)
-                actual = actual + pi;
+            for iter = 1:numTests
+                freq = linspace(startFreq(iter), 20, len);
+                sig = getCosSig(len, freq);
+                w = 2 * pi * freq / fs;
+                expected = mod(sum(w(1:end - 1)), 2 * pi);
+                actual = acos(sig(end));
+
+                if sig(end) > sig(end - 1)
+                    actual = 2 * pi - actual;
+                end
+
+                testCase.verifyEqual(actual, expected, 'AbsTol', 1.0e-12);
             end
 
-            testCase.verifyEqual(actual, expected);
         end
 
     end
