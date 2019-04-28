@@ -85,7 +85,7 @@ ylabel("Amplitude");
 xlabel("Time (ms)");
 grid on;
 
-% Save figure
+% Save figures
 switch restType
     case "sin"
         restDesc = ['_fRest_', num2str(fRest)];
@@ -93,24 +93,24 @@ switch restType
         restDesc = '_noise';
 end
 
-filename = ['shortTermQualMeas_overlapped_gap_', num2str(gapLen), '_f_', ...
-                num2str(f), restDesc];
-figPos = get(oFig, 'Position');
-figPos(3) = 1.5 * figPos(3);
-figPos(4) = 0.5 * figPos(4);
-set(oFig, 'Position', figPos);
-savefig(oFig, ['figures\\qualityAssessment\\', filename, '.fig']);
-saveas(oFig, ['figures\\qualityAssessment\\', filename, '.png']);
-saveas(oFig, ['figures\\qualityAssessment\\', filename, '.eps'], 'epsc');
-close(oFig);
+% filename = ['shortTermQualMeas_overlapped_gap_', num2str(gapLen), '_f_', ...
+%                 num2str(f), restDesc];
+% figPos = get(oFig, 'Position');
+% figPos(3) = 1.5 * figPos(3);
+% figPos(4) = 0.5 * figPos(4);
+% set(oFig, 'Position', figPos);
+% savefig(oFig, ['figures\\qualityAssessment\\', filename, '.fig']);
+% saveas(oFig, ['figures\\qualityAssessment\\', filename, '.png']);
+% saveas(oFig, ['figures\\qualityAssessment\\', filename, '.eps'], 'epsc');
+% close(oFig);
 
-filename = ['shortTermQualMeas_difference_gap_', num2str(gapLen), '_f_', ...
-                num2str(f), restDesc];
-figPos = get(dFig, 'Position');
-figPos(3) = 1.5 * figPos(3);
-figPos(4) = 0.5 * figPos(4);
-set(dFig, 'Position', figPos);
-savefig(dFig, ['figures\\qualityAssessment\\', filename, '.fig']);
-saveas(dFig, ['figures\\qualityAssessment\\', filename, '.png']);
-saveas(dFig, ['figures\\qualityAssessment\\', filename, '.eps'], 'epsc');
-close(dFig);
+% filename = ['shortTermQualMeas_difference_gap_', num2str(gapLen), '_f_', ...
+%                 num2str(f), restDesc];
+% figPos = get(dFig, 'Position');
+% figPos(3) = 1.5 * figPos(3);
+% figPos(4) = 0.5 * figPos(4);
+% set(dFig, 'Position', figPos);
+% savefig(dFig, ['figures\\qualityAssessment\\', filename, '.fig']);
+% saveas(dFig, ['figures\\qualityAssessment\\', filename, '.png']);
+% saveas(dFig, ['figures\\qualityAssessment\\', filename, '.eps'], 'epsc');
+% close(dFig);

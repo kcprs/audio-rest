@@ -13,7 +13,6 @@ function psdDiff = spgmDiff(t, f, psd1, psd2)
     plotOpts.threshold = 10 * log10(eps);
     plotOpts.isFsNorm = false;
 
-    % Power in dB
     psdDiff = 10 * (log10(abs(psd1) + eps) - log10(abs(psd2) + eps));
     signalwavelet.internal.convenienceplot.plotTFR(t, f, psdDiff, plotOpts);
 
@@ -23,7 +22,7 @@ function psdDiff = spgmDiff(t, f, psd1, psd2)
     caxis(gca, [-absLim, absLim]);
 
     lowCl = [0, 0, 1];
-    midCl = [1, 1, 1];
+    midCl = [0, 0, 0];
     hiCl = [1, 0, 0];
 
     mapr = [linspace(lowCl(1), midCl(1), 50).'; ...
