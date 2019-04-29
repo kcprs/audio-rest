@@ -18,9 +18,9 @@ envWeight = 1;
 
 % source = "saw";
 % source = "sin";
-% source = "audio/Cello.arco.mf.sulC.A2.wav";
+source = "audio/Cello.arco.mf.sulC.A2.wav";
 % source = "audio/Flute.nonvib.ff.A4.wav";
-source = "audio/Flute.vib.ff.A4.wav";
+% source = "audio/Flute.vib.ff.A4.wav";
 % source = "audio/Guitar.mf.sulD.A3.wav";
 % source = "audio/Guitar.mf.sulD.D3.wav";
 % source = "audio/Horn.mf.A2.wav";
@@ -58,6 +58,8 @@ if strcmp(source, 'audio/PianoScale.wav')
     [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen, 80000);
 elseif contains(source, "Guitar")
     [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen, 80000);
+elseif contains(source, "Cello")
+    [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen, 50000);
 else
     [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen);
 end

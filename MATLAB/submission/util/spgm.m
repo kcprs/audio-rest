@@ -10,11 +10,11 @@ function [t, f, psd] = spgm(sig, showFig, frmLen, hopLen, fs)
     if nargin < 3
         frmLen = 2048;
     end
-    
+
     if nargin < 4
         hopLen = round(frmLen / 8);
     end
-    
+
     if nargin < 2
         showFig = true;
     end
@@ -27,4 +27,8 @@ function [t, f, psd] = spgm(sig, showFig, frmLen, hopLen, fs)
     end
 
     [~, f, t, psd] = spectrogram(sig, hann(frmLen), overlap, frmLen, fs);
+
+    % Transpose to stay consistent with convention:
+    % time on vertical axis, frequency on horizontal axis
+    psd = psd.';
 end

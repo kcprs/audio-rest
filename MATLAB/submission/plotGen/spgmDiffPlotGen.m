@@ -7,8 +7,8 @@ fs = fsGlobal;
 
 sigLen = fs;
 
-% source = "sines";
-source = "phaseDemo";
+source = "sines";
+% source = "phaseDemo";
 
 switch source
     case "sines"
