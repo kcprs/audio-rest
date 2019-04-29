@@ -12,7 +12,7 @@ fs = fsGlobal;
 source = "flute.vib";
 
 sigLen = fs; % Total length of damaged signal in samples
-gapLen = 5000; % Length of gap in samples
+gapLen = 100; % Length of gap in samples
 fitLen = 2048; % Length of fitting section in samples
 
 % Set source-specific variable values
@@ -36,7 +36,7 @@ switch source
         sig = sig(sigStart:sigStart + sigLen - 1);
     case "flute.vib"
         sigStart = 15000;
-        arOrd = 200;
+        arOrd = 0;
 
         sig = audioread("Flute.vib.ff.A4.wav");
         sig = sig(sigStart:sigStart + sigLen - 1);
@@ -46,22 +46,33 @@ end
 [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen);
 
 %% Restoration
-% Predict the missing signal forward
-predFwd = burgPredict(sigDmg, arOrd, gapStart, gapLen, fitLen);
+% % Predict the missing signal forward
+% predFwd = burgPredict(sigDmg, arOrd, gapStart, gapLen, fitLen);
 
-% Predict the missing signal backward
-predBwd = burgPredict(sigDmg, arOrd, gapEnd, -gapLen, fitLen);
+% % Predict the missing signal backward
+% predBwd = burgPredict(sigDmg, arOrd, gapEnd, -gapLen, fitLen);
 
-% Apply the crossfade
-pred = crossfade(predFwd, predBwd);
+% % Apply the crossfade
+% sigGap = crossfade(predFwd, predBwd);
+
+% Pick out pre- and post- gap section for model fitting
+pre = sig(gapStart - fitLen:gapStart - 1);
+post = sig(gapEnd + 1:gapEnd + fitLen);
+
+% Predict signal in gap
+[sigGap, ordFw, ordBw] = wfbar(pre, post, gapLen, 0);
 
 % Replace gap with predicted signal
 sigRest = sigDmg;
-sigRest(gapStart:gapEnd) = pred;
+sigRest(gapStart:gapEnd) = sigGap;
 
 %% Plotting
+% Determine signal range to be plotted
+plotStart = gapStart - fitLen - round(0.2 * (gapLen + fitLen));
+plotEnd = gapEnd + fitLen + round(0.2 * (gapLen + fitLen));
+
 % Pad prediction so that the plot is continuous
-predPad = [sigRest(gapStart - 1); pred; sigRest(gapEnd + 1)];
+predPad = [sigRest(gapStart - 1); sigGap; sigRest(gapEnd + 1)];
 
 % Convert from samples to ms
 t = 1000 * (1:length(sig)) / fs;
@@ -71,15 +82,21 @@ tFig = figure(1);
 % Plot the original signal
 sigNaN = sig;
 sigNaN(gapStart:gapEnd) = NaN;
-plot(t, sigNaN);
+plot(t(plotStart:plotEnd), sigNaN(plotStart:plotEnd));
 hold on;
 
 % Plot the original signal within the gap
-% plot(t(gapStart - 1:gapEnd + 1), sig(gapStart - 1:gapEnd + 1), '--', ...
-    %     'Color', [170, 170, 170] / 256);
+plot(t(gapStart - 1:gapEnd + 1), sig(gapStart - 1:gapEnd + 1), '--', ...
+        'Color', [170, 170, 170] / 256);
 
 % Plot the restored signal with legend
-description = ['Reconstruction: arOrd = ', num2str(arOrd), ...
+if arOrd == 0
+    ordDesc = ['ordFw = ', num2str(ordFw), ', ordBw = ', num2str(ordBw)];
+else
+    ordDesc = ['ord = ', num2str(arOrd)];
+end
+
+description = ['Reconstruction: ', ordDesc, ...
                 ', gapLen = ', num2str(gapLen), ...
                 ', fitLen = ', num2str(fitLen), ...
                 ', fs = ', num2str(fs)];
@@ -103,7 +120,7 @@ switch source
                         ' f_{end} = ', num2str(f1), ' Hz'];
     case "flute.nonvib"
         sigDescription = 'audio: Flute.nonvib.ff.A4.wav';
-    case "flute.nonvib"
+    case "flute.vib"
         sigDescription = 'audio: Flute.vib.ff.A4.wav';
 end
 
@@ -115,13 +132,12 @@ grid on;
 
 % Frequency domain
 fFig = figure(2);
-spgm(sigRest, 1024);
-% set(gca, 'YScale', 'log');
+spgm(sigRest((plotStart:plotEnd)), 1024);
 title(['Weighted Fwd-Bwd AR Model - ', sigDescription]);
 
 % Original signal in full - time domain
 otFig = figure(3);
-plot(t, sig);
+plot(t(plotStart:plotEnd), sig(plotStart:plotEnd));
 title("Original signal");
 ylabel("Amplitude");
 xlabel("Time (ms)");
@@ -129,8 +145,7 @@ grid on;
 
 % Frequency domain
 ofFig = figure(4);
-spgm(sig, 1024);
-% set(gca, 'YScale', 'log');
+spgm(sig(plotStart:plotEnd), 1024);
 title("Original signal");
 
 % Save figures
