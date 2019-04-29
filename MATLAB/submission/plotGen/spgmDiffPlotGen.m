@@ -57,37 +57,35 @@ end
 
 switch source
     case "phaseDemo"
-        sigLenNew = 2000;
-        gapLen = round(sigLenNew * gapLen / sigLen);
-        sigLen = sigLenNew;
-        gapStart = (sigLen - gapLen) / 2;
-        gapEnd = gapStart + gapLen - 1;
-        smplShift = 50;
+        smplShift = 1000;
 
-        sig = getCosSig(sigLen, 200);
+        sig = getCosSig(sigLen, 10);
         gapSig = [sig(gapStart - 1); ...
                 sig(gapStart + smplShift:gapEnd + smplShift); ...
                 sig(gapEnd + 1)];
+
+        % Convert from samples to ms
+        t = 1000 * (1:length(sig)) / fs;
 
         figTm = figure(4);
         % Plot original signal with gap in the middle
         sigNaN = sig;
         sigNaN(gapStart:gapEnd) = NaN;
-        plot(sigNaN);
+        plot(t, sigNaN);
         hold on;
 
         % Plot the original signal within the gap
-        plot(gapStart - 1:gapEnd + 1, sig(gapStart - 1:gapEnd + 1), ...
+        plot(t(gapStart - 1:gapEnd + 1), sig(gapStart - 1:gapEnd + 1), ...
             '--', 'Color', [170, 170, 170] / 256);
 
         % Plot the restored signal
-        plot(gapStart - 1:gapEnd + 1, gapSig, 'Color', [219, 61, 21] / 256);
+        plot(t(gapStart - 1:gapEnd + 1), gapSig, 'Color', [219, 61, 21] / 256);
         hold off;
 
-        title("Reconstruction in time domain (time & frequency not to scale)");
+        title("Reconstruction in time domain (frequency not to scale for clarity)");
+        xlabel("Time (ms)");
         ylabel("Amplitude");
         ylim([-1.2, 1.2])
-        xticks([]);
         grid on;
 end
 
