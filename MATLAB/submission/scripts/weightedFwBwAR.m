@@ -12,8 +12,8 @@ fs = fsGlobal;
 source = "flute.vib";
 
 sigLen = fs; % Total length of damaged signal in samples
-gapLen = 100; % Length of gap in samples
-fitLen = 2048; % Length of fitting section in samples
+gapLen = 500; % Length of gap in samples
+fitLen = 1000; % Length of fitting section in samples
 
 % Set source-specific variable values
 switch source

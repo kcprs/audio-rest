@@ -1,7 +1,12 @@
 function ord = getArOrd(sig, mseTrs)
+    %GETARORD Find AR model order optimal for reconstruction of given signal 
+    %   ord = getArOrd(sig, mseTrs) returns the order ord of an AR model,
+    %   for which MSE of prediction is below threshold mseTrs.
+    % 
+    %    ord = getArOrd(sig) uses default value of mseTrs = 0.0005.
 
     if nargin < 2
-        mseTrs = 0.0001;
+        mseTrs = 0.0005;
     end
 
     sigLen = length(sig);

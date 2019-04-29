@@ -3,7 +3,7 @@ function [pred, ordFw, ordBw] = wfbar(pre, post, gapLen, ord, rmDC)
     %   [pred, ordFw, ordBw] = wfbar(pre, post, gapLen, ord, rmDC) returns
     %   prediction pred of length gapLen based on given pre- and post-gap
     %   sections using an AR model of order ord. If ord is set to 0, optimal
-    %   order for the AR model model will be found using getArOrd()
+    %   order for the AR model model will be found using getArOrd().
     % 
     %   [pred, ordFw, ordBw] = wfbar(pre, post, gapLen, ord, rmDC) uses
     %   default value of rmDC = false.
