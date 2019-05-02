@@ -11,12 +11,12 @@ classdef GetFTTest < matlab.unittest.TestCase
             fs = 1000;
             s = getCosSig(l, f, m, p, fs);
 
-            [mag, phs] = getFT(s);
+            [mag, phs, nfft] = getFT(s);
 
             [~, peakBin] = max(mag);
 
-            testCase.verifySize(mag, [1, l]);
-            testCase.verifyEqual(peakBin, f * l / fs + 1);
+            testCase.verifySize(mag, [1, nfft]);
+            testCase.verifyEqual(peakBin, f * nfft / fs + 1);
             testCase.verifyEqual(mag(peakBin), m, 'AbsTol', 10e-3);
             testCase.verifyEqual(phs(peakBin), ...
                 acos(s(ceil(l / 2) + 1) / a), 'AbsTol', 10e-7);
