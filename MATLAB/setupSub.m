@@ -25,6 +25,7 @@ function setupSub(basePath)
     % Define paths to add
     pathsAdded = [basePath + "\\functions";
             basePath + "\\scripts";
+            basePath + "\\classes";
             basePath + "\\util";
             basePath + "\\audio";
             basePath + "\\plotGen"];

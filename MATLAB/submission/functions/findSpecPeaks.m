@@ -13,14 +13,20 @@ function [freqEst, magEst, phsEst] = findSpecPeaks(sig, trs, npks)
     [mag, phs, nfft] = getFT(sig);
 
     % Find highest peaks in magnitude spectrum
-    % Set MinPeakWidth to 3 so that interpolation below is possible
+    % Set MinPeakWidth larger than sidelobe width to avoid side lobes
+    % being detected as peaks. If side lobes are small, limit peak width
+    % to 3 samples so that interpolation can be done.
+    sideLobeWidth = 2 * nfft / length(sig);
+    minwidth = max(3, sideLobeWidth + 1);
+
     if npks == 0
         [peakMag, peakLoc] = findpeaks(mag(1:(floor(nfft / 2) + 1)), ...
-            'SortStr', 'descend', 'MinPeakHeight', trs, 'MinPeakWidth', 3);
+            'SortStr', 'descend', 'MinPeakHeight', trs, ...
+            'MinPeakWidth', minwidth);
     else
         [peakMag, peakLoc] = findpeaks(mag(1:(floor(nfft / 2) + 1)), ...
             'SortStr', 'descend', 'MinPeakHeight', trs, 'NPeaks', npks, ...
-            'MinPeakWidth', 3);
+            'MinPeakWidth', minwidth);
     end
 
     % Interpolation method based on:
