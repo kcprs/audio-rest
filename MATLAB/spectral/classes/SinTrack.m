@@ -25,7 +25,7 @@ classdef SinTrack < handle
             obj.minTrjLen = 0;
         end
 
-        function pkScore = getPkScore(obj, pkFreq, pkMag, maxJump)
+        function pkScore = getPkScore(obj, pkFreq, pkMag)
             % GETPKSCORE Compute peak score for each peak in current frame
             % based on the previous peak in track
             [prevFreq, ~, ~] = obj.getRelIndFMP(-1);
@@ -38,6 +38,7 @@ classdef SinTrack < handle
             else
                 % Otherwise pick closest peak within maxJump range
                 freqDist = abs(pkFreq - prevFreq);
+                maxJump = prevFreq * (2^(1/12) - 1);
                 freqDist(freqDist > maxJump) = NaN;
                 pkScore = freqDist;
             end

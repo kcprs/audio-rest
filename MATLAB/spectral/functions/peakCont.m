@@ -22,7 +22,7 @@ function peakCont(trks, pkFreq, pkMag, pkPhs, smpl, pitchEst)
     % Save centre sample of current frame
     for trkIter = 1:numTrk
         pkScore(trkIter, :) = trks(trkIter).getPkScore(pkFreq, ...
-            pkMag, pitchEst / 2);
+            pkMag);
         trks(trkIter).saveSmpl(smpl);
         trks(trkIter).savePitch(pitchEst);
     end
