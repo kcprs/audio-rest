@@ -11,7 +11,7 @@ function sig = resynth(freqEst, magEst, initPhs, hopLen, endPhs)
         endPhs = NaN;
     end
 
-    almostNegInf = -200; % Approximation of negative infinity in dB
+    almostNegInf = -100; % Approximation of negative infinity in dB
 
     %% Allocate matrices for sample-by-sample values of freq and mag
     freq = zeros((size(freqEst, 1) - 1) * hopLen + 1, size(freqEst, 2));
@@ -64,36 +64,26 @@ function sig = resynth(freqEst, magEst, initPhs, hopLen, endPhs)
     end
 
     %% Alter frequency trajectories to match end phase
-    if ~all(isnan(endPhs))
+    % if ~all(isnan(endPhs))
 
-        for iter = 1:size(freq, 2)
-            freq(:, iter) = matchEndPhase(freq(:, iter), initPhs(iter), ...
-                endPhs(iter));
-        end
+    %     for iter = 1:size(freq, 2)
+    %         freq(:, iter) = matchEndPhase(freq(:, iter), initPhs(iter), ...
+        %             endPhs(iter));
+    %     end
 
-    end
+    % end
 
     %% Synthesise the signal
     sig = zeros(size(freq, 1), 1);
 
     for iter = 1:size(freq, 2)
-        % subplot(2, 1, 1);
         newSig = getCosSig(size(freq, 1), freq(:, iter), ...
             mag(:, iter), initPhs(iter));
-        % plot(newSig);
-        % title(['Signal from track ', num2str(iter)]);
-        % xlabel('Time in samples');
-        % ylabel('Amplitude');
 
-        sig = sig + newSig;
-        % subplot(2, 1, 2);
-        % plot(sig);
-        % title('Sum of signals');
-        % xlabel('Time in samples');
-        % ylabel('Amplitude');
+        if (all(~isnan(newSig)))
+            sig = sig + newSig;
+        end
 
-        % filename = strcat("anim/frame", num2str(iter), ".png");
-        % saveas(gcf, filename);
     end
 
 end
