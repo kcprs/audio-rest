@@ -64,14 +64,14 @@ function sig = resynth(freqEst, magEst, initPhs, hopLen, endPhs)
     end
 
     %% Alter frequency trajectories to match end phase
-    % if ~all(isnan(endPhs))
+    if ~all(isnan(endPhs))
 
-    %     for iter = 1:size(freq, 2)
-    %         freq(:, iter) = matchEndPhase(freq(:, iter), initPhs(iter), ...
-        %             endPhs(iter));
-    %     end
+        for iter = 1:size(freq, 2)
+            freq(:, iter) = matchEndPhase(freq(:, iter), initPhs(iter), ...
+                    endPhs(iter));
+        end
 
-    % end
+    end
 
     %% Synthesise the signal
     sig = zeros(size(freq, 1), 1);

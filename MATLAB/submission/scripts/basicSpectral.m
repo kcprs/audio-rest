@@ -399,65 +399,65 @@ switch source
         sigDesc = 'trumpetVib';
 end
 
-filename = [sigDesc, '_t_orig_gapLen_', num2str(gapLen)];
-resizeFigure(fig1, 1, 0.6);
-saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig1);
+% filename = [sigDesc, '_t_orig_gapLen_', num2str(gapLen)];
+% resizeFigure(fig1, 1, 0.6);
+% saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig1);
 
-filename = [sigDesc, '_t_gap_gapLen_', num2str(gapLen)];
-resizeFigure(fig2, 1, 0.6);
-saveas(fig2, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig2, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig2);
+% filename = [sigDesc, '_t_gap_gapLen_', num2str(gapLen)];
+% resizeFigure(fig2, 1, 0.6);
+% saveas(fig2, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig2, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig2);
 
-filename = [sigDesc, '_t_sigGap_gapLen_', num2str(gapLen)];
-resizeFigure(fig3, 1, 0.6);
-saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig3);
+% filename = [sigDesc, '_t_sigGap_gapLen_', num2str(gapLen)];
+% resizeFigure(fig3, 1, 0.6);
+% saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig3);
 
-filename = [sigDesc, '_t_rest_gapLen_', num2str(gapLen)];
-resizeFigure(fig4, 1, 0.6);
-saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig4);
+% filename = [sigDesc, '_t_rest_gapLen_', num2str(gapLen)];
+% resizeFigure(fig4, 1, 0.6);
+% saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig4);
 
-filename = [sigDesc, '_trk_freq_gapLen_', num2str(gapLen)];
-resizeFigure(fig5, 1, 0.6);
-saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig5);
+% filename = [sigDesc, '_trk_freq_gapLen_', num2str(gapLen)];
+% resizeFigure(fig5, 1, 0.6);
+% saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig5);
 
-filename = [sigDesc, '_trk_mag_gapLen_', num2str(gapLen)];
-resizeFigure(fig6, 1, 0.6);
-saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig6);
+% filename = [sigDesc, '_trk_mag_gapLen_', num2str(gapLen)];
+% resizeFigure(fig6, 1, 0.6);
+% saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig6);
 
-filename = [sigDesc, '_spgm_orig_gapLen_', num2str(gapLen)];
-resizeFigure(fig7, 1, 0.6);
-saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig7);
+% filename = [sigDesc, '_spgm_orig_gapLen_', num2str(gapLen)];
+% resizeFigure(fig7, 1, 0.6);
+% saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig7);
 
-filename = [sigDesc, '_spgm_rest_gapLen_', num2str(gapLen)];
-resizeFigure(fig8, 1, 0.6);
-saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig8);
+% filename = [sigDesc, '_spgm_rest_gapLen_', num2str(gapLen)];
+% resizeFigure(fig8, 1, 0.6);
+% saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig8);
 
-filename = [sigDesc, '_spgm_diff_gapLen_', num2str(gapLen)];
-resizeFigure(fig9, 1, 0.6);
-saveas(fig9, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig9, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig9);
+% filename = [sigDesc, '_spgm_diff_gapLen_', num2str(gapLen)];
+% resizeFigure(fig9, 1, 0.6);
+% saveas(fig9, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig9, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig9);
 
-filename = [sigDesc, '_lsd_gapLen_', num2str(gapLen)];
-resizeFigure(fig10, 1, 0.6);
-saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig10);
+% filename = [sigDesc, '_lsd_gapLen_', num2str(gapLen)];
+% resizeFigure(fig10, 1, 0.6);
+% saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig10);
 
 function resizeFigure(figHandle, xFact, yFact)
     figPos = get(figHandle, 'Position');
