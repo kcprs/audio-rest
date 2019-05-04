@@ -4,37 +4,20 @@
 global fsGlobal
 fs = fsGlobal;
 frmLen = 2048;
-gapLen = 10 * frmLen;
+gapLen = 4 * frmLen;
 sigLen = 6 * frmLen;
 hopLen = 256;
-numTrk = 20;
-minTrkLen = 10;
+numTrk = 60;
+minTrkLen = 20;
 resOrdAR = 100;
-pitchOrdAR = 2;
-magOrdAR = 2;
-envOrdAR = 2;
 almostNegInf = -100;
-envWeight = 1;
 
 % source = "saw";
 % source = "sin";
-% source = "matchTest";
-% source = "audio/Cello.arco.mf.sulC.A2.wav";
 % source = "audio/Flute.nonvib.ff.A4.wav";
 % source = "audio/Flute.vib.ff.A4.wav";
-% source = "audio/Guitar.mf.sulD.A3.wav";
-% source = "audio/Guitar.mf.sulD.D3.wav";
-% source = "audio/Horn.mf.A2.wav";
-% source = "audio/Horn.mf.A4.wav";
-% source = "audio/PianoScale.wav";
 source = "audio/Trumpet.novib.mf.A4.wav";
-% source = "audio/Trumpet.novib.mf.D4.wav";
 % source = "audio/Trumpet.vib.mf.A4.wav";
-% source = "audio/Trumpet.vib.mf.D4.wav";
-% source = "audio/Violin.arco.ff.sulG.A3.wav";
-% source = "audio/Violin.arco.ff.sulG.A4.wav";
-% source = "audio/Violin.arco.mf.sulA.A4.wav";
-% source = "audio/Violin.5th.wav";
 
 %% Prepare source signal
 if contains(source, "audio/")
@@ -47,17 +30,6 @@ elseif strcmp(source, 'sin')
     % sig = sig + getCosSig(sigLen, 4 * f, -18, 0.75 * pi);
     % sig = sig + getCosSig(sigLen, 5 * f, -21);
     % sig = sig + 0.1 * randn(size(sig)) ./ 6;
-elseif strcmp(source, 'matchTest')
-    f = 200;
-    sig1 = getCosSig(sigLen / 2, f, -6);
-    sig1 = sig1 + getCosSig(sigLen / 2, 2 * f, -12, pi);
-    sig1 = sig1 + getCosSig(sigLen / 2, 3 * f, -15, pi / 2);
-
-    sig2 = getCosSig(sigLen / 2, f, -6);
-    sig2 = sig2 + getCosSig(sigLen / 2, 2 * f + 50, -12, pi);
-    sig2 = sig2 + getCosSig(sigLen / 2, 5 * f, -15, pi / 2);
-
-    sig = [sig1; sig2];
 else
     f = 440; %logspace(log10(220), log10(440), sigLen).';
     m = -6; %linspace(-14, 0, sigLen).';
@@ -66,15 +38,7 @@ else
 end
 
 %% Damage the source signal
-if strcmp(source, 'audio/PianoScale.wav')
-    [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen, 80000);
-elseif contains(source, "Guitar")
-    [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen, 80000);
-elseif contains(source, "Cello")
-    [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen, 50000);
-else
-    [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen);
-end
+[sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen);
 
 %% Analyse pre- and post-gap sections
 % Pre-gap section
@@ -264,52 +228,240 @@ sigRest(smplGap(1):smplGap(end)) = sigRest(smplGap(1):smplGap(end)) + sigGapXF;
 sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
-figure(1);
-subplot(2, 2, 1);
-plot(sigPre, 'DisplayName', 'pre- section');
-hold on;
-plot([NaN(gapEnd, 1); sigPost], 'DisplayName', 'post- section');
-plot([NaN(smplGap(1), 1); sigGap], ':', 'DisplayName', 'reconstruction', ...
-    'Color', 'black');
-plot([smplGap(1), smplGap(end)], [0, 0], 'x', 'DisplayName', 'transitions');
-title('Damaged signal and reconstructed waveform')
-xlabel('Time in samples');
-legend;
-hold off;
+% Determine signal range to be plotted
+plotStart = gapStart - round(0.8 * gapLen);
+plotEnd = gapEnd + round(0.8 * gapLen);
 
-subplot(2, 2, 3);
-plot(sigRest, 'DisplayName', 'Final restored signal');
-hold on;
-rectangle('Position', [gapStart, min(sigRest), gapLen, ...
-                        max(sigRest) - min(sigRest)], ...
-    'FaceColor', [1, 0, 0, 0.1], ...
-    'EdgeColor', 'none');
-hold off;
-title('Fully restored signal')
-xlabel('Time in samples');
+% Freq range
+freqLim = [0, 10000] / 1000;
 
-subplot(2, 2, 2);
-plot(smplPre, freqPre);
+% Mag range
+magMin = -100;
+
+% Convert from samples to ms
+t = (1:length(sig)) / fs;
+timeUnit = 's';
+
+% Plot the original signal
+fig1 = figure(1);
+plot(t, sig);
 hold on;
-set(gca, 'ColorOrderIndex', 1);
-plot(smplPost, freqPost);
-set(gca, 'ColorOrderIndex', 1);
-plot(smplGap, freqGap, ':');
+ylimWoRect = ylim;
+rectHeight = 1.1 * max(abs(sigGap));
+rectangle('Position', [t(gapStart), -rectHeight, t(gapLen), 2 * rectHeight]);
 hold off;
-title(['Sinusoidal tracks - frequency (gap len: ', num2str(gapLen), ')']);
-ylabel('Frequency in Hz');
-xlabel('Time in samples');
+title(['Original signal and gap boundaries (gap len: ', num2str(gapLen), ...
+        ' samples)']);
+ylabel("Amplitude");
+xlabel(['Time (', timeUnit, ')']);
+xlim([t(plotStart), t(plotEnd)]);
+ylim(ylimWoRect);
 grid on;
 
-subplot(2, 2, 4);
-plot(smplPre, magPre);
+% Plot signal with gap
+fig2 = figure(2);
+sigNaN = sig;
+sigNaN(gapStart:gapEnd) = NaN;
+plot(t, sigNaN);
+hold on;
+env = ones(length(sig), 1);
+fadeOut = linspace(1, 0, gapStart - smplGap(1));
+fadeIn = linspace(0, 1, smplGap(end) - gapEnd);
+env(smplGap(1):gapStart - 1) = fadeOut;
+env(gapStart:gapEnd) = NaN;
+env(gapEnd:smplGap(end) - 1) = fadeIn;
+pEnv = plot(t, env, '--', 'Color', 'Black', 'DisplayName', 'Crossfade envelope');
+hold off;
+title('Damaged signal');
+ylabel("Amplitude");
+xlabel(['Time (', timeUnit, ')']);
+xlim([t(plotStart), t(plotEnd)]);
+legend(pEnv, 'Location', 'southeast');
+grid on;
+
+% Plot reconstructed signal within gap
+fig3 = figure(3);
+plot(t(smplGap(1):smplGap(end)), sigGap, 'Color', [221, 49, 26] / 256);
+hold on;
+env(isnan(env)) = 0;
+env = 1 - env;
+env(env == 0) = NaN;
+pEnv = plot(t, env, '--', 'Color', 'Black', 'DisplayName', 'Crossfade envelope');
+hold off;
+title('Restoration of the missing signal');
+ylabel("Amplitude");
+xlabel(['Time (', timeUnit, ')']);
+xlim([t(plotStart), t(plotEnd)]);
+legend(pEnv, 'Location', 'southeast');
+grid on;
+
+% Plot the restored signal
+fig4 = figure(4);
+sigRestNaN = sigRest;
+sigRestNaN(smplGap(1) + 1:smplGap(end) - 1) = NaN;
+plot(t, sigRestNaN);
+hold on;
+plot(t(smplGap(1):smplGap(end)), sigRest(smplGap(1):smplGap(end)), ...
+    'Color', [221, 49, 26] / 256);
+hold off;
+title("Fully restored signal");
+ylabel("Amplitude");
+xlabel(['Time (', timeUnit, ')']);
+xlim([t(plotStart), t(plotEnd)]);
+ylim(ylimWoRect);
+grid on;
+
+% Plot sinusoidal tracks - frequency
+fig5 = figure(5);
+plot(t(smplPre), freqPre / 1000);
 hold on;
 set(gca, 'ColorOrderIndex', 1);
-plot(smplPost, magPost);
+plot(t(smplPost), freqPost / 1000);
 set(gca, 'ColorOrderIndex', 1);
-plot(smplGap, magGap, ':');
+plot(t(smplGap), freqGap / 1000, ':');
 hold off;
-title(['Sinusoidal tracks - magnitude (gap len: ', num2str(gapLen), ')']);
-ylabel('Magnitude in dBFS');
-xlabel('Time in samples');
+title('Sinusoidal tracks - frequency');
+ylabel('Frequency (kHz)');
+xlabel(['Time (', timeUnit, ')']);
+ylim(freqLim)
+xlim([t(plotStart), t(plotEnd)]);
 grid on;
+
+% Plot sinusoidal tracks - magnitude
+fig6 = figure(6);
+plot(t(smplPre), magPre);
+hold on;
+set(gca, 'ColorOrderIndex', 1);
+plot(t(smplPost), magPost);
+set(gca, 'ColorOrderIndex', 1);
+plot(t(smplGap), magGap, ':');
+hold off;
+title('Sinusoidal tracks - magnitude');
+ylabel('Magnitude (dBFS)');
+xlabel(['Time (', timeUnit, ')']);
+xlim([t(plotStart), t(plotEnd)]);
+magLim = ylim;
+magLim(1) = magMin;
+ylim(magLim);
+grid on;
+
+% Plot original spectrogram
+fig7 = figure(7);
+[tSpgm, fSpgm, psdSig] = spgm(sig);
+ylim(freqLim)
+xlim([t(plotStart), t(plotEnd)]);
+title("Original - spectrogram");
+
+% Plot restoration spectrogram
+fig8 = figure(8);
+[~, ~, psdRest] = spgm(sigRest);
+ylim(freqLim)
+xlim([t(plotStart), t(plotEnd)]);
+title("Restoration - spectrogram");
+
+% Plot spectrogram difference
+fig9 = figure(9);
+spgmDiff(tSpgm, fSpgm, psdRest, psdSig);
+ylim(freqLim)
+xlim([t(plotStart), t(plotEnd)]);
+title("Spectrogram difference: restoration - original");
+
+% Plot lsd
+fig10 = figure(10);
+lsd = getLogSpecDist(psdRest, psdSig);
+plot(tSpgm, lsd);
+hold on;
+lsdStartTime = t(gapStart);
+lsdEndTime = t(gapEnd);
+lsdStartIdx = find(tSpgm >= lsdStartTime, 1, 'first');
+lsdEndIdx = find(tSpgm <= lsdEndTime, 1, 'last');
+rectangle('Position', [tSpgm(lsdStartIdx), 0, ...
+                        tSpgm(lsdEndIdx) - tSpgm(lsdStartIdx), ...
+                        max(lsd) + 1]);
+hold off;
+gapLSD = mean(lsd(lsdStartIdx:lsdEndIdx));
+title(['LSD between original and restored signal. Avg over gap: ', ...
+        num2str(gapLSD, 3), ' dB']);
+xlabel(['Time (', timeUnit, ')']);
+ylabel("LSD (dB)");
+xlim([t(plotStart), t(plotEnd)]);
+grid on;
+
+% Save figures
+switch source
+    case "audio/Flute.nonvib.ff.A4.wav"
+        sigDesc = 'flute';
+    case "audio/Flute.vib.ff.A4.wav"
+        sigDesc = 'fluteVib';
+    case "audio/Trumpet.novib.mf.A4.wav"
+        sigDesc = 'trumpet';
+    case "audio/Trumpet.vib.mf.A4.wav"
+        sigDesc = 'trumpetVib';
+end
+
+filename = [sigDesc, '_t_orig_gapLen_', num2str(gapLen)];
+resizeFigure(fig1, 1, 0.6);
+saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig1);
+
+filename = [sigDesc, '_t_gap_gapLen_', num2str(gapLen)];
+resizeFigure(fig2, 1, 0.6);
+saveas(fig2, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig2, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig2);
+
+filename = [sigDesc, '_t_sigGap_gapLen_', num2str(gapLen)];
+resizeFigure(fig3, 1, 0.6);
+saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig3);
+
+filename = [sigDesc, '_t_rest_gapLen_', num2str(gapLen)];
+resizeFigure(fig4, 1, 0.6);
+saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig4);
+
+filename = [sigDesc, '_trk_freq_gapLen_', num2str(gapLen)];
+resizeFigure(fig5, 1, 0.6);
+saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig5);
+
+filename = [sigDesc, '_trk_mag_gapLen_', num2str(gapLen)];
+resizeFigure(fig6, 1, 0.6);
+saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig6);
+
+filename = [sigDesc, '_spgm_orig_gapLen_', num2str(gapLen)];
+resizeFigure(fig7, 1, 0.6);
+saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig7);
+
+filename = [sigDesc, '_spgm_rest_gapLen_', num2str(gapLen)];
+resizeFigure(fig8, 1, 0.6);
+saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig8);
+
+filename = [sigDesc, '_spgm_diff_gapLen_', num2str(gapLen)];
+resizeFigure(fig9, 1, 0.6);
+saveas(fig9, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig9, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig9);
+
+filename = [sigDesc, '_lsd_gapLen_', num2str(gapLen)];
+resizeFigure(fig10, 1, 0.6);
+saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig10);
+
+function resizeFigure(figHandle, xFact, yFact)
+    figPos = get(figHandle, 'Position');
+    figPos(3) = xFact * figPos(3);
+    figPos(4) = yFact * figPos(4);
+    set(figHandle, 'Position', figPos);
+end

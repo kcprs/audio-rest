@@ -61,7 +61,7 @@ switch source
 end
 
 figDiff = figure(3);
-spgmDiff(t, f, psdSig, psdRest);
+spgmDiff(t, f, psdRest, psdSig);
 
 switch source
     case "cello"
