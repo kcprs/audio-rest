@@ -5,11 +5,11 @@ global fsGlobal
 fs = fsGlobal;
 frmLen = 2048;
 gapLen = 4 * frmLen;
-sigLen = 6 * frmLen;
+sigLen = 30 * frmLen;
 hopLen = 256;
 numTrk = 60;
 minTrkLen = 20;
-resOrdAR = 100;
+resOrdAR = 30;
 almostNegInf = -100;
 
 % source = "saw";
@@ -23,10 +23,10 @@ source = "audio/Trumpet.novib.mf.A4.wav";
 if contains(source, "audio/")
     sig = audioread(source);
 elseif strcmp(source, 'sin')
-    f = 100; % + 2 * getSineSig(sigLen, 8);
+    f = 440; % + 2 * getSineSig(sigLen, 8);
     sig = getCosSig(sigLen, f, -6);
-    sig = sig + getCosSig(sigLen, 2 * f, -12, pi);
-    sig = sig + getCosSig(sigLen, 3 * f, -15, pi / 2);
+    % sig = sig + getCosSig(sigLen, 2 * f, -12, pi);
+    % sig = sig + getCosSig(sigLen, 3 * f, -15, pi / 2);
     % sig = sig + getCosSig(sigLen, 4 * f, -18, 0.75 * pi);
     % sig = sig + getCosSig(sigLen, 5 * f, -21);
     % sig = sig + 0.1 * randn(size(sig)) ./ 6;
@@ -186,24 +186,24 @@ smplGap = smplPre(end):hopLen:smplPost(1);
 %% Synthesise sinusoidal gap signal
 sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen, phsPost(1, :));
 
-% Restore residual
-% Synthesise sinusoidal gap signal
-% sigGapLen = smplGap(end) - smplGap(1) + 1;
-% sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen, phsPost(1, :));
+%% Restore residual
+% Compute residual of last frame of pre- section
+resPre = getResidual(sigPre(end - frmLen + 1:end), freqPre(end, :), ...
+        magPre(end, :), phsPre(end, :));
 
-% % Synthesise residual of last frame of pre- section
-% resPre = getResidual(sigPre(end - frmLen + 1:end), freqPre(end, :), ...
-    %     magPre(end, :), phsPre(end, :));
+% Compute residual of first frame of post- section
+resPost = getResidual(sigPost(2:frmLen+1), freqPost(1, :), magPost(1, :), ...
+        phsPost(1, :));
 
-% % Synthesise residual of first frame of post- section
-% resPost = getResidual(sigPost(1:frmLen), freqPost(1, :), magPost(1, :), ...
-    %     phsPost(1, :));
+% Morph between pre- and post- residuals over the gap
+resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
 
-% % Morph between pre- and post- residuals over the gap
-% resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
+% Concatenate with half frame of known signal from either side
+% This is to match the size of sinSig
+resGap = [resPre(frmLen / 2:end); resGap; resPost(1:frmLen / 2)];
 
 %% Add reconstructed sinusoidal and residual
-sigGap = sinGap; % + resGap;
+sigGap = sinGap + resGap;
 
 %% Insert reconstructed signal into the gap
 % Prepare cross-fades
