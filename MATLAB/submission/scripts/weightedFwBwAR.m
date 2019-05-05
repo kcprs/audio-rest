@@ -7,15 +7,15 @@ fs = fsGlobal;
 
 % Uncomment below to set audio source and corresponding variables
 % source = "sine";
-% source = "sweep";
+source = "saw";
 % source = "flute";
 % source = "flute.vib";
-source = "trumpet";
+% source = "trumpet";
 % source = "trumpet.vib";
 
-sigLen = fs; % Total length of damaged signal in samples
+sigLen = 0.5 * fs; % Total length of damaged signal in samples
 fitLen = 2048; % Length of fitting section in samples
-gapLen = fitLen; % Length of gap in samples
+gapLen = 2 * fitLen; % Length of gap in samples
 
 % Set source-specific variable values
 switch source
@@ -23,11 +23,13 @@ switch source
         f0 = 100;
         arOrd = 2;
         sig = getSinSig(sigLen, f0);
-    case "sweep"
-        f0 = 200;
-        f1 = 400;
-        arOrd = 2;
-        sig = getSweepSig(sigLen, f0, f1);
+    case "saw"
+        f0 = 880; % A5 note
+        f1 = 1046.5; % C6 note
+        f = logspace(log10(f0), log10(f1), sigLen).';
+
+        arOrd = 0;
+        sig = getSawSig(sigLen, f, -12);
     case "flute"
         arOrd = 0;
         sig = audioread("Flute.nonvib.ff.A4.wav");
@@ -59,15 +61,20 @@ sigRest(gapStart:gapEnd) = sigGap;
 
 %% Plotting
 % Determine signal range to be plotted
-plotStart = gapStart - fitLen - round(0.2 * (gapLen + fitLen));
-plotEnd = gapEnd + fitLen + round(0.2 * (gapLen + fitLen));
+plotStart = gapStart - fitLen - round(0.5 * (gapLen + fitLen));
+plotEnd = gapEnd + fitLen + round(0.5 * (gapLen + fitLen));
 
 % Freq range
-freqLim = [0, 10000] / 1000;
+freqLim = [0, 20000] / 1000;
 
 % Convert from samples to s or ms
-t = (1:length(sig)) / fs;
-timeUnit = 's';
+if sigLen > fs
+    t = (1:length(sig)) / fs;
+    timeUnit = 's';
+else
+    t = 1000 * (1:length(sig)) / fs;
+    timeUnit = 'ms';
+end
 
 % Pad prediction so that the plot is continuous
 sigGap = [sigRest(gapStart - 1); sigGap; sigRest(gapEnd + 1)];
@@ -146,6 +153,12 @@ plot(tSpgm, lsd);
 hold on;
 lsdStartTime = t(gapStart);
 lsdEndTime = t(gapEnd);
+
+if sigLen <= fs
+    lsdStartTime = lsdStartTime / 1000;
+    lsdEndTime = lsdEndTime / 1000;
+end
+
 lsdStartIdx = find(tSpgm >= lsdStartTime, 1, 'first');
 lsdEndIdx = find(tSpgm <= lsdEndTime, 1, 'last');
 rectangle('Position', [tSpgm(lsdStartIdx), 0, ...
@@ -157,7 +170,12 @@ title(['LSD between original and restored signal. Avg over gap: ', ...
         num2str(gapLSD, 3), ' dB']);
 xlabel(['Time (', timeUnit, ')']);
 ylabel("LSD (dB)");
-xlim([t(plotStart), t(plotEnd)]);
+
+if sigLen > fs
+    xlim([t(plotStart), t(plotEnd)]);
+else
+    xlim([t(plotStart), t(plotEnd)] / 1000);
+end
 grid on;
 
 % Plot AR frequency response
@@ -172,7 +190,7 @@ hold on;
 magSpec = 20 * log10(abs(fft(pre, 2 * length(arFreqVec))));
 magSpec = magSpec(1:length(arFreqVec));
 magSpec = magSpec - max(magSpec);
-plot(arFreqVec / 1000, magSpec, 'DisplayName', "Modelled spectrum");
+plot(arFreqVec / 1000, magSpec, 'DisplayName', "Spectrum of the modelled signal");
 title("AR Filter - Frequency Response");
 xlabel("Frequency (kHz)");
 ylabel("Magnitude (dB)");
@@ -186,75 +204,91 @@ global arFwdCoeffs;
 zplane(1, arFwdCoeffs);
 title("AR Filter - Pole-Zero Plot");
 
-% Save figures
+% Save figures and audio
 switch source
     case "sine"
         sigDesc = ['wfbAR_sine_', num2str(f0), '_arOrd_', ...
-                    num2str(arOrd), '_fitLen_', num2str(fitLen)];
-    case "sweep"
-        sigDesc = ['wfbAR_sweep_', num2str(f0), '-', num2str(f1), ...
-                    '_arOrd_', num2str(arOrd), '_fitLen_', num2str(fitLen)];
+                    num2str(arOrd), '_gapLen_', num2str(gapLen), ...
+                    '_fitLen_', num2str(fitLen)];
+    case "saw"
+        sigDesc = ['wfbAR_saw_', num2str(f0), '-', num2str(f1), ...
+                    '_arOrd_', num2str(arOrd), ...
+                    '_gapLen_', num2str(gapLen), ...
+                    '_fitLen_', num2str(fitLen)];
     case "flute"
         sigDesc = ['wfbAR_flute_arOrd_', num2str(arOrd), ...
+                    '_gapLen_', num2str(gapLen), ...
                     '_fitLen_', num2str(fitLen)];
     case "flute.vib"
         sigDesc = ['wfbAR_fluteVib_arOrd_', num2str(arOrd), ...
+                    '_gapLen_', num2str(gapLen), ...
                     '_fitLen_', num2str(fitLen)];
     case "trumpet"
         sigDesc = ['wfbAR_trumpet_arOrd_', num2str(arOrd), ...
+                    '_gapLen_', num2str(gapLen), ...
                     '_fitLen_', num2str(fitLen)];
     case "trumpet.vib"
         sigDesc = ['wfbAR_trumpetVib_arOrd_', num2str(arOrd), ...
+                    '_gapLen_', num2str(gapLen), ...
                     '_fitLen_', num2str(fitLen)];
 end
 
-% filename = [sigDesc, '_t_orig_gapLen_', num2str(gapLen)];
-% resizeFigure(fig1, 1, 0.6);
-% saveas(fig1, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-% saveas(fig1, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-% close(fig1);
+filename = [sigDesc, '_orig'];
+audiowrite(['submission\\audioExamples\\wfbar_', filename, '.wav'], sig, fs);
 
-% filename = [sigDesc, '_t_sigGap_gapLen_', num2str(gapLen)];
-% resizeFigure(fig2, 1, 0.6);
-% saveas(fig2, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-% saveas(fig2, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-% close(fig2);
+filename = [sigDesc, '_dmg'];
+audiowrite(['submission\\audioExamples\\wfbar_', filename, '.wav'], sigDmg, fs);
 
-% filename = [sigDesc, '_spgm_orig_gapLen_', num2str(gapLen)];
-% resizeFigure(fig3, 1, 0.6);
-% saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig3);
+filename = [sigDesc, '_rest'];
+audiowrite(['submission\\audioExamples\\wfbar_', filename, '.wav'], sigRest, fs);
 
-% filename = [sigDesc, '_spgm_rest_gapLen_', num2str(gapLen)];
-% resizeFigure(fig4, 1, 0.6);
-% saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig4);
+filename = [sigDesc, '_t_orig'];
+resizeFigure(fig1, 1, 0.7);
+saveas(fig1, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
+saveas(fig1, ['figures\\arModelling\\wfbar\\', filename, '.png']);
+close(fig1);
 
-% filename = [sigDesc, '_spgm_diff_gapLen_', num2str(gapLen)];
-% resizeFigure(fig5, 1, 0.6);
-% saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig5);
+filename = [sigDesc, '_t_sigGap'];
+resizeFigure(fig2, 1, 0.7);
+saveas(fig2, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
+saveas(fig2, ['figures\\arModelling\\wfbar\\', filename, '.png']);
+close(fig2);
 
-% filename = [sigDesc, '_lsd_gapLen_', num2str(gapLen)];
-% resizeFigure(fig6, 1, 0.6);
-% saveas(fig6, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-% saveas(fig6, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-% close(fig6);
+filename = [sigDesc, '_spgm_orig'];
+resizeFigure(fig3, 1, 1.5);
+saveas(fig3, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
+saveas(fig3, ['figures\\arModelling\\wfbar\\', filename, '.png']);
+close(fig3);
 
-% filename = [sigDesc, '_freqResp_gapLen_', num2str(gapLen)];
-% resizeFigure(fig7, 1, 0.6);
-% saveas(fig7, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-% saveas(fig7, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-% close(fig7);
+filename = [sigDesc, '_spgm_rest'];
+resizeFigure(fig4, 1, 1.5);
+saveas(fig4, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
+saveas(fig4, ['figures\\arModelling\\wfbar\\', filename, '.png']);
+close(fig4);
 
-% filename = [sigDesc, '_zPlane_gapLen_', num2str(gapLen)];
-% resizeFigure(fig8, 1, 0.6);
-% saveas(fig8, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-% saveas(fig8, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-% close(fig8);
+filename = [sigDesc, '_spgm_diff'];
+resizeFigure(fig5, 1, 0.7);
+saveas(fig5, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
+saveas(fig5, ['figures\\arModelling\\wfbar\\', filename, '.png']);
+close(fig5);
+
+filename = [sigDesc, '_lsd'];
+resizeFigure(fig6, 1, 0.7);
+saveas(fig6, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
+saveas(fig6, ['figures\\arModelling\\wfbar\\', filename, '.png']);
+close(fig6);
+
+filename = [sigDesc, '_freqResp'];
+resizeFigure(fig7, 1, 0.7);
+saveas(fig7, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
+saveas(fig7, ['figures\\arModelling\\wfbar\\', filename, '.png']);
+close(fig7);
+
+filename = [sigDesc, '_zPlane'];
+resizeFigure(fig8, 1, 0.7);
+saveas(fig8, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
+saveas(fig8, ['figures\\arModelling\\wfbar\\', filename, '.png']);
+close(fig8);
 
 function resizeFigure(figHandle, xFact, yFact)
     figPos = get(figHandle, 'Position');

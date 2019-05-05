@@ -399,7 +399,7 @@ hold on;
 magSpec = 20 * log10(abs(fft(resPre, 2 * length(arFreqVec))));
 magSpec = magSpec(1:length(arFreqVec));
 magSpec = magSpec - max(magSpec);
-plot(arFreqVec / 1000, magSpec, 'DisplayName', "Modelled spectrum");
+plot(arFreqVec / 1000, magSpec, 'DisplayName', "Spectrum of the modelled signal");
 title("AR Filter - Frequency Response");
 xlabel("Frequency (kHz)");
 ylabel("Magnitude (dB)");
@@ -410,76 +410,85 @@ legend;
 % Save figures
 switch source
     case "audio/Flute.nonvib.ff.A4.wav"
-        sigDesc = 'flute';
+        sigDesc = ['flute_gapLen_', num2str(gapLen)];
     case "audio/Flute.vib.ff.A4.wav"
-        sigDesc = 'fluteVib';
+        sigDesc = ['fluteVib_gapLen_', num2str(gapLen)];
     case "audio/Trumpet.novib.mf.A4.wav"
-        sigDesc = 'trumpet';
+        sigDesc = ['trumpet_gapLen_', num2str(gapLen)];
     case "audio/Trumpet.vib.mf.A4.wav"
-        sigDesc = 'trumpetVib';
+        sigDesc = ['trumpetVib_gapLen_', num2str(gapLen)];
 end
 
-% filename = [sigDesc, '_t_orig_gapLen_', num2str(gapLen)];
+filename = [sigDesc, '_orig'];
+audiowrite(['submission\\audioExamples\\poly_', filename, '.wav'], sig, fs);
+
+filename = [sigDesc, '_dmg'];
+audiowrite(['submission\\audioExamples\\poly_', filename, '.wav'], sigDmg, fs);
+
+filename = [sigDesc, '_rest'];
+audiowrite(['submission\\audioExamples\\poly_', filename, '.wav'], sigRest, fs);
+
+% filename = [sigDesc, '_t_orig'];
 % resizeFigure(fig1, 1, 0.6);
 % saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig1);
 
-% filename = [sigDesc, '_t_gap_gapLen_', num2str(gapLen)];
+% filename = [sigDesc, '_t_gap'];
 % resizeFigure(fig2, 1, 0.6);
 % saveas(fig2, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig2, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig2);
 
-% filename = [sigDesc, '_t_sigGap_gapLen_', num2str(gapLen)];
+% filename = [sigDesc, '_t_sigGap'];
 % resizeFigure(fig3, 1, 0.6);
 % saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig3);
 
-% filename = [sigDesc, '_t_rest_gapLen_', num2str(gapLen)];
+% filename = [sigDesc, '_t_rest'];
 % resizeFigure(fig4, 1, 0.6);
 % saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig4);
 
-% filename = [sigDesc, '_trk_freq_gapLen_', num2str(gapLen)];
+% filename = [sigDesc, '_trk_freq'];
 % resizeFigure(fig5, 1, 0.6);
 % saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig5);
 
-% filename = [sigDesc, '_trk_mag_gapLen_', num2str(gapLen)];
+% filename = [sigDesc, '_trk_mag'];
 % resizeFigure(fig6, 1, 0.6);
 % saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig6);
 
-% filename = [sigDesc, '_spgm_orig_gapLen_', num2str(gapLen)];
+% filename = [sigDesc, '_spgm_orig'];
 % resizeFigure(fig7, 1, 0.6);
 % saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig7);
 
-% filename = [sigDesc, '_spgm_rest_gapLen_', num2str(gapLen)];
+% filename = [sigDesc, '_spgm_rest'];
 % resizeFigure(fig8, 1, 0.6);
 % saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig8);
 
-% filename = [sigDesc, '_spgm_diff_gapLen_', num2str(gapLen)];
+% filename = [sigDesc, '_spgm_diff'];
 % resizeFigure(fig9, 1, 0.6);
 % saveas(fig9, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig9, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig9);
 
-% filename = [sigDesc, '_lsd_gapLen_', num2str(gapLen)];
+% filename = [sigDesc, '_lsd'];
 % resizeFigure(fig10, 1, 0.6);
 % saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig10);
 
-% filename = [sigDesc, '_resFrqResp_gapLen_', num2str(gapLen)];
+% filename = [sigDesc, '_resFrqResp'];
 % resizeFigure(fig11, 1, 0.6);
 % saveas(fig11, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig11, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
