@@ -17,7 +17,12 @@ function residual = getResidual(sig, freq, mag, phs)
     sinSigBwd = resynth([freq; freq], [mag; mag], -phs, frmLen / 2 - 1);
     sinSig = [flipud(sinSigBwd); sinSigFwd(2:end)];
 
-    % Get residual as the difference between original signal and the
-    % sinuosoidal.
-    residual = sig - sinSig;
+    % Subtract in frequency domain to avoid phase issues
+    sinSigMag = abs(fft(sinSig, length(sig)));
+    sigFT = fft(sig);
+    sigMag = abs(sigFT);
+    sigPhs = angle(sigFT);
+
+    resMag = sigMag - sinSigMag;
+    residual = real(ifft(resMag .* exp(1j * sigPhs)));
 end
