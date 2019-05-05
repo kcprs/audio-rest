@@ -128,7 +128,7 @@ end
 % figPos = get(gcf, 'Position');
 % figPos(4) = 0.7 * figPos(4);
 % set(gcf, 'Position', figPos);
-% savefig(gcf, ['figures\\arModelling\\', filename, '.fig']);
-% saveas(gcf, ['figures\\arModelling\\', filename, '.png']);
-% saveas(gcf, ['figures\\arModelling\\', filename, '.eps'], 'epsc');
+% savefig(gcf, ['figures\\arModelling\\basicAR', filename, '.fig']);
+% saveas(gcf, ['figures\\arModelling\\basicAR', filename, '.png']);
+% saveas(gcf, ['figures\\arModelling\\basicAR', filename, '.eps'], 'epsc');
 % close(gcf);

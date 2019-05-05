@@ -9,7 +9,7 @@ sigLen = 30 * frmLen;
 hopLen = 256;
 numTrk = 60;
 minTrkLen = 20;
-resOrdAR = 30;
+resOrdAR = 50;
 almostNegInf = -100;
 
 % source = "saw";
@@ -189,11 +189,11 @@ sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen, phsPost(1, :));
 %% Restore residual
 % Compute residual of last frame of pre- section
 resPre = getResidual(sigPre(end - frmLen + 1:end), freqPre(end, :), ...
-        magPre(end, :), phsPre(end, :));
+    magPre(end, :), phsPre(end, :));
 
 % Compute residual of first frame of post- section
-resPost = getResidual(sigPost(2:frmLen+1), freqPost(1, :), magPost(1, :), ...
-        phsPost(1, :));
+resPost = getResidual(sigPost(2:frmLen + 1), freqPost(1, :), magPost(1, :), ...
+    phsPost(1, :));
 
 % Morph between pre- and post- residuals over the gap
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
@@ -238,7 +238,7 @@ freqLim = [0, 10000] / 1000;
 % Mag range
 magMin = -100;
 
-% Convert from samples to ms
+% Convert from samples to s or ms
 t = (1:length(sig)) / fs;
 timeUnit = 's';
 
@@ -387,6 +387,26 @@ ylabel("LSD (dB)");
 xlim([t(plotStart), t(plotEnd)]);
 grid on;
 
+% Plot AR frequency response
+fig11 = figure(11);
+global arFwdFreqResp;
+global arFreqVec;
+
+arFwdFreqResp = 20 * log10(abs(arFwdFreqResp));
+arFwdFreqResp = arFwdFreqResp - max(arFwdFreqResp);
+plot(arFreqVec / 1000, arFwdFreqResp, 'DisplayName', "AR magnitude response");
+hold on;
+magSpec = 20 * log10(abs(fft(resPre, 2 * length(arFreqVec))));
+magSpec = magSpec(1:length(arFreqVec));
+magSpec = magSpec - max(magSpec);
+plot(arFreqVec / 1000, magSpec, 'DisplayName', "Modelled spectrum");
+title("AR Filter - Frequency Response");
+xlabel("Frequency (kHz)");
+ylabel("Magnitude (dB)");
+xlim([0, 20000] / 1000);
+grid on;
+legend;
+
 % Save figures
 switch source
     case "audio/Flute.nonvib.ff.A4.wav"
@@ -458,6 +478,12 @@ end
 % saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig10);
+
+% filename = [sigDesc, '_resFrqResp_gapLen_', num2str(gapLen)];
+% resizeFigure(fig11, 1, 0.6);
+% saveas(fig11, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig11, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig11);
 
 function resizeFigure(figHandle, xFact, yFact)
     figPos = get(figHandle, 'Position');
