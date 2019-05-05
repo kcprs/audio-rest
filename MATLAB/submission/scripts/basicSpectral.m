@@ -4,19 +4,19 @@
 global fsGlobal
 fs = fsGlobal;
 frmLen = 2048;
-gapLen = 4 * frmLen;
+gapLen = 5 * frmLen;
 sigLen = 30 * frmLen;
 hopLen = 256;
 numTrk = 60;
-minTrkLen = 20;
-resOrdAR = 50;
+minTrkLen = 10;
+resOrdAR = 100;
 almostNegInf = -100;
 
 % source = "saw";
 % source = "sin";
 % source = "audio/Flute.nonvib.ff.A4.wav";
-% source = "audio/Flute.vib.ff.A4.wav";
-source = "audio/Trumpet.novib.mf.A4.wav";
+source = "audio/Flute.vib.ff.A4.wav";
+% source = "audio/Trumpet.novib.mf.A4.wav";
 % source = "audio/Trumpet.vib.mf.A4.wav";
 
 %% Prepare source signal
@@ -67,7 +67,7 @@ score = zeros(numTrk);
 
 for trkIter = 1:numTrk
     score(trkIter, :) = trksPre(trkIter).getPkScore(freqPost(1, :), ...
-        magPost(1, :));
+        magPost(1, :), 0.5);
 end
 
 % Assign trksPost to trksPre by finding lowest closeness scores
@@ -188,12 +188,10 @@ sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen, phsPost(1, :));
 
 %% Restore residual
 % Compute residual of last frame of pre- section
-resPre = getResidual(sigPre(end - frmLen + 1:end), freqPre(end, :), ...
-    magPre(end, :), phsPre(end, :));
+resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, numTrk);
 
 % Compute residual of first frame of post- section
-resPost = getResidual(sigPost(2:frmLen + 1), freqPost(1, :), magPost(1, :), ...
-    phsPost(1, :));
+resPost = getResidual(sigPost(2:frmLen + 1), -Inf, numTrk);
 
 % Morph between pre- and post- residuals over the gap
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
@@ -233,7 +231,7 @@ plotStart = gapStart - round(0.8 * gapLen);
 plotEnd = gapEnd + round(0.8 * gapLen);
 
 % Freq range
-freqLim = [0, 10000] / 1000;
+freqLim = [0, 20000] / 1000;
 
 % Mag range
 magMin = -100;
@@ -419,77 +417,77 @@ switch source
         sigDesc = ['trumpetVib_gapLen_', num2str(gapLen)];
 end
 
-filename = [sigDesc, '_orig'];
-audiowrite(['submission\\audioExamples\\poly_', filename, '.wav'], sig, fs);
+% filename = [sigDesc, '_orig'];
+% audiowrite(['submission\\audioExamples\\poly_', filename, '.wav'], sig, fs);
 
-filename = [sigDesc, '_dmg'];
-audiowrite(['submission\\audioExamples\\poly_', filename, '.wav'], sigDmg, fs);
+% filename = [sigDesc, '_dmg'];
+% audiowrite(['submission\\audioExamples\\poly_', filename, '.wav'], sigDmg, fs);
 
-filename = [sigDesc, '_rest'];
-audiowrite(['submission\\audioExamples\\poly_', filename, '.wav'], sigRest, fs);
+% filename = [sigDesc, '_rest'];
+% audiowrite(['submission\\audioExamples\\poly_', filename, '.wav'], sigRest, fs);
 
 % filename = [sigDesc, '_t_orig'];
-% resizeFigure(fig1, 1, 0.6);
+% resizeFigure(fig1, 1, 0.7);
 % saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig1);
 
 % filename = [sigDesc, '_t_gap'];
-% resizeFigure(fig2, 1, 0.6);
+% resizeFigure(fig2, 1, 0.7);
 % saveas(fig2, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig2, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig2);
 
 % filename = [sigDesc, '_t_sigGap'];
-% resizeFigure(fig3, 1, 0.6);
+% resizeFigure(fig3, 1, 0.7);
 % saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig3);
 
 % filename = [sigDesc, '_t_rest'];
-% resizeFigure(fig4, 1, 0.6);
+% resizeFigure(fig4, 1, 0.7);
 % saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig4);
 
 % filename = [sigDesc, '_trk_freq'];
-% resizeFigure(fig5, 1, 0.6);
+% resizeFigure(fig5, 1, 0.7);
 % saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig5);
 
 % filename = [sigDesc, '_trk_mag'];
-% resizeFigure(fig6, 1, 0.6);
+% resizeFigure(fig6, 1, 0.7);
 % saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig6);
 
 % filename = [sigDesc, '_spgm_orig'];
-% resizeFigure(fig7, 1, 0.6);
+% resizeFigure(fig7, 1, 0.7);
 % saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig7);
 
 % filename = [sigDesc, '_spgm_rest'];
-% resizeFigure(fig8, 1, 0.6);
+% resizeFigure(fig8, 1, 0.7);
 % saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig8);
 
 % filename = [sigDesc, '_spgm_diff'];
-% resizeFigure(fig9, 1, 0.6);
+% resizeFigure(fig9, 1, 0.7);
 % saveas(fig9, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig9, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig9);
 
 % filename = [sigDesc, '_lsd'];
-% resizeFigure(fig10, 1, 0.6);
+% resizeFigure(fig10, 1, 0.7);
 % saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig10);
 
 % filename = [sigDesc, '_resFrqResp'];
-% resizeFigure(fig11, 1, 0.6);
+% resizeFigure(fig11, 1, 0.7);
 % saveas(fig11, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig11, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig11);

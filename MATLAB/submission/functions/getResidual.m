@@ -1,14 +1,14 @@
-function residual = getResidual(sig, freq, mag, phs)
+function residual = getResidual(sig, trs, npks)
     %GETRESIDUAL Subtract sinusoidal portion from a signal
-    %   residual = getResidual(sig, freq, mag, phs, frmLen) returns residual
-    %   signal derived from the signal sig and spectral peak information
-    %   given as a vector of frequency locations (freq), magnitudes (mags)
-    %   and phases (phs) of peaks.
+    %   residual = getResidual(sig, trs, npks) returns residual
+    %   signal derived from the signal sig by finding npks spectral peaks
+    %   above threshold trs and removing them.
 
-    % TODO: Take spectrum changes into account
-    
     % Signal sig spans a single frame
     frmLen = length(sig);
+
+    % Find spectral peaks to remove
+    [freq, mag, phs] = findSpecPeaks(sig, trs, npks);
     
     % Resynthesise the sinusoidal of the given frame.
     % Build the signal from the middle outwards since phase is known for

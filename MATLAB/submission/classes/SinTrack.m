@@ -25,9 +25,14 @@ classdef SinTrack < handle
             obj.minTrjLen = 0;
         end
 
-        function pkScore = getPkScore(obj, pkFreq, pkMag)
+        function pkScore = getPkScore(obj, pkFreq, pkMag, matchFactor)
             % GETPKSCORE Compute peak score for each peak in current frame
             % based on the previous peak in track
+
+            if nargin < 4
+                matchFactor = (2^(1/24) - 1);
+            end
+
             [prevFreq, ~, ~] = obj.getRelIndFMP(-1);
 
             if isnan(prevFreq)
@@ -36,12 +41,12 @@ classdef SinTrack < handle
                 % since peaks are assigned from lowest to highest score.
                 pkScore = 44100 - pkMag;
             else
-                % Otherwise pick closest peak within half a semitone
+                % Otherwise pick closest peak within matchFactor
                 if pkFreq < 1000
-                    maxJump = prevFreq * (2^(1/24) - 1);
+                    maxJump = prevFreq * matchFactor;
                 else
                     % Limit maxJump for higher frequencies
-                    maxJump = 1000 * (2^(1/24) - 1);
+                    maxJump = 1000 * matchFactor;
                 end
 
                 freqDist = abs(pkFreq - prevFreq);
