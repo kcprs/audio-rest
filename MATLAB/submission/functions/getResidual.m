@@ -19,10 +19,14 @@ function residual = getResidual(sig, trs, npks)
 
     % Subtract in frequency domain to avoid phase issues
     sinSigMag = abs(fft(sinSig, length(sig)));
-    sigFT = fft(sig);
-    sigMag = abs(sigFT);
-    sigPhs = angle(sigFT);
-
+    sigMag = abs(fft(sig));
     resMag = sigMag - sinSigMag;
-    residual = real(ifft(resMag .* exp(1j * sigPhs)));
+
+    % Apply smoothing
+    resMag = 20 * log10(abs(resMag));
+    resMag = smoothdata(resMag, 'movmedian', 100);
+    resMag = 10 .^ (resMag/20);
+
+    % Go back to time domain, use random phase
+    residual = real(ifft(resMag .* exp(1j * 2 * pi * rand([length(sig), 1]))));
 end
