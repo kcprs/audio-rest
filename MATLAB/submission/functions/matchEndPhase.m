@@ -4,6 +4,11 @@ function freqMtch = matchEndPhase(freq, initPhs, endPhs)
     %   frequency trajectory vector freq (containing sample-by-sample
     %   frequency values) so that if resynthesis starts with initial phase
     %   initPhs, the phase of the last sample will be endPhs.
+    
+    if isnan(endPhs)
+        freqMtch = freq;
+        return;
+    end
 
     global fsGlobal
     fs = fsGlobal;
