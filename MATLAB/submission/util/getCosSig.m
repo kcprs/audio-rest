@@ -47,6 +47,10 @@ function sig = getCosSig(len, freq, mag, initPhs, fs)
         mag = ones(len, 1) * mag;
     end
     
+    % Remove NaN values
+    freq(isnan(freq)) = 0;
+    mag(isnan(mag)) = -Inf;
+    
     % Compute phase at each sample
     delPhs = getDelPhs(freq, fs);
     delPhs = delPhs(:); % Ensure vertical vector
