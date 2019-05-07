@@ -219,7 +219,7 @@ end
 resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, preActive, smthRes);
 
 % Compute residual of first frame of post- section
-resPost = getResidual(sigPost(2:frmLen + 1), -Inf, postActive, smthRes);
+resPost = getResidual(sigPost(1:frmLen), -Inf, postActive, smthRes);
 
 % Morph between pre- and post- residuals over the gap
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
@@ -255,16 +255,16 @@ sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
 % Determine signal range to be plotted
-% plotStart = gapStart - round(0.3 * gapLen);
-% plotEnd = gapEnd + round(0.3 * gapLen);
-plotStart = 14883;
-plotEnd = 29218;
+plotStart = gapStart - round(0.3 * gapLen);
+plotEnd = gapEnd + round(0.3 * gapLen);
+% plotStart = 14883;
+% plotEnd = 29218;
 
 % Freq range
 freqLim = [0, 20000] / 1000;
 
 % Mag range
-magMin = -100;
+magMin = -70;
 
 % Convert from samples to s or ms
 if sigLen > fs
@@ -501,29 +501,29 @@ end
 % saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig4);
 
-% filename = [sigDesc, '_trk_freq'];
-% resizeFigure(fig5, 1, 0.7);
-% saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig5);
+filename = [sigDesc, '_trk_freq'];
+resizeFigure(fig5, 1, 0.7);
+saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig5);
 
-% filename = [sigDesc, '_trk_mag'];
-% resizeFigure(fig6, 1, 0.7);
-% saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig6);
+filename = [sigDesc, '_trk_mag'];
+resizeFigure(fig6, 1, 0.7);
+saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig6);
 
-% filename = [sigDesc, '_spgm_orig'];
-% resizeFigure(fig7, 1, 1);
-% saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig7);
+filename = [sigDesc, '_spgm_orig'];
+resizeFigure(fig7, 1, 1);
+saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig7);
 
-% filename = [sigDesc, '_spgm_rest'];
-% resizeFigure(fig8, 1, 1);
-% saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig8);
+filename = [sigDesc, '_spgm_rest'];
+resizeFigure(fig8, 1, 1);
+saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+close(fig8);
 
 % filename = [sigDesc, '_spgm_diff'];
 % resizeFigure(fig9, 1, 0.7);

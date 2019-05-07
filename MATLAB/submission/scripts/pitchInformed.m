@@ -4,20 +4,19 @@
 global fsGlobal
 fs = fsGlobal;
 frmLen = 1024;
-gapLen = 10 * frmLen;
-sigLen = 0.5 * fs;
+gapLen = 20 * frmLen;
 hopLen = 256;
 numTrk = 60;
 minTrkLen = 8;
-resOrdAR = 100;
+resOrdAR = 50;
 almostNegInf = -100;
 smthRes = false;
 
 % source = "saw";
 % source = "sin";
 % source = "audio/Flute.nonvib.ff.A4.wav";
-source = "audio/Flute.vib.ff.A4.wav";
-% source = "audio/Trumpet.novib.mf.A4.wav";
+% source = "audio/Flute.vib.ff.A4.wav";
+source = "audio/Trumpet.novib.mf.A4.wav";
 % source = "audio/Trumpet.vib.mf.A4.wav";
 
 %% Prepare source signal
@@ -25,6 +24,7 @@ if contains(source, "audio/")
     sig = audioread(source);
     sigLen = length(sig);
 elseif strcmp(source, 'sin')
+    sigLen = 0.5 * fs;
     f = 440; % + 2 * getSineSig(sigLen, 8);
     sig = getCosSig(sigLen, f, -6);
     % sig = sig + getCosSig(sigLen, 2 * f, -12, pi);
@@ -33,12 +33,14 @@ elseif strcmp(source, 'sin')
     % sig = sig + getCosSig(sigLen, 5 * f, -21);
     % sig = sig + 0.1 * randn(size(sig)) ./ 6;
 else
+    sigLen = fs;
     f0 = 880; % A5 note
     f1 = 1046.5; % C6 note
     f = logspace(log10(f0), log10(f1), sigLen).';
 
     arOrd = 0;
     sig = getSawSig(sigLen, f, -12);
+    sig = sig + 0.002 * randn([sigLen, 1]);
 end
 
 %% Damage the source signal
@@ -163,27 +165,11 @@ smplGap = smplPre(end):hopLen:smplPost(1);
 sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen, phsPost(1, :));
 
 %% Restore residual
-% Find number of active tracks in pre and post sections
-preActive = 0;
-postActive = 0;
-
-for iter = 1:numHarm
-
-    if ~isnan(freqPre(end, iter))
-        preActive = preActive + 1;
-    end
-
-    if ~isnan(freqPost(1, iter))
-        postActive = postActive + 1;
-    end
-
-end
-
 % Compute residual of last frame of pre- section
-resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, preActive, smthRes);
+resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, 0, smthRes);
 
 % Compute residual of first frame of post- section
-resPost = getResidual(sigPost(2:frmLen + 1), -Inf, postActive, smthRes);
+resPost = getResidual(sigPost(1:frmLen), -Inf, 0, smthRes);
 
 % Morph between pre- and post- residuals over the gap
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
@@ -221,12 +207,16 @@ sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 % Determine signal range to be plotted
 plotStart = gapStart - round(0.8 * gapLen);
 plotEnd = gapEnd + round(0.8 * gapLen);
+% plotStart = 14883;
+% plotEnd = 29218;
+plotStart = max(1, plotStart);
+plotEnd = min(length(sig), plotEnd);
 
 % Freq range
-freqLim = [0, 8000] / 1000;
+freqLim = [0, 20000] / 1000;
 
 % Mag range
-magMin = -100;
+magMin = -50;
 
 % Convert from samples to s or ms
 if sigLen > fs
@@ -354,69 +344,90 @@ ylim(freqLim)
 xlim([t(plotStart), t(plotEnd)]);
 title("Restoration - spectrogram");
 
-% % Plot spectrogram difference
-% fig9 = figure(9);
-% spgmDiff(tSpgm, fSpgm, psdRest, psdSig);
-% ylim(freqLim)
-% xlim([t(plotStart), t(plotEnd)]);
-% title("Spectrogram difference: restoration - original");
+% Plot spectrogram difference
+fig9 = figure(9);
+spgmDiff(tSpgm, fSpgm, psdRest, psdSig);
+ylim(freqLim)
+xlim([t(plotStart), t(plotEnd)]);
+title("Spectrogram difference: restoration - original");
 
-% % Plot lsd
-% fig10 = figure(10);
-% lsd = getLogSpecDist(psdRest, psdSig);
-% plot(tSpgm, lsd);
-% hold on;
-% lsdStartTime = t(gapStart);
-% lsdEndTime = t(gapEnd);
+% Plot lsd
+fig10 = figure(10);
+lsd = getLogSpecDist(psdRest, psdSig);
+plot(tSpgm, lsd);
+hold on;
+lsdStartTime = t(gapStart);
+lsdEndTime = t(gapEnd);
 
-% if sigLen <= fs
-%     lsdStartTime = lsdStartTime / 1000;
-%     lsdEndTime = lsdEndTime / 1000;
-% end
+if sigLen <= fs
+    lsdStartTime = lsdStartTime / 1000;
+    lsdEndTime = lsdEndTime / 1000;
+end
 
-% lsdStartIdx = find(tSpgm >= lsdStartTime, 1, 'first');
-% lsdEndIdx = find(tSpgm <= lsdEndTime, 1, 'last');
-% rectangle('Position', [tSpgm(lsdStartIdx), 0, ...
-%                         tSpgm(lsdEndIdx) - tSpgm(lsdStartIdx), ...
-%                         max(lsd) + 1]);
-% hold off;
-% gapLSD = mean(lsd(lsdStartIdx:lsdEndIdx));
-% title(['LSD between original and restored signal. Avg over gap: ', ...
-%         num2str(gapLSD, 3), ' dB']);
-% xlabel(['Time (', timeUnit, ')']);
-% ylabel("LSD (dB)");
+lsdStartIdx = find(tSpgm >= lsdStartTime, 1, 'first');
+lsdEndIdx = find(tSpgm <= lsdEndTime, 1, 'last');
+rectangle('Position', [tSpgm(lsdStartIdx), 0, ...
+                            tSpgm(lsdEndIdx) - tSpgm(lsdStartIdx), ...
+                            max(lsd) + 1]);
+hold off;
+gapLSD = mean(lsd(lsdStartIdx:lsdEndIdx));
+title(['LSD between original and restored signal. Avg over gap: ', ...
+            num2str(gapLSD, 3), ' dB']);
+xlabel(['Time (', timeUnit, ')']);
+ylabel("LSD (dB)");
 
-% if sigLen > fs
-%     xlim([t(plotStart), t(plotEnd)]);
-% else
-%     xlim([t(plotStart), t(plotEnd)] / 1000);
-% end
+if sigLen > fs
+    xlim([t(plotStart), t(plotEnd)]);
+else
+    xlim([t(plotStart), t(plotEnd)] / 1000);
+end
 
-% grid on;
+grid on;
 
-% % Plot AR frequency response
-% fig11 = figure(11);
-% global arFwdFreqResp;
-% global arFreqVec;
+% Plot pre AR frequency response
+fig11 = figure(11);
+global arFwdFreqResp;
+global arFreqVec;
 
-% arFwdFreqResp = 20 * log10(abs(arFwdFreqResp));
-% arFwdFreqResp = arFwdFreqResp - max(arFwdFreqResp);
-% plot(arFreqVec / 1000, arFwdFreqResp, 'DisplayName', "AR magnitude response");
-% hold on;
-% magSpec = 20 * log10(abs(fft(resPre, 2 * length(arFreqVec))));
-% magSpec = magSpec(1:length(arFreqVec));
-% magSpec = magSpec - max(magSpec);
-% plot(arFreqVec / 1000, magSpec, 'DisplayName', "Spectrum of the modelled signal");
-% hold off;
-% title("AR Filter - Frequency Response");
-% xlabel("Frequency (kHz)");
-% ylabel("Magnitude (dB)");
-% xlim([0, 20000] / 1000);
-% grid on;
-% legend;
+arFwdFreqResp = 20 * log10(abs(arFwdFreqResp));
+arFwdFreqResp = arFwdFreqResp - max(arFwdFreqResp);
+plot(arFreqVec / 1000, arFwdFreqResp, 'DisplayName', "AR magnitude response");
+hold on;
+magSpec = 20 * log10(abs(fft(resPre, 2 * length(arFreqVec))));
+magSpec = magSpec(1:length(arFreqVec));
+magSpec = magSpec - max(magSpec);
+plot(arFreqVec / 1000, magSpec, 'DisplayName', "Spectrum of the modelled signal");
+hold off;
+title("AR Filter Fwd - Frequency Response");
+xlabel("Frequency (kHz)");
+ylabel("Magnitude (dB)");
+xlim([0, 20000] / 1000);
+grid on;
+legend;
+
+% Plot post AR frequency response
+fig12 = figure(12);
+global arBwdFreqResp;
+global arFreqVec;
+
+arBwdFreqResp = 20 * log10(abs(arBwdFreqResp));
+arBwdFreqResp = arBwdFreqResp - max(arBwdFreqResp);
+plot(arFreqVec / 1000, arBwdFreqResp, 'DisplayName', "AR magnitude response");
+hold on;
+magSpec = 20 * log10(abs(fft(resPost, 2 * length(arFreqVec))));
+magSpec = magSpec(1:length(arFreqVec));
+magSpec = magSpec - max(magSpec);
+plot(arFreqVec / 1000, magSpec, 'DisplayName', "Spectrum of the modelled signal");
+hold off;
+title("AR Filter Bwd - Frequency Response");
+xlabel("Frequency (kHz)");
+ylabel("Magnitude (dB)");
+xlim([0, 20000] / 1000);
+grid on;
+legend;
 
 % Plot pitch
-fig12 = figure(12);
+fig13 = figure(13);
 plot(t(smplPre), pitchPre);
 hold on;
 set(gca, 'ColorOrderIndex', 1);
@@ -427,6 +438,7 @@ hold off;
 title('Pitch trajectory');
 ylabel('Pitch in Hz');
 xlabel(['Time (', timeUnit, ')']);
+xlim([t(plotStart), t(plotEnd)]);
 grid on;
 
 % Save figures
@@ -490,19 +502,19 @@ end
 % close(fig6);
 
 % filename = [sigDesc, '_spgm_orig'];
-% resizeFigure(fig7, 1, 0.7);
+% resizeFigure(fig7, 1, 0.8);
 % saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
 % saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
 % close(fig7);
 
 % filename = [sigDesc, '_spgm_rest'];
-% resizeFigure(fig8, 1, 0.7);
+% resizeFigure(fig8, 1, 0.8);
 % saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
 % saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
 % close(fig8);
 
 % filename = [sigDesc, '_spgm_diff'];
-% resizeFigure(fig9, 1, 0.7);
+% resizeFigure(fig9, 1, 0.8);
 % saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
 % saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
 % close(fig9);
@@ -513,17 +525,23 @@ end
 % saveas(fig10, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
 % close(fig10);
 
-% filename = [sigDesc, '_resFrqResp'];
+% filename = [sigDesc, '_resFrqRespFwd'];
 % resizeFigure(fig11, 1, 0.7);
 % saveas(fig11, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
 % saveas(fig11, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
 % close(fig11);
 
-% filename = [sigDesc, '_pitch'];
+% filename = [sigDesc, '_resFrqRespBwd'];
 % resizeFigure(fig12, 1, 0.7);
 % saveas(fig12, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
 % saveas(fig12, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
 % close(fig12);
+
+% filename = [sigDesc, '_pitch'];
+% resizeFigure(fig13, 1, 0.7);
+% saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+% saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% close(fig13);
 
 function resizeFigure(figHandle, xFact, yFact)
     figPos = get(figHandle, 'Position');

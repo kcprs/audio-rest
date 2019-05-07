@@ -48,6 +48,7 @@ else
 
     sig = getSawSig(sigLen, f, m);
 end
+sigLen = length(sig);
 
 %% Damage the source signal
 if strcmp(source, 'audio/PianoScale.wav')
