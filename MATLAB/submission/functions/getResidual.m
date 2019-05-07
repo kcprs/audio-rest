@@ -1,15 +1,25 @@
-function residual = getResidual(sig, trs, npks, smth)
+function residual = getResidual(sig, trs, npks, tukey, smth, cpHi)
     %GETRESIDUAL Subtract sinusoidal portion from a signal
-    %   residual = getResidual(sig, trs, npks, smth) returns residual
-    %   signal derived from the signal sig by finding npks spectral peaks
-    %   above threshold trs and removing them. Set smth to true to smooth
-    %   the residual spectrum. Default value for smth is false.
+    %   residual = getResidual(sig, trs, npks, smth, tukey, smth, cpHi)
+    %   returns residual signal derived from the signal sig by finding npks
+    %   spectral peaks above threshold trs and removing them. Tukey is
+    %   the coefficient for the tukey window. Set smth to true to smooth
+    %   the residual spectrum. Set cpHi to true to copy high frequency
+    %   spectrum (above 10k) of the original signal into residual spectrum.
+    
+    global fsGlobal;
 
     if nargin < 4
+        tukey = 0.01;
+    end
+
+    if nargin < 5
         smth = false;
     end
 
-    tukeyFactor = 0.01;
+    if nargin < 5
+        cpHi = false;
+    end
 
     % Signal sig spans a single frame
     frmLen = length(sig);
@@ -25,8 +35,8 @@ function residual = getResidual(sig, trs, npks, smth)
     sinSig = [flipud(sinSigBwd); sinSigFwd(2:end)];
 
     % Subtract in frequency domain to avoid phase issues
-    sinSigMag = abs(fft(sinSig .* tukeywin(frmLen, tukeyFactor), frmLen));
-    sigMag = abs(fft(sig .* tukeywin(frmLen, tukeyFactor)));
+    sinSigMag = abs(fft(sinSig .* tukeywin(frmLen, tukey), frmLen));
+    sigMag = abs(fft(sig .* tukeywin(frmLen, tukey)));
     resMag = sigMag - sinSigMag;
 
     % Apply smoothing
@@ -37,18 +47,19 @@ function residual = getResidual(sig, trs, npks, smth)
     end
 
     % Use spectrum of original signal at high frequencies
-    global fsGlobal;
-    fs = fsGlobal;
-    bin8k = round(frmLen * 8000 / fs);
-    bin10k = round(frmLen * 10000 / fs);
+    if cpHi
+        fs = fsGlobal;
+        bin8k = round(frmLen * 8000 / fs);
+        bin10k = round(frmLen * 10000 / fs);
 
-    weight = [zeros(1, bin8k), linspace(0, 1, bin10k - bin8k), ...
-            ones(1, frmLen / 2 - bin10k)].';
-    weight = [weight; flipud(weight)];
-    resMag = resMag .* (1 - weight) + sigMag .* weight;
+        weight = [zeros(1, bin8k), linspace(0, 1, bin10k - bin8k), ...
+                ones(1, frmLen / 2 - bin10k)].';
+        weight = [weight; flipud(weight)];
+        resMag = resMag .* (1 - weight) + sigMag .* weight;
+    end
 
     % Scale to compensate for window spectrum height
-    winMag = abs(fft(tukeywin(frmLen, tukeyFactor)));
+    winMag = abs(fft(tukeywin(frmLen, tukey)));
     resMag = resMag * frmLen / max(winMag);
 
     % Go back to time domain, use random phase

@@ -1,4 +1,4 @@
-% ARINTERP Interpolate sinusoidal tracks using AR Modelling
+% PITCHINFORMED Audio restoration through spectral modelling with pitch tracking
 
 %% Set variable values
 global fsGlobal
@@ -10,7 +10,11 @@ numTrk = 60;
 minTrkLen = 8;
 resOrdAR = 50;
 almostNegInf = -100;
+
+% Residual computation settings
+tukey = 0.01;
 smthRes = false;
+cpHi = false;
 
 % source = "saw";
 % source = "sin";
@@ -166,10 +170,12 @@ sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen, phsPost(1, :));
 
 %% Restore residual
 % Compute residual of last frame of pre- section
-resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, 0, smthRes);
+resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, 0, tukey, ...
+    smthRes, cpHi);
 
 % Compute residual of first frame of post- section
-resPost = getResidual(sigPost(1:frmLen), -Inf, 0, smthRes);
+resPost = getResidual(sigPost(1:frmLen), -Inf, 0, tukey, ...
+    smthRes, cpHi);
 
 % Morph between pre- and post- residuals over the gap
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
@@ -367,12 +373,12 @@ end
 lsdStartIdx = find(tSpgm >= lsdStartTime, 1, 'first');
 lsdEndIdx = find(tSpgm <= lsdEndTime, 1, 'last');
 rectangle('Position', [tSpgm(lsdStartIdx), 0, ...
-                            tSpgm(lsdEndIdx) - tSpgm(lsdStartIdx), ...
-                            max(lsd) + 1]);
+                        tSpgm(lsdEndIdx) - tSpgm(lsdStartIdx), ...
+                        max(lsd) + 1]);
 hold off;
 gapLSD = mean(lsd(lsdStartIdx:lsdEndIdx));
 title(['LSD between original and restored signal. Avg over gap: ', ...
-            num2str(gapLSD, 3), ' dB']);
+        num2str(gapLSD, 3), ' dB']);
 xlabel(['Time (', timeUnit, ')']);
 ylabel("LSD (dB)");
 

@@ -1,4 +1,4 @@
-% ARINTERP Interpolate sinusoidal tracks using AR Modelling
+% BASICSPECTRAL Audio restoration through spectral modelling
 
 %% Set variable values
 global fsGlobal
@@ -10,7 +10,11 @@ numTrk = 60;
 minTrkLen = 8;
 resOrdAR = 50;
 almostNegInf = -100;
+
+% Residual computation settings
+tukey = 0.01;
 smthRes = false;
+cpHi = false;
 
 source = "saw";
 % source = "sin";
@@ -164,7 +168,7 @@ for trkIter = 1:numTrkGap
         queryInd = dataRange + (1:numGapFrm);
         freqPoly = polyfit(dataInd, freqDataPost, polyOrd);
         freqGap(:, trkIter) = polyval(freqPoly, queryInd);
-        
+
         fadeIn = linspace(10^(almostNegInf / 20), 1, numGapFrm).';
         magGap(:, trkIter) = magDataPost(1) + 20 * log10(fadeIn);
     elseif all(isnan(freqDataPost))
@@ -206,6 +210,7 @@ preActive = 0;
 postActive = 0;
 
 for iter = 1:numTrk
+
     if ~isnan(freqPre(end, iter))
         preActive = preActive + 1;
     end
@@ -213,13 +218,16 @@ for iter = 1:numTrk
     if ~isnan(freqPost(1, iter))
         postActive = postActive + 1;
     end
+
 end
 
 % Compute residual of last frame of pre- section
-resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, preActive, smthRes);
+resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, preActive, ...
+    tukey, smthRes, cpHi);
 
 % Compute residual of first frame of post- section
-resPost = getResidual(sigPost(1:frmLen), -Inf, postActive, smthRes);
+resPost = getResidual(sigPost(1:frmLen), -Inf, postActive, tukey, ...
+    smthRes, cpHi);
 
 % Morph between pre- and post- residuals over the gap
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
