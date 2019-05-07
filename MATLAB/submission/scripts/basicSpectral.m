@@ -3,26 +3,28 @@
 %% Set variable values
 global fsGlobal
 fs = fsGlobal;
-frmLen = 2048;
-gapLen = 5 * frmLen;
-sigLen = 30 * frmLen;
+frmLen = 1024;
+gapLen = 4096;
 hopLen = 256;
 numTrk = 60;
-minTrkLen = 10;
-resOrdAR = 100;
+minTrkLen = 8;
+resOrdAR = 50;
 almostNegInf = -100;
+smthRes = false;
 
-% source = "saw";
+source = "saw";
 % source = "sin";
 % source = "audio/Flute.nonvib.ff.A4.wav";
-source = "audio/Flute.vib.ff.A4.wav";
+% source = "audio/Flute.vib.ff.A4.wav";
 % source = "audio/Trumpet.novib.mf.A4.wav";
 % source = "audio/Trumpet.vib.mf.A4.wav";
 
 %% Prepare source signal
 if contains(source, "audio/")
     sig = audioread(source);
+    sigLen = length(sig);
 elseif strcmp(source, 'sin')
+    sigLen = fs;
     f = 440; % + 2 * getSineSig(sigLen, 8);
     sig = getCosSig(sigLen, f, -6);
     % sig = sig + getCosSig(sigLen, 2 * f, -12, pi);
@@ -31,10 +33,14 @@ elseif strcmp(source, 'sin')
     % sig = sig + getCosSig(sigLen, 5 * f, -21);
     % sig = sig + 0.1 * randn(size(sig)) ./ 6;
 else
-    f = 440; %logspace(log10(220), log10(440), sigLen).';
-    m = -6; %linspace(-14, 0, sigLen).';
+    sigLen = fs;
+    f0 = 880; % A5 note
+    f1 = 1046.5; % C6 note
+    f = logspace(log10(f0), log10(f1), sigLen).';
 
-    sig = getSawSig(sigLen, f, m);
+    arOrd = 0;
+    sig = getSawSig(sigLen, f, -12);
+    sig = sig + 0.002 * randn([sigLen, 1]);
 end
 
 %% Damage the source signal
@@ -67,7 +73,7 @@ score = zeros(numTrk);
 
 for trkIter = 1:numTrk
     score(trkIter, :) = trksPre(trkIter).getPkScore(freqPost(1, :), ...
-        magPost(1, :), 0.5);
+        magPost(1, :), 0.05);
 end
 
 % Assign trksPost to trksPre by finding lowest closeness scores
@@ -152,14 +158,22 @@ for trkIter = 1:numTrkGap
     magDataPre = magPre(end - dataRange + 1:end, trkIter);
     magDataPost = magPost(1:dataRange, trkIter);
 
-    % If no match, match with itself at zero amplitude
+    % If no match, extrapolate frequency and fade out magnitude
     if all(isnan(freqDataPre))
-        freqGap(:, trkIter) = freqDataPost(1);
-        fadeIn = linspace(10^(almostNegInf / 20), 0, numGapFrm).';
+        dataInd = dataRange + numGapFrm + (1:dataRange).';
+        queryInd = dataRange + (1:numGapFrm);
+        freqPoly = polyfit(dataInd, freqDataPost, polyOrd);
+        freqGap(:, trkIter) = polyval(freqPoly, queryInd);
+        
+        fadeIn = linspace(10^(almostNegInf / 20), 1, numGapFrm).';
         magGap(:, trkIter) = magDataPost(1) + 20 * log10(fadeIn);
     elseif all(isnan(freqDataPost))
-        freqGap(:, trkIter) = freqDataPre(end);
-        fadeOut = linspace(0, 10^(almostNegInf / 20), numGapFrm).';
+        dataInd = (1:dataRange).';
+        queryInd = dataRange + (1:numGapFrm);
+        freqPoly = polyfit(dataInd, freqDataPre, polyOrd);
+        freqGap(:, trkIter) = polyval(freqPoly, queryInd);
+
+        fadeOut = linspace(1, 10^(almostNegInf / 20), numGapFrm).';
         magGap(:, trkIter) = magDataPre(end) + 20 * log10(fadeOut);
     else
         % If match exists, interpolate
@@ -187,11 +201,25 @@ smplGap = smplPre(end):hopLen:smplPost(1);
 sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen, phsPost(1, :));
 
 %% Restore residual
+% Find number of active tracks in pre and post sections
+preActive = 0;
+postActive = 0;
+
+for iter = 1:numTrk
+    if ~isnan(freqPre(end, iter))
+        preActive = preActive + 1;
+    end
+
+    if ~isnan(freqPost(1, iter))
+        postActive = postActive + 1;
+    end
+end
+
 % Compute residual of last frame of pre- section
-resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, numTrk);
+resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, preActive, smthRes);
 
 % Compute residual of first frame of post- section
-resPost = getResidual(sigPost(2:frmLen + 1), -Inf, numTrk);
+resPost = getResidual(sigPost(2:frmLen + 1), -Inf, postActive, smthRes);
 
 % Morph between pre- and post- residuals over the gap
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
@@ -227,8 +255,10 @@ sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
 % Determine signal range to be plotted
-plotStart = gapStart - round(0.8 * gapLen);
-plotEnd = gapEnd + round(0.8 * gapLen);
+% plotStart = gapStart - round(0.3 * gapLen);
+% plotEnd = gapEnd + round(0.3 * gapLen);
+plotStart = 14883;
+plotEnd = 29218;
 
 % Freq range
 freqLim = [0, 20000] / 1000;
@@ -237,8 +267,13 @@ freqLim = [0, 20000] / 1000;
 magMin = -100;
 
 % Convert from samples to s or ms
-t = (1:length(sig)) / fs;
-timeUnit = 's';
+if sigLen > fs
+    t = (1:length(sig)) / fs;
+    timeUnit = 's';
+else
+    t = 1000 * (1:length(sig)) / fs;
+    timeUnit = 'ms';
+end
 
 % Plot the original signal
 fig1 = figure(1);
@@ -371,6 +406,12 @@ plot(tSpgm, lsd);
 hold on;
 lsdStartTime = t(gapStart);
 lsdEndTime = t(gapEnd);
+
+if sigLen <= fs
+    lsdStartTime = lsdStartTime / 1000;
+    lsdEndTime = lsdEndTime / 1000;
+end
+
 lsdStartIdx = find(tSpgm >= lsdStartTime, 1, 'first');
 lsdEndIdx = find(tSpgm <= lsdEndTime, 1, 'last');
 rectangle('Position', [tSpgm(lsdStartIdx), 0, ...
@@ -382,7 +423,13 @@ title(['LSD between original and restored signal. Avg over gap: ', ...
         num2str(gapLSD, 3), ' dB']);
 xlabel(['Time (', timeUnit, ')']);
 ylabel("LSD (dB)");
-xlim([t(plotStart), t(plotEnd)]);
+
+if sigLen > fs
+    xlim([t(plotStart), t(plotEnd)]);
+else
+    xlim([t(plotStart), t(plotEnd)] / 1000);
+end
+
 grid on;
 
 % Plot AR frequency response
@@ -398,6 +445,7 @@ magSpec = 20 * log10(abs(fft(resPre, 2 * length(arFreqVec))));
 magSpec = magSpec(1:length(arFreqVec));
 magSpec = magSpec - max(magSpec);
 plot(arFreqVec / 1000, magSpec, 'DisplayName', "Spectrum of the modelled signal");
+hold off;
 title("AR Filter - Frequency Response");
 xlabel("Frequency (kHz)");
 ylabel("Magnitude (dB)");
@@ -415,6 +463,9 @@ switch source
         sigDesc = ['trumpet_gapLen_', num2str(gapLen)];
     case "audio/Trumpet.vib.mf.A4.wav"
         sigDesc = ['trumpetVib_gapLen_', num2str(gapLen)];
+    case "saw"
+        sigDesc = ['saw_', num2str(f0), '-', num2str(f1), ...
+                    '_gapLen_', num2str(gapLen)];
 end
 
 % filename = [sigDesc, '_orig'];
@@ -463,13 +514,13 @@ end
 % close(fig6);
 
 % filename = [sigDesc, '_spgm_orig'];
-% resizeFigure(fig7, 1, 0.7);
+% resizeFigure(fig7, 1, 1);
 % saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig7);
 
 % filename = [sigDesc, '_spgm_rest'];
-% resizeFigure(fig8, 1, 0.7);
+% resizeFigure(fig8, 1, 1);
 % saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig8);
