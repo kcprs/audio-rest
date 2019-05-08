@@ -4,7 +4,7 @@
 global fsGlobal
 fs = fsGlobal;
 frmLen = 1024;
-gapLen = 20 * frmLen;
+gapLen = 4096;
 hopLen = 256;
 numTrk = 60;
 minTrkLen = 8;
@@ -16,11 +16,11 @@ tukey = 0.01;
 smthRes = false;
 cpHi = false;
 
-% source = "saw";
+source = "saw";
 % source = "sin";
 % source = "audio/Flute.nonvib.ff.A4.wav";
 % source = "audio/Flute.vib.ff.A4.wav";
-source = "audio/Trumpet.novib.mf.A4.wav";
+% source = "audio/Trumpet.novib.mf.A4.wav";
 % source = "audio/Trumpet.vib.mf.A4.wav";
 
 %% Prepare source signal
@@ -495,35 +495,35 @@ end
 % saveas(fig4, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
 % close(fig4);
 
-% filename = [sigDesc, '_trk_freq'];
-% resizeFigure(fig5, 1, 0.7);
-% saveas(fig5, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig5, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-% close(fig5);
+filename = [sigDesc, '_trk_freq'];
+resizeFigure(fig5, 1, 0.7);
+saveas(fig5, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+saveas(fig5, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+close(fig5);
 
-% filename = [sigDesc, '_trk_mag'];
-% resizeFigure(fig6, 1, 0.7);
-% saveas(fig6, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig6, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-% close(fig6);
+filename = [sigDesc, '_trk_mag'];
+resizeFigure(fig6, 1, 0.7);
+saveas(fig6, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+saveas(fig6, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+close(fig6);
 
-% filename = [sigDesc, '_spgm_orig'];
-% resizeFigure(fig7, 1, 0.8);
-% saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-% close(fig7);
+filename = [sigDesc, '_spgm_orig'];
+resizeFigure(fig7, 1, 0.8);
+saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+close(fig7);
 
-% filename = [sigDesc, '_spgm_rest'];
-% resizeFigure(fig8, 1, 0.8);
-% saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-% close(fig8);
+filename = [sigDesc, '_spgm_rest'];
+resizeFigure(fig8, 1, 0.8);
+saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+close(fig8);
 
-% filename = [sigDesc, '_spgm_diff'];
-% resizeFigure(fig9, 1, 0.8);
-% saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-% close(fig9);
+filename = [sigDesc, '_spgm_diff'];
+resizeFigure(fig9, 1, 0.8);
+saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+close(fig9);
 
 % filename = [sigDesc, '_lsd'];
 % resizeFigure(fig10, 1, 0.7);
@@ -543,11 +543,11 @@ end
 % saveas(fig12, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
 % close(fig12);
 
-% filename = [sigDesc, '_pitch'];
-% resizeFigure(fig13, 1, 0.7);
-% saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-% close(fig13);
+filename = [sigDesc, '_pitch'];
+resizeFigure(fig13, 1, 0.7);
+saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+close(fig13);
 
 function resizeFigure(figHandle, xFact, yFact)
     figPos = get(figHandle, 'Position');

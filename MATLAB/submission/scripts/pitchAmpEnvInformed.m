@@ -5,13 +5,13 @@
 global fsGlobal
 fs = fsGlobal;
 frmLen = 1024;
-gapLen = 20 * frmLen;
+gapLen = 10240;
 hopLen = 256;
 numTrk = 60;
 minTrkLen = 8;
 resOrdAR = 50;
 almostNegInf = -100;
-envWeight = 1;
+envWeight = 0.9;
 
 % Residual computation settings
 tukey = 0.01;
@@ -21,8 +21,8 @@ cpHi = false;
 % source = "saw";
 % source = "sin";
 % source = "audio/Flute.nonvib.ff.A4.wav";
-% source = "audio/Flute.vib.ff.A4.wav";
-source = "audio/Trumpet.novib.mf.A4.wav";
+source = "audio/Flute.vib.ff.A4.wav";
+% source = "audio/Trumpet.novib.mf.A4.wav";
 % source = "audio/Trumpet.vib.mf.A4.wav";
 
 %% Prepare source signal
@@ -207,9 +207,9 @@ resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
 % Apply interpolated gap envelope to residual
 numResFrm = numGapFrm - frmLen / hopLen + 2;
 envGapdBCut = envGapdB(frmLen / (2 * hopLen) + 1:end - frmLen / (2 * hopLen));
-resRelStrength = linspace(envGapInitdb, envGapEnddb, numResFrm + 2).';
-resRelStrength = resRelStrength(2:end - 1);
-resAmpFrm = 10.^((envGapdBCut - resRelStrength) / 20);
+resRelMag = linspace(envGapInitdb, envGapEnddb, numResFrm + 2).';
+resRelMag = resRelMag(2:end - 1);
+resAmpFrm = 10.^((envGapdBCut - resRelMag) / 20);
 resAmp = resAmpFrm(1) * ones(size(resGap));
 
 for iter = 1:(numResFrm - 1)
@@ -499,7 +499,6 @@ hold off;
 title('Global amplitude envelope');
 xlabel(['Time (', timeUnit, ')']);
 xlim([t(plotStart), t(plotEnd)]);
-ylim([-10, 0]);
 grid on;
 
 % Save figures

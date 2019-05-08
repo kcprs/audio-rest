@@ -4,23 +4,25 @@
 global fsGlobal
 fs = fsGlobal;
 frmLen = 1024;
-gapLen = 4096;
+gapLen = 20 * frmLen;
 hopLen = 256;
 numTrk = 60;
 minTrkLen = 8;
 resOrdAR = 50;
 almostNegInf = -100;
+noMatchBehaviour = "constant";
+% noMatchBehaviour = "polynomial";
 
 % Residual computation settings
 tukey = 0.01;
 smthRes = false;
 cpHi = false;
 
-source = "saw";
+% source = "saw";
 % source = "sin";
 % source = "audio/Flute.nonvib.ff.A4.wav";
 % source = "audio/Flute.vib.ff.A4.wav";
-% source = "audio/Trumpet.novib.mf.A4.wav";
+source = "audio/Trumpet.novib.mf.A4.wav";
 % source = "audio/Trumpet.vib.mf.A4.wav";
 
 %% Prepare source signal
@@ -77,7 +79,7 @@ score = zeros(numTrk);
 
 for trkIter = 1:numTrk
     score(trkIter, :) = trksPre(trkIter).getPkScore(freqPost(1, :), ...
-        magPost(1, :), 0.05);
+        magPost(1, :), 0.1);
 end
 
 % Assign trksPost to trksPre by finding lowest closeness scores
@@ -164,18 +166,28 @@ for trkIter = 1:numTrkGap
 
     % If no match, extrapolate frequency and fade out magnitude
     if all(isnan(freqDataPre))
-        dataInd = dataRange + numGapFrm + (1:dataRange).';
-        queryInd = dataRange + (1:numGapFrm);
-        freqPoly = polyfit(dataInd, freqDataPost, polyOrd);
-        freqGap(:, trkIter) = polyval(freqPoly, queryInd);
+
+        if strcmp(noMatchBehaviour, "polynomial")
+            dataInd = dataRange + numGapFrm + (1:dataRange).';
+            queryInd = dataRange + (1:numGapFrm);
+            freqPoly = polyfit(dataInd, freqDataPost, polyOrd);
+            freqGap(:, trkIter) = polyval(freqPoly, queryInd);
+        else
+            freqGap(:, trkIter) = freqDataPost(1);
+        end
 
         fadeIn = linspace(10^(almostNegInf / 20), 1, numGapFrm).';
         magGap(:, trkIter) = magDataPost(1) + 20 * log10(fadeIn);
     elseif all(isnan(freqDataPost))
-        dataInd = (1:dataRange).';
-        queryInd = dataRange + (1:numGapFrm);
-        freqPoly = polyfit(dataInd, freqDataPre, polyOrd);
-        freqGap(:, trkIter) = polyval(freqPoly, queryInd);
+
+        if strcmp(noMatchBehaviour, "polynomial")
+            dataInd = (1:dataRange).';
+            queryInd = dataRange + (1:numGapFrm);
+            freqPoly = polyfit(dataInd, freqDataPre, polyOrd);
+            freqGap(:, trkIter) = polyval(freqPoly, queryInd);
+        else
+            freqGap(:, trkIter) = freqDataPre(end);
+        end
 
         fadeOut = linspace(1, 10^(almostNegInf / 20), numGapFrm).';
         magGap(:, trkIter) = magDataPre(end) + 20 * log10(fadeOut);
@@ -263,16 +275,16 @@ sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
 % Determine signal range to be plotted
-plotStart = gapStart - round(0.3 * gapLen);
-plotEnd = gapEnd + round(0.3 * gapLen);
+plotStart = gapStart - round(2 * gapLen);
+plotEnd = gapEnd + round(2 * gapLen);
 % plotStart = 14883;
 % plotEnd = 29218;
 
 % Freq range
-freqLim = [0, 20000] / 1000;
+freqLim = [0, 15000] / 1000;
 
 % Mag range
-magMin = -70;
+magMin = -100;
 
 % Convert from samples to s or ms
 if sigLen > fs
@@ -486,7 +498,7 @@ end
 % audiowrite(['submission\\audioExamples\\poly_', filename, '.wav'], sigRest, fs);
 
 % filename = [sigDesc, '_t_orig'];
-% resizeFigure(fig1, 1, 0.7);
+% resizeFigure(fig1, 1, 0.6);
 % saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig1);
@@ -504,31 +516,31 @@ end
 % close(fig3);
 
 % filename = [sigDesc, '_t_rest'];
-% resizeFigure(fig4, 1, 0.7);
+% resizeFigure(fig4, 1, 0.6);
 % saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig4);
 
-filename = [sigDesc, '_trk_freq'];
-resizeFigure(fig5, 1, 0.7);
-saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig5);
+% filename = [sigDesc, '_trk_freq'];
+% resizeFigure(fig5, 1, 0.7);
+% saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig5);
 
-filename = [sigDesc, '_trk_mag'];
-resizeFigure(fig6, 1, 0.7);
-saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig6);
+% filename = [sigDesc, '_trk_mag'];
+% resizeFigure(fig6, 1, 0.7);
+% saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig6);
 
 filename = [sigDesc, '_spgm_orig'];
-resizeFigure(fig7, 1, 1);
+resizeFigure(fig7, 1, 0.7);
 saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 close(fig7);
 
 filename = [sigDesc, '_spgm_rest'];
-resizeFigure(fig8, 1, 1);
+resizeFigure(fig8, 1, 0.7);
 saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 close(fig8);
@@ -540,7 +552,7 @@ close(fig8);
 % close(fig9);
 
 % filename = [sigDesc, '_lsd'];
-% resizeFigure(fig10, 1, 0.7);
+% resizeFigure(fig10, 1, 0.6);
 % saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig10);
