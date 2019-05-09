@@ -3,11 +3,11 @@
 %% Set variable values
 global fsGlobal
 fs = fsGlobal;
-frmLen = 1024;
-gapLen = 4096;
+frmLen = 2048;
+gapLen = 10240;
 hopLen = 256;
 numTrk = 60;
-minTrkLen = 8;
+minTrkLen = 10;
 resOrdAR = 50;
 almostNegInf = -100;
 
@@ -16,10 +16,14 @@ tukey = 0.01;
 smthRes = false;
 cpHi = false;
 
-source = "saw";
+% Polynomial interpolation settings
+polyOrd = 3;
+fitRange = 4; % at either side of the gap
+
+% source = "saw";
 % source = "sin";
 % source = "audio/Flute.nonvib.ff.A4.wav";
-% source = "audio/Flute.vib.ff.A4.wav";
+source = "audio/Flute.vib.ff.A4.wav";
 % source = "audio/Trumpet.novib.mf.A4.wav";
 % source = "audio/Trumpet.vib.mf.A4.wav";
 
@@ -116,29 +120,12 @@ freqPost = freqHarmPost;
 magPost = magHarmPost;
 phsPost = phsHarmPost;
 
-% Add matching information for harmonics only present at one side of the gap
-for harmIter = 1:numHarm
-
-    if isnan(freqPre(end, harmIter))
-        freqPre(end, harmIter) = freqPost(1, harmIter);
-        magPre(end, harmIter) = almostNegInf;
-    end
-
-    if isnan(freqPost(1, harmIter))
-        freqPost(1, harmIter) = freqPre(end, harmIter);
-        magPost(1, harmIter) = almostNegInf;
-    end
-
-end
-
 %% Interpolate
 numGapFrm = floor((gapLen + frmLen) / hopLen) - 1;
-dataRange = 4;
-polyOrd = 3;
 
-pitchData = [pitchPre(end - dataRange + 1:end); pitchPost(1:dataRange)];
-dataInd = [1:dataRange, dataRange + numGapFrm + (1:dataRange)].';
-queryInd = dataRange + (1:numGapFrm).';
+pitchData = [pitchPre(end - fitRange + 1:end); pitchPost(1:fitRange)];
+dataInd = [1:fitRange, fitRange + numGapFrm + (1:fitRange)].';
+queryInd = fitRange + (1:numGapFrm).';
 pitchPoly = polyfit(dataInd, pitchData, polyOrd);
 pitchGap = polyval(pitchPoly, queryInd);
 
@@ -150,13 +137,27 @@ freqGap = NaN(numGapFrm, numHarm);
 magGap = NaN(numGapFrm, numHarm);
 
 for harmIter = 1:numHarm
-    freqGap(:, harmIter) = pitchGap .* harmRatios(:, harmIter);
+    magDataPre = magPre(end - fitRange + 1:end, harmIter);
+    magDataPost = magPost(1:fitRange, harmIter);
 
-    magData = [magPre(end - dataRange + 1:end, harmIter); ...
-                magPost(1:dataRange, harmIter)];
+    % If no match, extrapolate frequency and fade out magnitude
+    if isnan(harmRatiosPre(harmIter))
+        freqGap(:, harmIter) = pitchGap .* harmRatios(end, harmIter);
+        fadeIn = linspace(10^(almostNegInf / 20), 1, numGapFrm).';
+        magGap(:, harmIter) = magDataPost(1) + 20 * log10(fadeIn);
+    elseif isnan(harmRatiosPost(harmIter))
+        freqGap(:, harmIter) = pitchGap .* harmRatios(1, harmIter);
+        fadeOut = linspace(1, 10^(almostNegInf / 20), numGapFrm).';
+        magGap(:, harmIter) = magDataPre(end) + 20 * log10(fadeOut);
+    else
+        % If match exists, interpolate
+        freqGap(:, harmIter) = pitchGap .* harmRatios(:, harmIter);
 
-    magPoly = polyfit(dataInd, magData, polyOrd);
-    magGap(:, harmIter) = polyval(magPoly, queryInd);
+        magData = [magDataPre; magDataPost];
+        magPoly = polyfit(dataInd, magData, polyOrd);
+        magGap(:, harmIter) = polyval(magPoly, queryInd);
+    end
+
 end
 
 pitchGap = [pitchPre(end); pitchGap; pitchPost(1)];
@@ -211,18 +212,18 @@ sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
 % Determine signal range to be plotted
-plotStart = gapStart - round(0.8 * gapLen);
-plotEnd = gapEnd + round(0.8 * gapLen);
+plotStart = gapStart - round(0.5 * gapLen);
+plotEnd = gapEnd + round(0.5 * gapLen);
 % plotStart = 14883;
 % plotEnd = 29218;
 plotStart = max(1, plotStart);
 plotEnd = min(length(sig), plotEnd);
 
 % Freq range
-freqLim = [0, 20000] / 1000;
+freqLim = [0, 10000] / 1000;
 
 % Mag range
-magMin = -50;
+magMin = -100;
 
 % Convert from samples to s or ms
 if sigLen > fs
@@ -299,7 +300,7 @@ title("Fully restored signal");
 ylabel("Amplitude");
 xlabel(['Time (', timeUnit, ')']);
 xlim([t(plotStart), t(plotEnd)]);
-ylim(ylimWoRect);
+% ylim(ylimWoRect);
 grid on;
 
 % Plot sinusoidal tracks - frequency
@@ -334,6 +335,7 @@ xlim([t(plotStart), t(plotEnd)]);
 magLim = ylim;
 magLim(1) = magMin;
 ylim(magLim);
+ylim([-100, 0]);
 grid on;
 
 % Plot original spectrogram
@@ -440,11 +442,16 @@ set(gca, 'ColorOrderIndex', 1);
 plot(t(smplPost), pitchPost);
 set(gca, 'ColorOrderIndex', 1);
 plot(t(smplGap), pitchGap, '--');
+% plot(t(smplPre(end - fitRange:end)), pitchPre(end - fitRange:end), ...
+    %     'Color', [31, 140, 12] / 256);
+% plot(t(smplPost(1:fitRange)), pitchPost(1:fitRange), ...
+    %     'Color', [31, 140, 12] / 256);
 hold off;
 title('Pitch trajectory');
 ylabel('Pitch in Hz');
 xlabel(['Time (', timeUnit, ')']);
 xlim([t(plotStart), t(plotEnd)]);
+ylim([430, 460]);
 grid on;
 
 % Save figures
@@ -495,35 +502,35 @@ end
 % saveas(fig4, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
 % close(fig4);
 
-filename = [sigDesc, '_trk_freq'];
-resizeFigure(fig5, 1, 0.7);
-saveas(fig5, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-saveas(fig5, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-close(fig5);
+% filename = [sigDesc, '_trk_freq'];
+% resizeFigure(fig5, 1, 0.7);
+% saveas(fig5, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+% saveas(fig5, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% close(fig5);
 
-filename = [sigDesc, '_trk_mag'];
-resizeFigure(fig6, 1, 0.7);
-saveas(fig6, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-saveas(fig6, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-close(fig6);
+% filename = [sigDesc, '_trk_mag'];
+% resizeFigure(fig6, 1, 0.7);
+% saveas(fig6, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+% saveas(fig6, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% close(fig6);
 
-filename = [sigDesc, '_spgm_orig'];
-resizeFigure(fig7, 1, 0.8);
-saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-close(fig7);
+% filename = [sigDesc, '_spgm_orig'];
+% resizeFigure(fig7, 1, 0.8);
+% saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+% saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% close(fig7);
 
-filename = [sigDesc, '_spgm_rest'];
-resizeFigure(fig8, 1, 0.8);
-saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-close(fig8);
+% filename = [sigDesc, '_spgm_rest'];
+% resizeFigure(fig8, 1, 0.8);
+% saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+% saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% close(fig8);
 
-filename = [sigDesc, '_spgm_diff'];
-resizeFigure(fig9, 1, 0.8);
-saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-close(fig9);
+% filename = [sigDesc, '_spgm_diff'];
+% resizeFigure(fig9, 1, 0.8);
+% saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+% saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% close(fig9);
 
 % filename = [sigDesc, '_lsd'];
 % resizeFigure(fig10, 1, 0.7);
@@ -543,11 +550,11 @@ close(fig9);
 % saveas(fig12, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
 % close(fig12);
 
-filename = [sigDesc, '_pitch'];
-resizeFigure(fig13, 1, 0.7);
-saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-close(fig13);
+% filename = [sigDesc, '_pitch'];
+% resizeFigure(fig13, 1, 0.7);
+% saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+% saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% close(fig13);
 
 function resizeFigure(figHandle, xFact, yFact)
     figPos = get(figHandle, 'Position');

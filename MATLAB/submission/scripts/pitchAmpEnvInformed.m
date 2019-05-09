@@ -4,18 +4,18 @@
 %% Set variable values
 global fsGlobal
 fs = fsGlobal;
-frmLen = 1024;
+frmLen = 2048;
 gapLen = 10240;
 hopLen = 256;
 numTrk = 60;
-minTrkLen = 8;
+minTrkLen = 10;
 resOrdAR = 50;
 almostNegInf = -100;
 envWeight = 0.9;
 
 % Residual computation settings
 tukey = 0.01;
-smthRes = false;
+smthRes = true;
 cpHi = false;
 
 % source = "saw";
@@ -126,34 +126,19 @@ freqPost = freqHarmPost;
 magPost = magHarmPost;
 phsPost = phsHarmPost;
 
-% Add matching information for harmonics only present at one side of the gap
-for harmIter = 1:numHarm
-
-    if isnan(freqPre(end, harmIter))
-        freqPre(end, harmIter) = freqPost(1, harmIter);
-        magPre(end, harmIter) = almostNegInf;
-    end
-
-    if isnan(freqPost(1, harmIter))
-        freqPost(1, harmIter) = freqPre(end, harmIter);
-        magPost(1, harmIter) = almostNegInf;
-    end
-
-end
-
 %% Interpolate pitch
 numGapFrm = floor((gapLen + frmLen) / hopLen) - 1;
-dataRange = 4;
+fitRange = 4;
 polyOrd = 3;
 
-pitchData = [pitchPre(end - dataRange + 1:end); pitchPost(1:dataRange)];
-dataInd = [1:dataRange, dataRange + numGapFrm + (1:dataRange)].';
-queryInd = dataRange + (1:numGapFrm).';
+pitchData = [pitchPre(end - fitRange + 1:end); pitchPost(1:fitRange)];
+dataInd = [1:fitRange, fitRange + numGapFrm + (1:fitRange)].';
+queryInd = fitRange + (1:numGapFrm).';
 pitchPoly = polyfit(dataInd, pitchData, polyOrd);
 pitchGap = polyval(pitchPoly, queryInd);
 
 %% Interpolate amplitude envelope
-envData = [envPredB(end - dataRange + 1:end); envPostdB(1:dataRange)];
+envData = [envPredB(end - fitRange + 1:end); envPostdB(1:fitRange)];
 envPoly = polyfit(dataInd, envData, polyOrd);
 envGapdB = polyval(envPoly, queryInd);
 envGapInitdb = envPredB(end);
@@ -167,10 +152,24 @@ freqGap = NaN(numGapFrm, numHarm);
 magGap = NaN(numGapFrm, numHarm);
 
 for harmIter = 1:numHarm
-    freqGap(:, harmIter) = pitchGap .* harmRatios(:, harmIter);
+    magDataPre = magPre(end - fitRange + 1:end, harmIter);
+    magDataPost = magPost(1:fitRange, harmIter);
 
-    magData = [magPre(end - dataRange + 1:end, harmIter); ...
-                magPost(1:dataRange, harmIter)];
+    % If no match, extrapolate frequency and fade out magnitude
+    if isnan(harmRatiosPre(harmIter))
+        freqGap(:, harmIter) = pitchGap .* harmRatios(end, harmIter);
+        fadeIn = linspace(10^(almostNegInf / 20), 1, numGapFrm).';
+        magGap(:, harmIter) = magDataPost(1) + 20 * log10(fadeIn);
+    elseif isnan(harmRatiosPost(harmIter))
+        freqGap(:, harmIter) = pitchGap .* harmRatios(1, harmIter);
+        fadeOut = linspace(1, 10^(almostNegInf / 20), numGapFrm).';
+        magGap(:, harmIter) = magDataPre(end) + 20 * log10(fadeOut);
+    else
+        % If match exists, interpolate
+        freqGap(:, harmIter) = pitchGap .* harmRatios(:, harmIter);
+
+        magData = [magPre(end - fitRange + 1:end, harmIter); ...
+                magPost(1:fitRange, harmIter)];
 
     magPoly = polyfit(dataInd, magData, polyOrd);
     magGapIndividual = polyval(magPoly, queryInd);
@@ -180,6 +179,8 @@ for harmIter = 1:numHarm
     magGapEnv = envGapdB + magRel;
 
     magGap(:, harmIter) = magGapEnv * envWeight + magGapIndividual * (1 - envWeight);
+    end
+
 end
 
 pitchGap = [pitchPre(end); pitchGap; pitchPost(1)];
@@ -251,8 +252,8 @@ sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
 % Determine signal range to be plotted
-plotStart = gapStart - round(0.8 * gapLen);
-plotEnd = gapEnd + round(0.8 * gapLen);
+plotStart = gapStart - round(2.5 * gapLen);
+plotEnd = gapEnd + round(2.5 * gapLen);
 % plotStart = 14883;
 % plotEnd = 29218;
 plotStart = max(1, plotStart);
@@ -262,7 +263,7 @@ plotEnd = min(length(sig), plotEnd);
 freqLim = [0, 20000] / 1000;
 
 % Mag range
-magMin = -50;
+magMin = -80;
 
 % Convert from samples to s or ms
 if sigLen > fs
@@ -454,7 +455,6 @@ legend;
 % Plot post AR frequency response
 fig12 = figure(12);
 global arBwdFreqResp;
-global arFreqVec;
 
 arBwdFreqResp = 20 * log10(abs(arBwdFreqResp));
 arBwdFreqResp = arBwdFreqResp - max(arBwdFreqResp);
@@ -527,81 +527,87 @@ end
 
 % filename = [sigDesc, '_t_orig'];
 % resizeFigure(fig1, 1, 0.7);
-% saveas(fig1, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig1, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig1, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig1, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig1);
 
 % filename = [sigDesc, '_t_gap'];
 % resizeFigure(fig2, 1, 0.7);
-% saveas(fig2, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig2, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig2, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig2, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig2);
 
 % filename = [sigDesc, '_t_sigGap'];
 % resizeFigure(fig3, 1, 0.7);
-% saveas(fig3, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig3, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig3, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig3, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig3);
 
 % filename = [sigDesc, '_t_rest'];
 % resizeFigure(fig4, 1, 0.7);
-% saveas(fig4, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig4, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig4, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig4, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig4);
 
 % filename = [sigDesc, '_trk_freq'];
 % resizeFigure(fig5, 1, 0.7);
-% saveas(fig5, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig5, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig5, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig5, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig5);
 
 % filename = [sigDesc, '_trk_mag'];
 % resizeFigure(fig6, 1, 0.7);
-% saveas(fig6, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig6, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig6, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig6, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig6);
 
 % filename = [sigDesc, '_spgm_orig'];
 % resizeFigure(fig7, 1, 0.8);
-% saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig7, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig7, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig7);
 
 % filename = [sigDesc, '_spgm_rest'];
 % resizeFigure(fig8, 1, 0.8);
-% saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig8, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig8, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig8);
 
 % filename = [sigDesc, '_spgm_diff'];
 % resizeFigure(fig9, 1, 0.8);
-% saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig9, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig9, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig9);
 
 % filename = [sigDesc, '_lsd'];
 % resizeFigure(fig10, 1, 0.7);
-% saveas(fig10, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig10, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig10, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig10, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig10);
 
 % filename = [sigDesc, '_resFrqRespFwd'];
 % resizeFigure(fig11, 1, 0.7);
-% saveas(fig11, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig11, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig11, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig11, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig11);
 
 % filename = [sigDesc, '_resFrqRespBwd'];
 % resizeFigure(fig12, 1, 0.7);
-% saveas(fig12, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig12, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig12, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig12, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig12);
 
 % filename = [sigDesc, '_pitch'];
 % resizeFigure(fig13, 1, 0.7);
-% saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig13, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig13, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig13);
+
+% filename = [sigDesc, '_globAmp'];
+% resizeFigure(fig14, 1, 0.7);
+% saveas(fig14, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig14, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
+% close(fig14);
 
 function resizeFigure(figHandle, xFact, yFact)
     figPos = get(figHandle, 'Position');
