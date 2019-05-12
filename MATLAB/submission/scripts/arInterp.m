@@ -24,9 +24,9 @@ cpHi = false;
 % source = "saw";
 % source = "sin";
 % source = "audio/Flute.nonvib.ff.A4.wav";
-source = "audio/Flute.vib.ff.A4.wav";
+% source = "audio/Flute.vib.ff.A4.wav";
 % source = "audio/Trumpet.novib.mf.A4.wav";
-% source = "audio/Trumpet.vib.mf.A4.wav";
+source = "audio/Trumpet.vib.mf.A4.wav";
 
 %% Prepare source signal
 if contains(source, "audio/")
@@ -151,12 +151,17 @@ dataRangePitchPost = lastUsablePitchPost;
 
 pitchDataPre = pitchPre(end - dataRangePitchPre + 1:end);
 pitchDataPost = pitchPost(1:dataRangePitchPost);
-pitchGap = wfbar(pitchDataPre, pitchDataPost, numGapFrm, pitchOrdAR);
+pitchGap = wfbar(pitchDataPre, pitchDataPost, numGapFrm, pitchOrdAR, true);
 
 %% Interpolate amplitude envelope
-% Find first & last frame with amplitude within 8 dB range
-firstUsableEnvPre = find(abs(envPredB - envPredB(end)) > 8, 1, 'last') + 1;
-lastUsableEnvPost = find(abs(envPostdB - envPostdB(1)) > 8, 1, 'first') - 1;
+% Find first & last frame with amplitude within 10 dB range
+noteStartEnvPre = find(abs(envPredB - envPredB(end)) > 10, 1, 'last') + 1;
+noteEndEnvPost = find(abs(envPostdB - envPostdB(1)) > 10, 1, 'first') - 1;
+
+% Find fitting range
+firstUsableEnvPre = find(abs(envPredB(noteStartEnvPre:end) - envPredB(end)) < 2, 1, 'first');
+firstUsableEnvPre = firstUsableEnvPre + noteStartEnvPre;
+lastUsableEnvPost = find(abs(envPostdB(1:noteEndEnvPost) - envPostdB(1)) < 2, 1, 'last');
 
 if isempty(firstUsableEnvPre)
     firstUsableEnvPre = 1;
@@ -171,7 +176,7 @@ dataRangeEnvPost = lastUsableEnvPost;
 
 envDataPre = envPredB(end - dataRangeEnvPre + 1:end);
 envDataPost = envPostdB(1:dataRangeEnvPost);
-envGapdB = wfbar(envDataPre, envDataPost, numGapFrm, envOrdAR);
+envGapdB = wfbar(envDataPre, envDataPost, numGapFrm, envOrdAR, true);
 envGapInitdb = envPredB(end);
 envGapEnddb = envPostdB(1);
 
@@ -213,7 +218,7 @@ for harmIter = 1:numHarm
         freqGap(:, harmIter) = pitchGap .* harmRatios(:, harmIter);
     
         % Magnitude of harmonic, as predicted from mag trajectory of this harmonic
-        magHarmGap = wfbar(magDataPre, magDataPost, numGapFrm, magOrdAR);
+        magHarmGap = wfbar(magDataPre, magDataPost, numGapFrm, magOrdAR, true);
     
         % Magnitude of harmonic, as predicted based on global envelope and
         % harmonic magnitude strength related to the global envelope
