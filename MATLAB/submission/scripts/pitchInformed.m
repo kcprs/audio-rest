@@ -3,11 +3,11 @@
 %% Set variable values
 global fsGlobal
 fs = fsGlobal;
-frmLen = 2048;
-gapLen = 10240;
+frmLen = 512;
+gapLen = 2 * 10240;
 hopLen = 256;
 numTrk = 60;
-minTrkLen = 10;
+minTrkLen = 4;
 resOrdAR = 50;
 almostNegInf = -100;
 
@@ -212,8 +212,8 @@ sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
 % Determine signal range to be plotted
-plotStart = gapStart - round(0.5 * gapLen);
-plotEnd = gapEnd + round(0.5 * gapLen);
+plotStart = gapStart - round(2.5 * gapLen);
+plotEnd = gapEnd + round(2.5 * gapLen);
 % plotStart = 14883;
 % plotEnd = 29218;
 plotStart = max(1, plotStart);
@@ -451,7 +451,7 @@ title('Pitch trajectory');
 ylabel('Pitch in Hz');
 xlabel(['Time (', timeUnit, ')']);
 xlim([t(plotStart), t(plotEnd)]);
-ylim([430, 460]);
+ylim([400, 480]);
 grid on;
 
 % Save figures
@@ -550,11 +550,11 @@ end
 % saveas(fig12, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
 % close(fig12);
 
-% filename = [sigDesc, '_pitch'];
-% resizeFigure(fig13, 1, 0.7);
-% saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-% close(fig13);
+filename = [sigDesc, '_pitch'];
+resizeFigure(fig13, 1, 0.7);
+saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+close(fig13);
 
 function resizeFigure(figHandle, xFact, yFact)
     figPos = get(figHandle, 'Position');

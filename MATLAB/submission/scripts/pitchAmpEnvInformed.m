@@ -4,11 +4,11 @@
 %% Set variable values
 global fsGlobal
 fs = fsGlobal;
-frmLen = 2048;
+frmLen = 1024;
 gapLen = 10240;
 hopLen = 256;
 numTrk = 60;
-minTrkLen = 10;
+minTrkLen = 4;
 resOrdAR = 50;
 almostNegInf = -100;
 envWeight = 0.9;
@@ -21,8 +21,8 @@ cpHi = false;
 % source = "saw";
 % source = "sin";
 % source = "audio/Flute.nonvib.ff.A4.wav";
-source = "audio/Flute.vib.ff.A4.wav";
-% source = "audio/Trumpet.novib.mf.A4.wav";
+% source = "audio/Flute.vib.ff.A4.wav";
+source = "audio/Trumpet.novib.mf.A4.wav";
 % source = "audio/Trumpet.vib.mf.A4.wav";
 
 %% Prepare source signal
@@ -252,15 +252,15 @@ sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
 % Determine signal range to be plotted
-plotStart = gapStart - round(2.5 * gapLen);
-plotEnd = gapEnd + round(2.5 * gapLen);
+plotStart = gapStart - round(1.5 * gapLen);
+plotEnd = gapEnd + round(1.5 * gapLen);
 % plotStart = 14883;
 % plotEnd = 29218;
 plotStart = max(1, plotStart);
 plotEnd = min(length(sig), plotEnd);
 
 % Freq range
-freqLim = [0, 20000] / 1000;
+freqLim = [0, 10000] / 1000;
 
 % Mag range
 magMin = -80;
@@ -482,9 +482,10 @@ set(gca, 'ColorOrderIndex', 1);
 plot(t(smplGap), pitchGap, '--');
 hold off;
 title('Pitch trajectory');
-ylabel('Pitch in Hz');
+ylabel('Pitch (Hz)');
 xlabel(['Time (', timeUnit, ')']);
 xlim([t(plotStart), t(plotEnd)]);
+ylim([400, 500]);
 grid on;
 
 % Plot amplitude envelope
@@ -497,8 +498,10 @@ set(gca, 'ColorOrderIndex', 1);
 plot(t(smplGap), envGapdB, '--');
 hold off;
 title('Global amplitude envelope');
+ylabel('Amplitude (dBFS)');
 xlabel(['Time (', timeUnit, ')']);
 xlim([t(plotStart), t(plotEnd)]);
+% ylim([-18, -4]);
 grid on;
 
 % Save figures

@@ -4,7 +4,7 @@
 global fsGlobal
 fs = fsGlobal;
 frmLen = 1024;
-gapLen = 20 * frmLen;
+gapLen = 8192;
 hopLen = 256;
 numTrk = 60;
 minTrkLen = 8;
@@ -22,8 +22,8 @@ cpHi = false;
 % source = "sin";
 % source = "audio/Flute.nonvib.ff.A4.wav";
 % source = "audio/Flute.vib.ff.A4.wav";
-source = "audio/Trumpet.novib.mf.A4.wav";
-% source = "audio/Trumpet.vib.mf.A4.wav";
+% source = "audio/Trumpet.novib.mf.A4.wav";
+source = "audio/Trumpet.vib.mf.A4.wav";
 
 %% Prepare source signal
 if contains(source, "audio/")
@@ -275,16 +275,16 @@ sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
 % Determine signal range to be plotted
-plotStart = gapStart - round(2 * gapLen);
-plotEnd = gapEnd + round(2 * gapLen);
+plotStart = gapStart - round(2.5 * gapLen);
+plotEnd = gapEnd + round(2.5 * gapLen);
 % plotStart = 14883;
 % plotEnd = 29218;
 
 % Freq range
-freqLim = [0, 15000] / 1000;
+freqLim = [0, 20000] / 1000;
 
 % Mag range
-magMin = -100;
+magMin = -80;
 
 % Convert from samples to s or ms
 if sigLen > fs
@@ -533,17 +533,17 @@ end
 % saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig6);
 
-filename = [sigDesc, '_spgm_orig'];
-resizeFigure(fig7, 1, 0.7);
-saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig7);
+% filename = [sigDesc, '_spgm_orig'];
+% resizeFigure(fig7, 1, 0.7);
+% saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig7);
 
-filename = [sigDesc, '_spgm_rest'];
-resizeFigure(fig8, 1, 0.7);
-saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-close(fig8);
+% filename = [sigDesc, '_spgm_rest'];
+% resizeFigure(fig8, 1, 0.7);
+% saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
+% saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% close(fig8);
 
 % filename = [sigDesc, '_spgm_diff'];
 % resizeFigure(fig9, 1, 0.7);
