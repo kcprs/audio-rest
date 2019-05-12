@@ -5,7 +5,7 @@
 global fsGlobal
 fs = fsGlobal;
 frmLen = 1024;
-gapLen = 10240;
+gapLen = 2 * 10240;
 hopLen = 256;
 numTrk = 60;
 minTrkLen = 4;
@@ -21,8 +21,8 @@ cpHi = false;
 % source = "saw";
 % source = "sin";
 % source = "audio/Flute.nonvib.ff.A4.wav";
-% source = "audio/Flute.vib.ff.A4.wav";
-source = "audio/Trumpet.novib.mf.A4.wav";
+source = "audio/Flute.vib.ff.A4.wav";
+% source = "audio/Trumpet.novib.mf.A4.wav";
 % source = "audio/Trumpet.vib.mf.A4.wav";
 
 %% Prepare source signal

@@ -3,8 +3,8 @@
 %% Set variable values
 global fsGlobal
 fs = fsGlobal;
-frmLen = 512;
-gapLen = 20 * frmLen;
+frmLen = 1024;
+gapLen = 40 * frmLen;
 sigLen = 100 * frmLen;
 hopLen = 256;
 numTrk = 60;
@@ -40,8 +40,8 @@ elseif strcmp(source, 'sin')
     % sig = sig + getCosSig(sigLen, 5 * f, -21);
     % sig = sig + 0.1 * randn(size(sig)) ./ 6;
 else
-    f = 440;%logspace(log10(220), log10(440), sigLen).';
-    m = -6;%linspace(-14, 0, sigLen).';
+    f = 440; %logspace(log10(220), log10(440), sigLen).';
+    m = -6; %linspace(-14, 0, sigLen).';
 
     sig = getSawSig(sigLen, f, m);
 end
@@ -131,28 +131,6 @@ freqPost = freqHarmPost;
 magPost = magHarmPost;
 phsPost = phsHarmPost;
 
-% Add matching information for harmonics only present at one
-% side of the gap
-
-for harmIter = 1:numHarm
-
-    if all(isnan(magPre(end - magOrdAR:end, harmIter))) && ...
-            all(isnan(magPost(1:magOrdAR + 1, harmIter)))
-        continue;
-    end
-
-    if any(isnan(magPre(end - magOrdAR:end, harmIter)))
-        magPre(end - magOrdAR:end, harmIter) = almostNegInf;
-        harmRatiosPre(harmIter) = harmRatiosPost(harmIter);
-    end
-
-    if any(isnan(magPost(1:magOrdAR + 1, harmIter)))
-        magPost(1:magOrdAR + 1, harmIter) = almostNegInf;
-        harmRatiosPost(harmIter) = harmRatiosPre(harmIter);
-    end
-
-end
-
 %% Interpolate pitch -> frequencies and magnitudes
 numGapFrm = floor((gapLen + frmLen) / hopLen) - 1;
 
@@ -212,27 +190,39 @@ for harmIter = 1:numHarm
         continue;
     end
 
-    if any(isnan(magDataPre))
-        firstUsable = find(isnan(magDataPre), 1, 'last') + 1;
-        magDataPre = magDataPre(firstUsable:end);
+    % If no match, extrapolate frequency and fade out magnitude
+    if isnan(harmRatiosPre(harmIter))
+        freqGap(:, harmIter) = pitchGap .* harmRatios(end, harmIter);
+        fadeIn = linspace(10^(almostNegInf / 20), 1, numGapFrm).';
+        magGap(:, harmIter) = magDataPost(1) + 20 * log10(fadeIn);
+    elseif isnan(harmRatiosPost(harmIter))
+        freqGap(:, harmIter) = pitchGap .* harmRatios(1, harmIter);
+        fadeOut = linspace(1, 10^(almostNegInf / 20), numGapFrm).';
+        magGap(:, harmIter) = magDataPre(end) + 20 * log10(fadeOut);
+    else
+        if any(isnan(magDataPre))
+            firstUsable = find(isnan(magDataPre), 1, 'last') + 1;
+            magDataPre = magDataPre(firstUsable:end);
+        end
+    
+        if any(isnan(magDataPost))
+            lastUsable = find(isnan(magDataPost), 1, 'first') - 1;
+            magDataPost = magDataPost(1:lastUsable);
+        end
+    
+        freqGap(:, harmIter) = pitchGap .* harmRatios(:, harmIter);
+    
+        % Magnitude of harmonic, as predicted from mag trajectory of this harmonic
+        magHarmGap = wfbar(magDataPre, magDataPost, numGapFrm, magOrdAR);
+    
+        % Magnitude of harmonic, as predicted based on global envelope and
+        % harmonic magnitude strength related to the global envelope
+        harmRelStrength = linspace(magDataPre(end) - envGapInitdb, magDataPost(1) - envGapEnddb, numGapFrm).';
+        envHarm = envGapdB + harmRelStrength;
+    
+        magGap(:, harmIter) = envHarm * envWeight + magHarmGap * (1 - envWeight);
     end
 
-    if any(isnan(magDataPost))
-        lastUsable = find(isnan(magDataPost), 1, 'first') - 1;
-        magDataPost = magDataPost(1:lastUsable);
-    end
-
-    freqGap(:, harmIter) = pitchGap .* harmRatios(:, harmIter);
-
-    % Magnitude of harmonic, as predicted from mag trajectory of this harmonic
-    magHarmGap = wfbar(magDataPre, magDataPost, numGapFrm, magOrdAR);
-
-    % Magnitude of harmonic, as predicted based on global envelope and
-    % harmonic magnitude strength related to the global envelope
-    harmRelStrength = linspace(magDataPre(end) - envGapInitdb, magDataPost(1) - envGapEnddb, numGapFrm).';
-    envHarm = envGapdB + harmRelStrength;
-
-    magGap(:, harmIter) = envHarm * envWeight + magHarmGap * (1 - envWeight);
 end
 
 pitchGap = [pitchPre(end); pitchGap; pitchPost(1)];
