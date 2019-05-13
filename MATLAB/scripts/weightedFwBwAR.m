@@ -34,16 +34,16 @@ switch source
         sig = sig + 0.002 * randn([sigLen, 1]);
     case "flute"
         arOrd = 0;
-        sig = audioread("Flute.nonvib.ff.A4.wav");
+        sig = audioread("Flute.nonvib.A4.wav");
     case "flute.vib"
         arOrd = 0;
-        sig = audioread("Flute.vib.ff.A4.wav");
+        sig = audioread("Flute.vib.A4.wav");
     case "trumpet"
         arOrd = 0;
-        sig = audioread("Trumpet.novib.mf.A4.wav");
+        sig = audioread("Trumpet.nonvib.A4.wav");
     case "trumpet.vib"
         arOrd = 0;
-        sig = audioread("Trumpet.vib.mf.A4.wav");
+        sig = audioread("Trumpet.vib.A4.wav");
 end
 
 sigLen = length(sig);
@@ -240,13 +240,13 @@ switch source
 end
 
 % filename = [sigDesc, '_orig'];
-% audiowrite(['submission\\audioExamples\\wfbar_', filename, '.wav'], sig, fs);
+% audiowrite(['audioExamples\\', filename, '.wav'], sig, fs);
 
 % filename = [sigDesc, '_dmg'];
-% audiowrite(['submission\\audioExamples\\wfbar_', filename, '.wav'], sigDmg, fs);
+% audiowrite(['audioExamples\\', filename, '.wav'], sigDmg, fs);
 
 % filename = [sigDesc, '_rest'];
-% audiowrite(['submission\\audioExamples\\wfbar_', filename, '.wav'], sigRest, fs);
+% audiowrite(['audioExamples\\', filename, '.wav'], sigRest, fs);
 
 % filename = [sigDesc, '_t_orig'];
 % resizeFigure(fig1, 1, 0.7);
@@ -261,13 +261,13 @@ end
 % close(fig2);
 
 % filename = [sigDesc, '_spgm_orig'];
-% resizeFigure(fig3, 1, 1.4);
+% resizeFigure(fig3, 1, 0.7);
 % saveas(fig3, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
 % saveas(fig3, ['figures\\arModelling\\wfbar\\', filename, '.png']);
 % close(fig3);
 
 % filename = [sigDesc, '_spgm_rest'];
-% resizeFigure(fig4, 1, 1.4);
+% resizeFigure(fig4, 1, 0.7);
 % saveas(fig4, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
 % saveas(fig4, ['figures\\arModelling\\wfbar\\', filename, '.png']);
 % close(fig4);
