@@ -17,9 +17,7 @@ almostNegInf = -100;
 envWeight = 0.9;
 
 % Residual computation settings
-tukey = 0.01;
 smthRes = false;
-cpHi = false;
 
 % source = "saw";
 % source = "sin";
@@ -243,12 +241,10 @@ sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen, phsPost(1, :));
 
 %% Restore residual
 % Compute residual of last frame of pre- section
-resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, 0, tukey, ...
-    smthRes, cpHi);
+resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, 0, smthRes);
 
 % Compute residual of first frame of post- section
-resPost = getResidual(sigPost(1:frmLen), -Inf, 0, tukey, ...
-    smthRes, cpHi);
+resPost = getResidual(sigPost(1:frmLen), -Inf, 0, smthRes);
 
 % Morph between pre- and post- residuals over the gap
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);

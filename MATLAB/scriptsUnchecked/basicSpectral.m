@@ -14,16 +14,14 @@ noMatchBehaviour = "constant";
 % noMatchBehaviour = "polynomial";
 
 % Residual computation settings
-tukey = 0.01;
 smthRes = false;
-cpHi = false;
 
 % source = "saw";
 % source = "sin";
-% source = "audio/Flute.nonvib.ff.A4.wav";
-% source = "audio/Flute.vib.ff.A4.wav";
-% source = "audio/Trumpet.novib.mf.A4.wav";
-source = "audio/Trumpet.vib.mf.A4.wav";
+% source = "audio/Flute.nonvib.A4.wav";
+% source = "audio/Flute.vib.A4.wav";
+% source = "audio/Trumpet.nonvib.A4.wav";
+source = "audio/Trumpet.vib.A4.wav";
 
 %% Prepare source signal
 if contains(source, "audio/")
@@ -234,12 +232,10 @@ for iter = 1:numTrk
 end
 
 % Compute residual of last frame of pre- section
-resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, preActive, ...
-    tukey, smthRes, cpHi);
+resPre = getResidual(sigPre(end - frmLen + 1:end), -Inf, preActive, smthRes);
 
 % Compute residual of first frame of post- section
-resPost = getResidual(sigPost(1:frmLen), -Inf, postActive, tukey, ...
-    smthRes, cpHi);
+resPost = getResidual(sigPost(1:frmLen), -Inf, postActive, smthRes);
 
 % Morph between pre- and post- residuals over the gap
 resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
@@ -452,7 +448,7 @@ end
 
 grid on;
 
-% Plot AR frequency response
+% Plot pre AR frequency response
 fig11 = figure(11);
 global arFwdFreqResp;
 global arFreqVec;
@@ -466,7 +462,28 @@ magSpec = magSpec(1:length(arFreqVec));
 magSpec = magSpec - max(magSpec);
 plot(arFreqVec / 1000, magSpec, 'DisplayName', "Spectrum of the modelled signal");
 hold off;
-title("AR Filter - Frequency Response");
+title("AR Filter Fwd - Frequency Response");
+xlabel("Frequency (kHz)");
+ylabel("Magnitude (dB)");
+xlim([0, 20000] / 1000);
+grid on;
+legend;
+
+% Plot post AR frequency response
+fig12 = figure(12);
+global arBwdFreqResp;
+global arFreqVec;
+
+arBwdFreqResp = 20 * log10(abs(arBwdFreqResp));
+arBwdFreqResp = arBwdFreqResp - max(arBwdFreqResp);
+plot(arFreqVec / 1000, arBwdFreqResp, 'DisplayName', "AR magnitude response");
+hold on;
+magSpec = 20 * log10(abs(fft(resPost, 2 * length(arFreqVec))));
+magSpec = magSpec(1:length(arFreqVec));
+magSpec = magSpec - max(magSpec);
+plot(arFreqVec / 1000, magSpec, 'DisplayName', "Spectrum of the modelled signal");
+hold off;
+title("AR Filter Bwd - Frequency Response");
 xlabel("Frequency (kHz)");
 ylabel("Magnitude (dB)");
 xlim([0, 20000] / 1000);
@@ -557,11 +574,17 @@ end
 % saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig10);
 
-% filename = [sigDesc, '_resFrqResp'];
+% filename = [sigDesc, '_resFrqRespFwd'];
 % resizeFigure(fig11, 1, 0.7);
-% saveas(fig11, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig11, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
+% saveas(fig11, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+% saveas(fig11, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
 % close(fig11);
+
+% filename = [sigDesc, '_resFrqRespBwd'];
+% resizeFigure(fig12, 1, 0.7);
+% saveas(fig12, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
+% saveas(fig12, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% close(fig12);
 
 function resizeFigure(figHandle, xFact, yFact)
     figPos = get(figHandle, 'Position');
