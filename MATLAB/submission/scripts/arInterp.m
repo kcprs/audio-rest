@@ -154,14 +154,14 @@ pitchDataPost = pitchPost(1:dataRangePitchPost);
 pitchGap = wfbar(pitchDataPre, pitchDataPost, numGapFrm, pitchOrdAR, true);
 
 %% Interpolate amplitude envelope
-% Find first & last frame with amplitude within 10 dB range
-noteStartEnvPre = find(abs(envPredB - envPredB(end)) > 10, 1, 'last') + 1;
-noteEndEnvPost = find(abs(envPostdB - envPostdB(1)) > 10, 1, 'first') - 1;
+% Find first & last frame with amplitude within 16 dB range
+noteStartEnvPre = find(abs(envPredB - envPredB(end)) > 16, 1, 'last') + 1;
+noteEndEnvPost = find(abs(envPostdB - envPostdB(1)) > 16, 1, 'first') - 1;
 
 % Find fitting range
 firstUsableEnvPre = find(abs(envPredB(noteStartEnvPre:end) - envPredB(end)) < 2, 1, 'first');
 firstUsableEnvPre = firstUsableEnvPre + noteStartEnvPre;
-lastUsableEnvPost = find(abs(envPostdB(1:noteEndEnvPost) - envPostdB(1)) < 2, 1, 'last');
+lastUsableEnvPost = find(abs(envPostdB(1:noteEndEnvPost) - envPostdB(1)) < 2, 1, 'last') - 1;
 
 if isempty(firstUsableEnvPre)
     firstUsableEnvPre = 1;
@@ -500,7 +500,7 @@ legend;
 % Plot post AR frequency response
 fig12 = figure(12);
 global arBwdFreqResp;
-global arFreqVec;
+% global arFreqVec;
 
 arBwdFreqResp = 20 * log10(abs(arBwdFreqResp));
 arBwdFreqResp = arBwdFreqResp - max(arBwdFreqResp);
@@ -519,13 +519,19 @@ grid on;
 legend;
 
 % Plot pitch
+trksGapOrig = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrkLen);
+[~, ~, ~, smplGapOrig] = SinTrack.consolidateFMP(trksGapOrig);
+pitchGapOrig = trksGapOrig(1).pitchEst;
+pitchGapOrig = interp1(smplGapOrig, pitchGapOrig, smplGap);
+
 fig13 = figure(13);
 plot(t(smplPre), pitchPre);
 hold on;
 set(gca, 'ColorOrderIndex', 1);
 plot(t(smplPost), pitchPost);
 set(gca, 'ColorOrderIndex', 1);
-plot(t(smplGap), pitchGap, '--');
+plot(t(smplGap), pitchGapOrig, 'Color', [0.7, 0.7, 0.7]);
+plot(t(smplGap), pitchGap, 'Color', [221, 49, 26] / 256);
 plot([t(smplPre(firstUsablePitchPre)), t(smplPost(lastUsablePitchPost))], ...
     [pitchPre(firstUsablePitchPre), pitchPost(lastUsablePitchPost)], 'x');
 hold off;
@@ -536,19 +542,25 @@ xlim([t(plotStart), t(plotEnd)]);
 grid on;
 
 % Plot amplitude envelope
+[envUpper, envLower] = envelope(sig, hopLen, 'peak');
+envGapOrig = (envUpper - envLower) / 2;
+envGapOrig = 20 * log10(envGapOrig(smplGap));
+
 fig14 = figure(14);
 plot(t(smplPre), envPredB);
 hold on;
 set(gca, 'ColorOrderIndex', 1);
 plot(t(smplPost), envPostdB);
 set(gca, 'ColorOrderIndex', 1);
-plot(t(smplGap), envGapdB, '--');
+plot(t(smplGap), envGapOrig, 'Color', [0.7, 0.7, 0.7]);
+plot(t(smplGap), envGapdB, 'Color', [221, 49, 26] / 256);
 plot([t(smplPre(firstUsableEnvPre)), t(smplPost(lastUsableEnvPost))], ...
     [envPredB(firstUsableEnvPre), envPostdB(lastUsableEnvPost)], 'x');
 hold off;
 title('Global amplitude envelope');
 xlabel(['Time (', timeUnit, ')']);
 xlim([t(plotStart), t(plotEnd)]);
+ylim([-30, 0]);
 grid on;
 
 % Save figures

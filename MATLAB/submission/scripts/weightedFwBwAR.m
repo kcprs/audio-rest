@@ -260,17 +260,17 @@ end
 % saveas(fig2, ['figures\\arModelling\\wfbar\\', filename, '.png']);
 % close(fig2);
 
-filename = [sigDesc, '_spgm_orig'];
-resizeFigure(fig3, 1, 1.4);
-saveas(fig3, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-saveas(fig3, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-close(fig3);
+% filename = [sigDesc, '_spgm_orig'];
+% resizeFigure(fig3, 1, 1.4);
+% saveas(fig3, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
+% saveas(fig3, ['figures\\arModelling\\wfbar\\', filename, '.png']);
+% close(fig3);
 
-filename = [sigDesc, '_spgm_rest'];
-resizeFigure(fig4, 1, 1.4);
-saveas(fig4, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-saveas(fig4, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-close(fig4);
+% filename = [sigDesc, '_spgm_rest'];
+% resizeFigure(fig4, 1, 1.4);
+% saveas(fig4, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
+% saveas(fig4, ['figures\\arModelling\\wfbar\\', filename, '.png']);
+% close(fig4);
 
 % filename = [sigDesc, '_spgm_diff'];
 % resizeFigure(fig5, 1, 0.7);
