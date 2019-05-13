@@ -48,7 +48,7 @@ function sig = getSawSig(len, freq, mag, fs)
     % Using additive synthesis as described in link below
     % (https://en.wikipedia.org/wiki/Sawtooth_wave)
     while any(2 * freqHrm < fs)
-        harm = getSineSig(len, freqHrm, mag, 0, fs) .* (2 * freqHrm < fs);
+        harm = getSinSig(len, freqHrm, mag, 0, fs) .* (2 * freqHrm < fs);
         sig = sig + (-1) ^ harmInd * harm / harmInd;
 
         harmInd = harmInd + 1;

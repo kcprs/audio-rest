@@ -23,14 +23,11 @@ function setup(basePath)
     end
 
     % Define paths to add
-    pathsAdded = [basePath + "\\util";
-            basePath + "\\simpleAR\\scripts";
-            basePath + "\\simpleAR\\functions";
-            basePath + "\\spectral\\scripts";
-            basePath + "\\spectral\\functions";
-            basePath + "\\spectral\\classes";
-            basePath + "\\comparisons\\scripts";
-            basePath + "\\plotting"];
+    pathsAdded = [basePath + "\\functions";
+            basePath + "\\scripts";
+            basePath + "\\classes";
+            basePath + "\\util";
+            basePath + "\\audio"];
 
     % Add required subfolders to path
     for iter = 1:length(pathsAdded)
