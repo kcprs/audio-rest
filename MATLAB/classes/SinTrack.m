@@ -42,11 +42,11 @@ classdef SinTrack < handle
                 pkScore = 44100 - pkMag;
             else
                 % Otherwise pick closest peak within matchFactor
-                if pkFreq < 1000
+                if pkFreq < 2000
                     maxJump = prevFreq * matchFactor;
                 else
                     % Limit maxJump for higher frequencies
-                    maxJump = 1000 * matchFactor;
+                    maxJump = 2000 * matchFactor;
                 end
 
                 freqDist = abs(pkFreq - prevFreq);

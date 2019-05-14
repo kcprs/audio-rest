@@ -525,7 +525,6 @@ plot(t(smplPre), pitchPre);
 hold on;
 set(gca, 'ColorOrderIndex', 1);
 plot(t(smplPost), pitchPost);
-set(gca, 'ColorOrderIndex', 1);
 plot(t(smplGap), pitchGapOrig, 'Color', [0.7, 0.7, 0.7]);
 plot(t(smplGap), pitchGap, 'Color', [221, 49, 26] / 256);
 plot([t(smplPre(firstUsablePitchPre)), t(smplPost(lastUsablePitchPost))], ...
@@ -547,7 +546,6 @@ plot(t(smplPre), envPredB);
 hold on;
 set(gca, 'ColorOrderIndex', 1);
 plot(t(smplPost), envPostdB);
-set(gca, 'ColorOrderIndex', 1);
 plot(t(smplGap), envGapOrig, 'Color', [0.7, 0.7, 0.7]);
 plot(t(smplGap), envGapdB, 'Color', [221, 49, 26] / 256);
 plot([t(smplPre(firstUsableEnvPre)), t(smplPost(lastUsableEnvPost))], ...

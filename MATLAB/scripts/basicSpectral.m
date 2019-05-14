@@ -4,7 +4,7 @@
 global fsGlobal
 fs = fsGlobal;
 frmLen = 1024;
-gapLen = 8192;
+gapLen = 10240;
 hopLen = 256;
 numTrk = 60;
 minTrkLen = 8;
@@ -17,14 +17,14 @@ noMatchBehaviour = "constant";
 smthRes = false;
 
 % Plotting settings
-xRange = 2.6; % Plotting range on x axis. Value of 1 corresponds to gap length.
+xRange = 3; % Plotting range on x axis. Value of 1 corresponds to gap length.
 freqLim = [0, 10000] / 1000; % Freq range
-magMin = -80; % Lowest magnitude to be shown in the plot of magnitude trajectories
+magMin = -70; % Lowest magnitude to be shown in the plot of magnitude trajectories
 
 % source = "saw";
 % source = "sin";
-source = "audio/Flute.nonvib.A4.wav";
-% source = "audio/Flute.vib.A4.wav";
+% source = "audio/Flute.nonvib.A4.wav";
+source = "audio/Flute.vib.A4.wav";
 % source = "audio/Trumpet.nonvib.A4.wav";
 % source = "audio/Trumpet.vib.A4.wav";
 
@@ -250,7 +250,7 @@ resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
 resGap = [resPre(frmLen / 2:end); resGap; resPost(1:frmLen / 2)];
 
 %% Add reconstructed sinusoidal and residual
-sigGap = resGap;%sinGap + resGap;
+sigGap = sinGap + resGap;
 
 %% Insert reconstructed signal into the gap
 % Prepare cross-fades
@@ -281,6 +281,8 @@ plotStart = gapCentre - int64(0.5 * xRange * gapLen);
 plotEnd = gapCentre + int64(0.5 * xRange * gapLen);
 % plotStart = 14883;
 % plotEnd = 29218;
+plotStart = max(1, plotStart);
+plotEnd = min(length(sig), plotEnd);
 
 % Convert from samples to s or ms
 if sigLen > fs
@@ -551,13 +553,13 @@ end
 % close(fig6);
 
 % filename = [sigDesc, '_spgm_orig'];
-% resizeFigure(fig7, 1, 0.7);
+% resizeFigure(fig7, 1, 1);
 % saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig7);
 
 % filename = [sigDesc, '_spgm_rest'];
-% resizeFigure(fig8, 1, 0.7);
+% resizeFigure(fig8, 1, 1);
 % saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig8);
@@ -569,7 +571,7 @@ end
 % close(fig9);
 
 % filename = [sigDesc, '_lsd'];
-% resizeFigure(fig10, 1, 0.6);
+% resizeFigure(fig10, 1, 0.7);
 % saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig10);
