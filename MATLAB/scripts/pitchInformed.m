@@ -80,8 +80,8 @@ pitchPost = trksPost(1).pitchEst;
 
 %% Match tracks across the gap
 % Reorder based on harmonics
-maxHarmPre = round(max(freqPre(end, :)) / trksPre(1).pitchEst(end));
-maxHarmPost = round(max(freqPost(1, :)) / trksPost(1).pitchEst(1));
+maxHarmPre = ceil(max(freqPre(end, :)) / trksPre(1).pitchEst(end));
+maxHarmPost = ceil(max(freqPost(1, :)) / trksPost(1).pitchEst(1));
 
 numHarm = max(maxHarmPre, maxHarmPost);
 
@@ -145,11 +145,11 @@ for harmIter = 1:numHarm
 
     % If no match, extrapolate frequency and fade out magnitude
     if isnan(harmRatiosPre(harmIter))
-        freqGap(:, harmIter) = pitchGap .* harmRatios(end, harmIter);
+        freqGap(:, harmIter) = pitchGap .* harmRatiosPost(1, harmIter);
         fadeIn = linspace(10^(almostNegInf / 20), 1, numGapFrm).';
         magGap(:, harmIter) = magDataPost(1) + 20 * log10(fadeIn);
     elseif isnan(harmRatiosPost(harmIter))
-        freqGap(:, harmIter) = pitchGap .* harmRatios(1, harmIter);
+        freqGap(:, harmIter) = pitchGap .* harmRatiosPre(end, harmIter);
         fadeOut = linspace(1, 10^(almostNegInf / 20), numGapFrm).';
         magGap(:, harmIter) = magDataPre(end) + 20 * log10(fadeOut);
     else
