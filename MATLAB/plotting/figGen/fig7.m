@@ -47,12 +47,12 @@ dim = [1000 * cSt / fs, -1.3, 1000 * cLen / fs, 2.6];
 rectangle('Position', dim, 'EdgeColor', [66, 134, 244] / 256, 'LineWidth', 1);
 grid on;
 
-filename = 'uncertainty_f';
-resizeFigure(fig1, 1, 0.9);
-saveas(fig1, ['figures\\other\\', filename, '.eps'], 'epsc');
-saveas(fig1, ['figures\\other\\', filename, '.png']);
+% filename = 'uncertainty_f';
+% resizeFigure(fig1, 1, 0.9);
+% saveas(fig1, ['figures\\other\\', filename, '.eps'], 'epsc');
+% saveas(fig1, ['figures\\other\\', filename, '.png']);
 
-filename = 'uncertainty_t';
-resizeFigure(fig2, 1, 0.9);
-saveas(fig2, ['figures\\other\\', filename, '.eps'], 'epsc');
-saveas(fig2, ['figures\\other\\', filename, '.png']);
+% filename = 'uncertainty_t';
+% resizeFigure(fig2, 1, 0.9);
+% saveas(fig2, ['figures\\other\\', filename, '.eps'], 'epsc');
+% saveas(fig2, ['figures\\other\\', filename, '.png']);
