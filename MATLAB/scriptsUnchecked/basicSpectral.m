@@ -16,12 +16,17 @@ noMatchBehaviour = "constant";
 % Residual computation settings
 smthRes = false;
 
+% Plotting settings
+xRange = 2.6; % Plotting range on x axis. Value of 1 corresponds to gap length.
+freqLim = [0, 10000] / 1000; % Freq range
+magMin = -80; % Lowest magnitude to be shown in the plot of magnitude trajectories
+
 % source = "saw";
 % source = "sin";
-% source = "audio/Flute.nonvib.A4.wav";
+source = "audio/Flute.nonvib.A4.wav";
 % source = "audio/Flute.vib.A4.wav";
 % source = "audio/Trumpet.nonvib.A4.wav";
-source = "audio/Trumpet.vib.A4.wav";
+% source = "audio/Trumpet.vib.A4.wav";
 
 %% Prepare source signal
 if contains(source, "audio/")
@@ -245,7 +250,7 @@ resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
 resGap = [resPre(frmLen / 2:end); resGap; resPost(1:frmLen / 2)];
 
 %% Add reconstructed sinusoidal and residual
-sigGap = sinGap + resGap;
+sigGap = resGap;%sinGap + resGap;
 
 %% Insert reconstructed signal into the gap
 % Prepare cross-fades
@@ -271,16 +276,11 @@ sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
 % Determine signal range to be plotted
-plotStart = gapStart - round(2.5 * gapLen);
-plotEnd = gapEnd + round(2.5 * gapLen);
+gapCentre = int64((gapStart + gapEnd) / 2);
+plotStart = gapCentre - int64(0.5 * xRange * gapLen);
+plotEnd = gapCentre + int64(0.5 * xRange * gapLen);
 % plotStart = 14883;
 % plotEnd = 29218;
-
-% Freq range
-freqLim = [0, 20000] / 1000;
-
-% Mag range
-magMin = -80;
 
 % Convert from samples to s or ms
 if sigLen > fs
@@ -472,7 +472,7 @@ legend;
 % Plot post AR frequency response
 fig12 = figure(12);
 global arBwdFreqResp;
-global arFreqVec;
+% global arFreqVec;
 
 arBwdFreqResp = 20 * log10(abs(arBwdFreqResp));
 arBwdFreqResp = arBwdFreqResp - max(arBwdFreqResp);
@@ -492,13 +492,13 @@ legend;
 
 % Save figures
 switch source
-    case "audio/Flute.nonvib.ff.A4.wav"
+    case "audio/Flute.nonvib.A4.wav"
         sigDesc = ['flute_gapLen_', num2str(gapLen)];
-    case "audio/Flute.vib.ff.A4.wav"
+    case "audio/Flute.vib.A4.wav"
         sigDesc = ['fluteVib_gapLen_', num2str(gapLen)];
-    case "audio/Trumpet.novib.mf.A4.wav"
+    case "audio/Trumpet.nonvib.A4.wav"
         sigDesc = ['trumpet_gapLen_', num2str(gapLen)];
-    case "audio/Trumpet.vib.mf.A4.wav"
+    case "audio/Trumpet.vib.A4.wav"
         sigDesc = ['trumpetVib_gapLen_', num2str(gapLen)];
     case "saw"
         sigDesc = ['saw_', num2str(f0), '-', num2str(f1), ...
@@ -506,16 +506,16 @@ switch source
 end
 
 % filename = [sigDesc, '_orig'];
-% audiowrite(['submission\\audioExamples\\poly_', filename, '.wav'], sig, fs);
+% audiowrite(['audioExamples\\poly_', filename, '.wav'], sig, fs);
 
 % filename = [sigDesc, '_dmg'];
-% audiowrite(['submission\\audioExamples\\poly_', filename, '.wav'], sigDmg, fs);
+% audiowrite(['audioExamples\\poly_', filename, '.wav'], sigDmg, fs);
 
 % filename = [sigDesc, '_rest'];
-% audiowrite(['submission\\audioExamples\\poly_', filename, '.wav'], sigRest, fs);
+% audiowrite(['audioExamples\\poly_', filename, '.wav'], sigRest, fs);
 
 % filename = [sigDesc, '_t_orig'];
-% resizeFigure(fig1, 1, 0.6);
+% resizeFigure(fig1, 1, 0.7);
 % saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig1);
@@ -533,7 +533,7 @@ end
 % close(fig3);
 
 % filename = [sigDesc, '_t_rest'];
-% resizeFigure(fig4, 1, 0.6);
+% resizeFigure(fig4, 1, 0.7);
 % saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
 % saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
 % close(fig4);
