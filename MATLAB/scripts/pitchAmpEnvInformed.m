@@ -1,36 +1,40 @@
-% ARINTERP Interpolate sinusoidal tracks using AR Modelling
+% PITCHAMPENVINFORMED Audio restoration through spectral modelling
+% with interpolation of pitch trajectory and global amplitude envelope
 
 %% Set variable values
 global fsGlobal
 fs = fsGlobal;
 frmLen = 1024;
-gapLen = 40 * frmLen;
-sigLen = 100 * frmLen;
+gapLen = 10240;
 hopLen = 256;
 numTrk = 60;
-minTrkLen = 10;
+minTrkLen = 8;
 resOrdAR = 50;
-pitchOrdAR = 2;
-magOrdAR = 2;
-envOrdAR = 2;
 almostNegInf = -100;
 envWeight = 0.9;
 
 % Residual computation settings
 smthRes = false;
 
+% Plotting settings
+xRange = 3; % Plotting range on x axis. Value of 1 corresponds to gap length.
+freqLim = [0, 10000] / 1000; % Freq range
+magMin = -100; % Lowest magnitude to be shown in the plot of magnitude trajectories
+
 % source = "saw";
 % source = "sin";
-% source = "audio/Flute.nonvib.ff.A4.wav";
-% source = "audio/Flute.vib.ff.A4.wav";
-% source = "audio/Trumpet.novib.mf.A4.wav";
-source = "audio/Trumpet.vib.mf.A4.wav";
+% source = "audio/Flute.nonvib.A4.wav";
+source = "audio/Flute.vib.A4.wav";
+% source = "audio/Trumpet.nonvib.A4.wav";
+% source = "audio/Trumpet.vib.A4.wav";
 
 %% Prepare source signal
 if contains(source, "audio/")
     sig = audioread(source);
+    sigLen = length(sig);
 elseif strcmp(source, 'sin')
-    f = 100; % + 2 * getSineSig(sigLen, 8);
+    sigLen = 0.5 * fs;
+    f = 440; % + 2 * getSineSig(sigLen, 8);
     sig = getCosSig(sigLen, f, -6);
     % sig = sig + getCosSig(sigLen, 2 * f, -12, pi);
     % sig = sig + getCosSig(sigLen, 3 * f, -15, pi / 2);
@@ -38,22 +42,18 @@ elseif strcmp(source, 'sin')
     % sig = sig + getCosSig(sigLen, 5 * f, -21);
     % sig = sig + 0.1 * randn(size(sig)) ./ 6;
 else
-    f = 440; %logspace(log10(220), log10(440), sigLen).';
-    m = -6; %linspace(-14, 0, sigLen).';
+    sigLen = fs;
+    f0 = 880; % A5 note
+    f1 = 1046.5; % C6 note
+    f = logspace(log10(f0), log10(f1), sigLen).';
 
-    sig = getSawSig(sigLen, f, m);
+    arOrd = 0;
+    sig = getSawSig(sigLen, f, -12);
+    sig = sig + 0.002 * randn([sigLen, 1]);
 end
 
 %% Damage the source signal
-if strcmp(source, 'audio/PianoScale.wav')
-    [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen, 80000);
-elseif contains(source, "Guitar")
-    [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen, 80000);
-elseif contains(source, "Cello")
-    [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen, 50000);
-else
-    [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen);
-end
+[sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen);
 
 %% Analyse pre- and post-gap sections
 % Pre-gap section
@@ -85,9 +85,9 @@ envPostdB = 20 * log10(abs(envPost));
 smplPost = gapEnd + smplPost;
 
 %% Match tracks across the gap
-% Reorder tracks based on harmonics
-maxHarmPre = round(max(freqPre(end, :)) / pitchPre(end));
-maxHarmPost = round(max(freqPost(1, :)) / pitchPost(1));
+% Reorder based on harmonics
+maxHarmPre = round(max(freqPre(end, :)) / trksPre(1).pitchEst(end));
+maxHarmPost = round(max(freqPost(1, :)) / trksPost(1).pitchEst(1));
 
 numHarm = max(maxHarmPre, maxHarmPost);
 
@@ -129,52 +129,21 @@ freqPost = freqHarmPost;
 magPost = magHarmPost;
 phsPost = phsHarmPost;
 
-%% Interpolate pitch -> frequencies and magnitudes
+%% Interpolate pitch
 numGapFrm = floor((gapLen + frmLen) / hopLen) - 1;
+fitRange = 4;
+polyOrd = 3;
 
-% Find first & last frame with pitch within semitone up or down
-firstUsablePitchPre = find(abs(log2(pitchPre / pitchPre(end))) > 1/12, 1, 'last') + 1;
-lastUsablePitchPost = find(abs(log2(pitchPost / pitchPost(1))) > 1/12, 1, 'first') - 1;
-
-if isempty(firstUsablePitchPre)
-    firstUsablePitchPre = 1;
-end
-
-if isempty(lastUsablePitchPost)
-    lastUsablePitchPost = length(pitchPost);
-end
-
-dataRangePitchPre = length(pitchPre) - firstUsablePitchPre;
-dataRangePitchPost = lastUsablePitchPost;
-
-pitchDataPre = pitchPre(end - dataRangePitchPre + 1:end);
-pitchDataPost = pitchPost(1:dataRangePitchPost);
-pitchGap = wfbar(pitchDataPre, pitchDataPost, numGapFrm, pitchOrdAR, true);
+pitchData = [pitchPre(end - fitRange + 1:end); pitchPost(1:fitRange)];
+dataInd = [1:fitRange, fitRange + numGapFrm + (1:fitRange)].';
+queryInd = fitRange + (1:numGapFrm).';
+pitchPoly = polyfit(dataInd, pitchData, polyOrd);
+pitchGap = polyval(pitchPoly, queryInd);
 
 %% Interpolate amplitude envelope
-% Find first & last frame with amplitude within 16 dB range
-noteStartEnvPre = find(abs(envPredB - envPredB(end)) > 16, 1, 'last') + 1;
-noteEndEnvPost = find(abs(envPostdB - envPostdB(1)) > 16, 1, 'first') - 1;
-
-% Find fitting range
-firstUsableEnvPre = find(abs(envPredB(noteStartEnvPre:end) - envPredB(end)) < 2, 1, 'first');
-firstUsableEnvPre = firstUsableEnvPre + noteStartEnvPre;
-lastUsableEnvPost = find(abs(envPostdB(1:noteEndEnvPost) - envPostdB(1)) < 2, 1, 'last') - 1;
-
-if isempty(firstUsableEnvPre)
-    firstUsableEnvPre = 1;
-end
-
-if isempty(lastUsableEnvPost)
-    lastUsableEnvPost = length(envPostdB);
-end
-
-dataRangeEnvPre = length(envPredB) - firstUsableEnvPre;
-dataRangeEnvPost = lastUsableEnvPost;
-
-envDataPre = envPredB(end - dataRangeEnvPre + 1:end);
-envDataPost = envPostdB(1:dataRangeEnvPost);
-envGapdB = wfbar(envDataPre, envDataPost, numGapFrm, envOrdAR, true);
+envData = [envPredB(end - fitRange + 1:end); envPostdB(1:fitRange)];
+envPoly = polyfit(dataInd, envData, polyOrd);
+envGapdB = polyval(envPoly, queryInd);
 envGapInitdb = envPredB(end);
 envGapEnddb = envPostdB(1);
 
@@ -186,12 +155,8 @@ freqGap = NaN(numGapFrm, numHarm);
 magGap = NaN(numGapFrm, numHarm);
 
 for harmIter = 1:numHarm
-    magDataPre = magPre(end - dataRangeEnvPre + 1:end, harmIter);
-    magDataPost = magPost(1:dataRangeEnvPost, harmIter);
-
-    if all(isnan([magDataPre; magDataPost]))
-        continue;
-    end
+    magDataPre = magPre(end - fitRange + 1:end, harmIter);
+    magDataPost = magPost(1:fitRange, harmIter);
 
     % If no match, extrapolate frequency and fade out magnitude
     if isnan(harmRatiosPre(harmIter))
@@ -203,27 +168,20 @@ for harmIter = 1:numHarm
         fadeOut = linspace(1, 10^(almostNegInf / 20), numGapFrm).';
         magGap(:, harmIter) = magDataPre(end) + 20 * log10(fadeOut);
     else
-        if any(isnan(magDataPre))
-            firstUsable = find(isnan(magDataPre), 1, 'last') + 1;
-            magDataPre = magDataPre(firstUsable:end);
-        end
-    
-        if any(isnan(magDataPost))
-            lastUsable = find(isnan(magDataPost), 1, 'first') - 1;
-            magDataPost = magDataPost(1:lastUsable);
-        end
-    
+        % If match exists, interpolate
         freqGap(:, harmIter) = pitchGap .* harmRatios(:, harmIter);
-    
-        % Magnitude of harmonic, as predicted from mag trajectory of this harmonic
-        magHarmGap = wfbar(magDataPre, magDataPost, numGapFrm, magOrdAR, true);
-    
-        % Magnitude of harmonic, as predicted based on global envelope and
-        % harmonic magnitude strength related to the global envelope
-        harmRelStrength = linspace(magDataPre(end) - envGapInitdb, magDataPost(1) - envGapEnddb, numGapFrm).';
-        envHarm = envGapdB + harmRelStrength;
-    
-        magGap(:, harmIter) = envHarm * envWeight + magHarmGap * (1 - envWeight);
+
+        magData = [magPre(end - fitRange + 1:end, harmIter); ...
+                magPost(1:fitRange, harmIter)];
+
+    magPoly = polyfit(dataInd, magData, polyOrd);
+    magGapIndividual = polyval(magPoly, queryInd);
+
+    magRel = linspace(magPre(end, harmIter) - envGapInitdb, ...
+        magPost(1, harmIter) - envGapEnddb, numGapFrm).';
+    magGapEnv = envGapdB + magRel;
+
+    magGap(:, harmIter) = magGapEnv * envWeight + magGapIndividual * (1 - envWeight);
     end
 
 end
@@ -235,8 +193,7 @@ envGapdB = [envPredB(end); envGapdB; envPostdB(1)];
 
 smplGap = smplPre(end):hopLen:smplPost(1);
 
-% Synthesise sinusoidal gap signal
-sigGapLen = smplGap(end) - smplGap(1) + 1;
+%% Synthesise sinusoidal gap signal
 sinGap = resynth(freqGap, magGap, phsPre(end, :), hopLen, phsPost(1, :));
 
 %% Restore residual
@@ -252,9 +209,9 @@ resGap = wfbar(resPre, resPost, gapLen, resOrdAR);
 % Apply interpolated gap envelope to residual
 numResFrm = numGapFrm - frmLen / hopLen + 2;
 envGapdBCut = envGapdB(frmLen / (2 * hopLen) + 1:end - frmLen / (2 * hopLen));
-resRelStrength = linspace(envGapInitdb, envGapEnddb, numResFrm + 2).';
-resRelStrength = resRelStrength(2:end - 1);
-resAmpFrm = 10.^((envGapdBCut - resRelStrength) / 20);
+resRelMag = linspace(envGapInitdb, envGapEnddb, numResFrm + 2).';
+resRelMag = resRelMag(2:end - 1);
+resAmpFrm = 10.^((envGapdBCut - resRelMag) / 20);
 resAmp = resAmpFrm(1) * ones(size(resGap));
 
 for iter = 1:(numResFrm - 1)
@@ -262,8 +219,11 @@ for iter = 1:(numResFrm - 1)
         linspace(resAmpFrm(iter), resAmpFrm(iter + 1), hopLen + 1).';
 end
 
-resAmp = resAmp(1:end - 1); %TODO: Check if size adjustment is ok
+resAmp = resAmp(1:end - 1);
 resGap = resGap .* resAmp;
+
+% Concatenate with half frame of known signal from either side
+% This is to match the size of sinSig
 resGap = [resPre(frmLen / 2:end); resGap; resPost(1:frmLen / 2)];
 
 %% Add reconstructed sinusoidal and residual
@@ -293,18 +253,12 @@ sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 
 %% Plotting
 % Determine signal range to be plotted
-plotStart = gapStart - round(0.8 * gapLen);
-plotEnd = gapEnd + round(0.8 * gapLen);
-% plotStart = 14883;
-% plotEnd = 29218;
+gapCentre = int64((gapStart + gapEnd) / 2);
+plotStart = gapCentre - int64(0.5 * xRange * gapLen);
+plotEnd = gapCentre + int64(0.5 * xRange * gapLen);
+
 plotStart = max(1, plotStart);
 plotEnd = min(length(sig), plotEnd);
-
-% Freq range
-freqLim = [0, 20000] / 1000;
-
-% Mag range
-magMin = -50;
 
 % Convert from samples to s or ms
 if sigLen > fs
@@ -496,7 +450,6 @@ legend;
 % Plot post AR frequency response
 fig12 = figure(12);
 global arBwdFreqResp;
-% global arFreqVec;
 
 arBwdFreqResp = 20 * log10(abs(arBwdFreqResp));
 arBwdFreqResp = arBwdFreqResp - max(arBwdFreqResp);
@@ -527,13 +480,12 @@ set(gca, 'ColorOrderIndex', 1);
 plot(t(smplPost), pitchPost);
 plot(t(smplGap), pitchGapOrig, 'Color', [0.7, 0.7, 0.7]);
 plot(t(smplGap), pitchGap, 'Color', [221, 49, 26] / 256);
-plot([t(smplPre(firstUsablePitchPre)), t(smplPost(lastUsablePitchPost))], ...
-    [pitchPre(firstUsablePitchPre), pitchPost(lastUsablePitchPost)], 'x');
 hold off;
 title('Pitch trajectory');
-ylabel('Pitch in Hz');
+ylabel('Pitch (Hz)');
 xlabel(['Time (', timeUnit, ')']);
 xlim([t(plotStart), t(plotEnd)]);
+ylim([400, 500]);
 grid on;
 
 % Plot amplitude envelope
@@ -548,24 +500,23 @@ set(gca, 'ColorOrderIndex', 1);
 plot(t(smplPost), envPostdB);
 plot(t(smplGap), envGapOrig, 'Color', [0.7, 0.7, 0.7]);
 plot(t(smplGap), envGapdB, 'Color', [221, 49, 26] / 256);
-plot([t(smplPre(firstUsableEnvPre)), t(smplPost(lastUsableEnvPost))], ...
-    [envPredB(firstUsableEnvPre), envPostdB(lastUsableEnvPost)], 'x');
 hold off;
 title('Global amplitude envelope');
+ylabel('Amplitude (dBFS)');
 xlabel(['Time (', timeUnit, ')']);
 xlim([t(plotStart), t(plotEnd)]);
-ylim([-30, 0]);
+% ylim([-18, -4]);
 grid on;
 
 % Save figures
 switch source
-    case "audio/Flute.nonvib.ff.A4.wav"
+    case "audio/Flute.nonvib.A4.wav"
         sigDesc = ['flute_gapLen_', num2str(gapLen)];
-    case "audio/Flute.vib.ff.A4.wav"
+    case "audio/Flute.vib.A4.wav"
         sigDesc = ['fluteVib_gapLen_', num2str(gapLen)];
-    case "audio/Trumpet.novib.mf.A4.wav"
+    case "audio/Trumpet.nonvib.A4.wav"
         sigDesc = ['trumpet_gapLen_', num2str(gapLen)];
-    case "audio/Trumpet.vib.mf.A4.wav"
+    case "audio/Trumpet.vib.A4.wav"
         sigDesc = ['trumpetVib_gapLen_', num2str(gapLen)];
     case "saw"
         sigDesc = ['saw_', num2str(f0), '-', num2str(f1), ...
@@ -573,91 +524,97 @@ switch source
 end
 
 % filename = [sigDesc, '_orig'];
-% audiowrite(['submission\\audioExamples\\pitch_', filename, '.wav'], sig, fs);
+% audiowrite(['audioExamples\\pitchAmpEnv_', filename, '.wav'], sig, fs);
 
 % filename = [sigDesc, '_dmg'];
-% audiowrite(['submission\\audioExamples\\pitch_', filename, '.wav'], sigDmg, fs);
+% audiowrite(['audioExamples\\pitchAmpEnv_', filename, '.wav'], sigDmg, fs);
 
 % filename = [sigDesc, '_rest'];
-% audiowrite(['submission\\audioExamples\\pitch_', filename, '.wav'], sigRest, fs);
+% audiowrite(['audioExamples\\pitchAmpEnv_', filename, '.wav'], sigRest, fs);
 
 % filename = [sigDesc, '_t_orig'];
 % resizeFigure(fig1, 1, 0.7);
-% saveas(fig1, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig1, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig1, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig1, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig1);
 
 % filename = [sigDesc, '_t_gap'];
 % resizeFigure(fig2, 1, 0.7);
-% saveas(fig2, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig2, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig2, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig2, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig2);
 
 % filename = [sigDesc, '_t_sigGap'];
 % resizeFigure(fig3, 1, 0.7);
-% saveas(fig3, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig3, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig3, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig3, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig3);
 
 % filename = [sigDesc, '_t_rest'];
 % resizeFigure(fig4, 1, 0.7);
-% saveas(fig4, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig4, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig4, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig4, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig4);
 
 % filename = [sigDesc, '_trk_freq'];
 % resizeFigure(fig5, 1, 0.7);
-% saveas(fig5, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig5, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig5, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig5, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig5);
 
 % filename = [sigDesc, '_trk_mag'];
 % resizeFigure(fig6, 1, 0.7);
-% saveas(fig6, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig6, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig6, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig6, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig6);
 
 % filename = [sigDesc, '_spgm_orig'];
-% resizeFigure(fig7, 1, 0.8);
-% saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig7, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% resizeFigure(fig7, 1, 0.7);
+% saveas(fig7, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig7, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig7);
 
 % filename = [sigDesc, '_spgm_rest'];
-% resizeFigure(fig8, 1, 0.8);
-% saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig8, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% resizeFigure(fig8, 1, 0.7);
+% saveas(fig8, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig8, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig8);
 
 % filename = [sigDesc, '_spgm_diff'];
-% resizeFigure(fig9, 1, 0.8);
-% saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig9, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% resizeFigure(fig9, 1, 0.7);
+% saveas(fig9, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig9, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig9);
 
 % filename = [sigDesc, '_lsd'];
 % resizeFigure(fig10, 1, 0.7);
-% saveas(fig10, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig10, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig10, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig10, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig10);
 
 % filename = [sigDesc, '_resFrqRespFwd'];
 % resizeFigure(fig11, 1, 0.7);
-% saveas(fig11, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig11, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig11, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig11, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig11);
 
 % filename = [sigDesc, '_resFrqRespBwd'];
 % resizeFigure(fig12, 1, 0.7);
-% saveas(fig12, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig12, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig12, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig12, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig12);
 
 % filename = [sigDesc, '_pitch'];
 % resizeFigure(fig13, 1, 0.7);
-% saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig13, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
+% saveas(fig13, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig13, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
 % close(fig13);
+
+% filename = [sigDesc, '_globAmp'];
+% resizeFigure(fig14, 1, 0.7);
+% saveas(fig14, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
+% saveas(fig14, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
+% close(fig14);
 
 function resizeFigure(figHandle, xFact, yFact)
     figPos = get(figHandle, 'Position');
