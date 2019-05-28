@@ -1,5 +1,13 @@
 function [t, f, psd] = spgm(sig, showFig, frmLen, hopLen, fs)
     %SPGM Plot a spectrogram using MATLAB's spectrogram function
+    %   [t, f, psd] = spgm(sig, showFig, frmLen, hopLen, fs) returns time 
+    %   vector t, frequency vector f and power spectral density matrix psd
+    %   of the given signal sig. 
+    %   Additional settings;
+    %   showFig - Set to true to show spectrogram plot (true by default)
+    %   frmLen - analysis frame length in samples (2048 by default)
+    %   hopLen - analysis hop length in samples (256 by default)
+    %   fs - sampling frequency of sig  (uses fsGlobal by default)
 
     global fsGlobal;
 

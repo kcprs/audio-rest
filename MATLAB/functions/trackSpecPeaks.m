@@ -58,28 +58,3 @@ function [trks, pitch] = trackSpecPeaks(sig, frmLen, hopLen, numTrk, minTrjLen, 
     end
 
 end
-
-function [trs, nfft] = unpackSPDArgs(spdArgs)
-
-    if isfield(spdArgs, 'trs')
-        trs = spdArgs.trs;
-        spdArgs = rmfield(spdArgs, 'trs');
-    else
-        trs = -Inf;
-    end
-
-    if isfield(spdArgs, 'nfft')
-        nfft = spdArgs.nfft;
-        spdArgs = rmfield(spdArgs, 'nfft');
-    else
-        nfft = 2048;
-    end
-
-    % Throw error if there are leftover fields in the given struct
-    if numel(fieldnames(spdArgs)) ~= 0
-        msg = "Unrecognised parameters passed to trackSpecPeak: ";
-        fieldNames = strjoin(fieldnames(spdArgs), ', ');
-        error(strcat(msg, fieldNames));
-    end
-
-end

@@ -1,26 +1,46 @@
-% PITCHAMPENVINFORMED Audio restoration through spectral modelling
-% with interpolation of pitch trajectory and global amplitude envelope
+% SPECTRALPITCHAMPENV Audio restoration through spectral modelling with
+% pitch tracking and amplitude envelope prediction
+%  (see section 6.5 in the report)
 
-%% Set variable values
+% Before the script is used, setup.m must be ran to set global variable
+% values and add required folders to workspace path. If the command 'clear all'
+% is used, the setup script has to be ran again to reinstate global variables.
+
+% Script returns processed signals in the following variables:
+% sig - original signal
+% sigDmg - damaged signal
+% sigRest - restored signal
+% Use MATLAB's audiowrite to save them to an audio file.
+
+%% Set up global variable values
 global fsGlobal
 fs = fsGlobal;
-frmLen = 1024;
-gapLen = 10240;
-hopLen = 256;
-numTrk = 60;
-minTrkLen = 8;
-resOrdAR = 50;
 almostNegInf = -100;
-envWeight = 0.9;
+
+%% ----------- Script Settings - user editable --------------------
+% Analysis settings
+frmLen = 1024; % STFT frame length
+hopLen = 256; % STFT hop length
+numTrk = 60; % Number of sinusoidal tracks to be used for spectral modelling
+minTrkLen = 8; % Minimum trajectory length
+
+% Length of gap in samples - must be greater than frmLen and integer multiple of hopLen
+gapLen = 10240;
 
 % Residual computation settings
-smthRes = false;
+resOrdAR = 50; % Order of the AR model used for residual restoration
+smthRes = false; % Smooth residual spectrum before resynthesis?
+
+% Weight of amplitude prediction applied to magnitude trajectories
+% (see report section 6.5.1)
+envWeight = 0.9;
 
 % Plotting settings
 xRange = 3; % Plotting range on x axis. Value of 1 corresponds to gap length.
 freqLim = [0, 10000] / 1000; % Freq range
 magMin = -100; % Lowest magnitude to be shown in the plot of magnitude trajectories
 
+% Uncomment below to set audio source
 % source = "saw";
 % source = "sin";
 % source = "audio/Flute.nonvib.A4.wav";
@@ -34,13 +54,8 @@ if contains(source, "audio/")
     sigLen = length(sig);
 elseif strcmp(source, 'sin')
     sigLen = 0.5 * fs;
-    f = 440; % + 2 * getSineSig(sigLen, 8);
+    f = 440;
     sig = getCosSig(sigLen, f, -6);
-    % sig = sig + getCosSig(sigLen, 2 * f, -12, pi);
-    % sig = sig + getCosSig(sigLen, 3 * f, -15, pi / 2);
-    % sig = sig + getCosSig(sigLen, 4 * f, -18, 0.75 * pi);
-    % sig = sig + getCosSig(sigLen, 5 * f, -21);
-    % sig = sig + 0.1 * randn(size(sig)) ./ 6;
 else
     sigLen = fs;
     f0 = 880; % A5 note
@@ -51,6 +66,8 @@ else
     sig = getSawSig(sigLen, f, -12);
     sig = sig + 0.002 * randn([sigLen, 1]);
 end
+
+%% ----------- end of Script Settings --------------------
 
 %% Damage the source signal
 [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen);
@@ -505,120 +522,4 @@ title('Global amplitude envelope');
 ylabel('Amplitude (dBFS)');
 xlabel(['Time (', timeUnit, ')']);
 xlim([t(plotStart), t(plotEnd)]);
-% ylim([-18, -4]);
 grid on;
-
-% Save figures
-switch source
-    case "audio/Flute.nonvib.A4.wav"
-        sigDesc = ['flute_gapLen_', num2str(gapLen)];
-    case "audio/Flute.vib.A4.wav"
-        sigDesc = ['fluteVib_gapLen_', num2str(gapLen)];
-    case "audio/Trumpet.nonvib.A4.wav"
-        sigDesc = ['trumpet_gapLen_', num2str(gapLen)];
-    case "audio/Trumpet.vib.A4.wav"
-        sigDesc = ['trumpetVib_gapLen_', num2str(gapLen)];
-    case "saw"
-        sigDesc = ['saw_', num2str(f0), '-', num2str(f1), ...
-                    '_gapLen_', num2str(gapLen)];
-end
-
-% filename = [sigDesc, '_orig'];
-% audiowrite(['audioExamples\\pitchAmpEnv_', filename, '.wav'], sig, fs);
-
-% filename = [sigDesc, '_dmg'];
-% audiowrite(['audioExamples\\pitchAmpEnv_', filename, '.wav'], sigDmg, fs);
-
-% filename = [sigDesc, '_rest'];
-% audiowrite(['audioExamples\\pitchAmpEnv_', filename, '.wav'], sigRest, fs);
-
-% filename = [sigDesc, '_t_orig'];
-% resizeFigure(fig1, 1, 0.7);
-% saveas(fig1, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig1, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig1);
-
-% filename = [sigDesc, '_t_gap'];
-% resizeFigure(fig2, 1, 0.7);
-% saveas(fig2, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig2, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig2);
-
-% filename = [sigDesc, '_t_sigGap'];
-% resizeFigure(fig3, 1, 0.7);
-% saveas(fig3, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig3, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig3);
-
-% filename = [sigDesc, '_t_rest'];
-% resizeFigure(fig4, 1, 0.7);
-% saveas(fig4, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig4, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig4);
-
-% filename = [sigDesc, '_trk_freq'];
-% resizeFigure(fig5, 1, 0.7);
-% saveas(fig5, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig5, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig5);
-
-% filename = [sigDesc, '_trk_mag'];
-% resizeFigure(fig6, 1, 0.7);
-% saveas(fig6, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig6, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig6);
-
-% filename = [sigDesc, '_spgm_orig'];
-% resizeFigure(fig7, 1, 0.7);
-% saveas(fig7, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig7, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig7);
-
-% filename = [sigDesc, '_spgm_rest'];
-% resizeFigure(fig8, 1, 0.7);
-% saveas(fig8, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig8, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig8);
-
-% filename = [sigDesc, '_spgm_diff'];
-% resizeFigure(fig9, 1, 0.7);
-% saveas(fig9, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig9, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig9);
-
-% filename = [sigDesc, '_lsd'];
-% resizeFigure(fig10, 1, 0.7);
-% saveas(fig10, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig10, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig10);
-
-% filename = [sigDesc, '_resFrqRespFwd'];
-% resizeFigure(fig11, 1, 0.7);
-% saveas(fig11, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig11, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig11);
-
-% filename = [sigDesc, '_resFrqRespBwd'];
-% resizeFigure(fig12, 1, 0.7);
-% saveas(fig12, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig12, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig12);
-
-% filename = [sigDesc, '_pitch'];
-% resizeFigure(fig13, 1, 0.7);
-% saveas(fig13, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig13, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig13);
-
-% filename = [sigDesc, '_globAmp'];
-% resizeFigure(fig14, 1, 0.7);
-% saveas(fig14, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.eps'], 'epsc');
-% saveas(fig14, ['figures\\spectralModelling\\pitchAmpEnv\\', filename, '.png']);
-% close(fig14);
-
-function resizeFigure(figHandle, xFact, yFact)
-    figPos = get(figHandle, 'Position');
-    figPos(3) = xFact * figPos(3);
-    figPos(4) = yFact * figPos(4);
-    set(figHandle, 'Position', figPos);
-end

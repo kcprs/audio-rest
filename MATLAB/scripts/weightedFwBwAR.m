@@ -1,20 +1,39 @@
 % WEIGHTEDFWBWAR Fix a gap in a signal using a weighted forward-backward
-% predictor
+% predictor (see section 5.2 in the report)
 
-%% Set up variable values
+% Before the script is used, setup.m must be ran to set global variable
+% values and add required folders to workspace path. If the command 'clear all'
+% is used, the setup script has to be ran again to reinstate global variables.
+
+% Script returns processed signals in the following variables:
+% sig - original signal
+% sigDmg - damaged signal
+% sigRest - restored signal
+% Use MATLAB's audiowrite to save them to an audio file.
+
+%% Set up global variable values
 global fsGlobal
 fs = fsGlobal;
 
-% Uncomment below to set audio source and corresponding variables
-% source = "sine";
-source = "saw";
+%% ----------- Script Settings - user editable --------------------
+
+% Uncomment below to set audio source
+source = "sine";
+% source = "saw";
 % source = "flute";
 % source = "flute.vib";
 % source = "trumpet";
 % source = "trumpet.vib";
 
-fitLen = 2048; % Length of fitting section in samples
-gapLen = 4096; % Length of gap in samples
+% Length of fitting section in samples
+fitLen = 2048; 
+
+% Length of gap in samples
+gapLen = 4096;
+
+% Plotting settings
+xRange = 3; % Plotting range on x axis. Value of 1 corresponds to gap length.
+freqLim = [0, 10000] / 1000; % Frequency range
 
 % Set source-specific variable values
 switch source
@@ -29,22 +48,24 @@ switch source
         f1 = 1046.5; % C6 note
         f = logspace(log10(f0), log10(f1), sigLen).';
 
-        arOrd = 0;
+        arOrd = 0; % Uses automatic order finding
         sig = getSawSig(sigLen, f, -12);
         sig = sig + 0.002 * randn([sigLen, 1]);
     case "flute"
-        arOrd = 0;
+        arOrd = 0; % Uses automatic order finding
         sig = audioread("Flute.nonvib.A4.wav");
     case "flute.vib"
-        arOrd = 0;
+        arOrd = 0; % Uses automatic order finding
         sig = audioread("Flute.vib.A4.wav");
     case "trumpet"
-        arOrd = 0;
+        arOrd = 0; % Uses automatic order finding
         sig = audioread("Trumpet.nonvib.A4.wav");
     case "trumpet.vib"
-        arOrd = 0;
+        arOrd = 0; % Uses automatic order finding
         sig = audioread("Trumpet.vib.A4.wav");
 end
+
+%% ----------- end of Script Settings --------------------
 
 sigLen = length(sig);
 
@@ -65,11 +86,12 @@ sigRest(gapStart:gapEnd) = sigGap;
 
 %% Plotting
 % Determine signal range to be plotted
-plotStart = gapStart - fitLen - round(0.5 * (gapLen + fitLen));
-plotEnd = gapEnd + fitLen + round(0.5 * (gapLen + fitLen));
+gapCentre = int64((gapStart + gapEnd) / 2);
+plotStart = gapCentre - int64(0.5 * xRange * gapLen);
+plotEnd = gapCentre + int64(0.5 * xRange * gapLen);
 
-% Freq range
-freqLim = [0, 20000] / 1000;
+plotStart = max(1, plotStart);
+plotEnd = min(length(sig), plotEnd);
 
 % Convert from samples to s or ms
 if sigLen > fs
@@ -209,96 +231,3 @@ fig8 = figure(8);
 global arFwdCoeffs;
 zplane(1, arFwdCoeffs);
 title("AR Filter - Pole-Zero Plot");
-
-% Save figures and audio
-switch source
-    case "sine"
-        sigDesc = ['wfbAR_sine_', num2str(f0), '_arOrd_', ...
-                    num2str(arOrd), '_gapLen_', num2str(gapLen), ...
-                    '_fitLen_', num2str(fitLen)];
-    case "saw"
-        sigDesc = ['wfbAR_saw_', num2str(f0), '-', num2str(f1), ...
-                    '_arOrd_', num2str(arOrd), ...
-                    '_gapLen_', num2str(gapLen), ...
-                    '_fitLen_', num2str(fitLen)];
-    case "flute"
-        sigDesc = ['wfbAR_flute_arOrd_', num2str(arOrd), ...
-                    '_gapLen_', num2str(gapLen), ...
-                    '_fitLen_', num2str(fitLen)];
-    case "flute.vib"
-        sigDesc = ['wfbAR_fluteVib_arOrd_', num2str(arOrd), ...
-                    '_gapLen_', num2str(gapLen), ...
-                    '_fitLen_', num2str(fitLen)];
-    case "trumpet"
-        sigDesc = ['wfbAR_trumpet_arOrd_', num2str(arOrd), ...
-                    '_gapLen_', num2str(gapLen), ...
-                    '_fitLen_', num2str(fitLen)];
-    case "trumpet.vib"
-        sigDesc = ['wfbAR_trumpetVib_arOrd_', num2str(arOrd), ...
-                    '_gapLen_', num2str(gapLen), ...
-                    '_fitLen_', num2str(fitLen)];
-end
-
-% filename = [sigDesc, '_orig'];
-% audiowrite(['audioExamples\\', filename, '.wav'], sig, fs);
-
-% filename = [sigDesc, '_dmg'];
-% audiowrite(['audioExamples\\', filename, '.wav'], sigDmg, fs);
-
-% filename = [sigDesc, '_rest'];
-% audiowrite(['audioExamples\\', filename, '.wav'], sigRest, fs);
-
-% filename = [sigDesc, '_t_orig'];
-% resizeFigure(fig1, 1, 0.7);
-% saveas(fig1, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-% saveas(fig1, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-% close(fig1);
-
-% filename = [sigDesc, '_t_sigGap'];
-% resizeFigure(fig2, 1, 0.7);
-% saveas(fig2, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-% saveas(fig2, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-% close(fig2);
-
-% filename = [sigDesc, '_spgm_orig'];
-% resizeFigure(fig3, 1, 0.7);
-% saveas(fig3, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-% saveas(fig3, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-% close(fig3);
-
-% filename = [sigDesc, '_spgm_rest'];
-% resizeFigure(fig4, 1, 0.7);
-% saveas(fig4, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-% saveas(fig4, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-% close(fig4);
-
-% filename = [sigDesc, '_spgm_diff'];
-% resizeFigure(fig5, 1, 0.7);
-% saveas(fig5, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-% saveas(fig5, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-% close(fig5);
-
-% filename = [sigDesc, '_lsd'];
-% resizeFigure(fig6, 1, 0.7);
-% saveas(fig6, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-% saveas(fig6, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-% close(fig6);
-
-% filename = [sigDesc, '_freqResp'];
-% resizeFigure(fig7, 1, 0.7);
-% saveas(fig7, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-% saveas(fig7, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-% close(fig7);
-
-% filename = [sigDesc, '_zPlane'];
-% resizeFigure(fig8, 1, 0.7);
-% saveas(fig8, ['figures\\arModelling\\wfbar\\', filename, '.eps'], 'epsc');
-% saveas(fig8, ['figures\\arModelling\\wfbar\\', filename, '.png']);
-% close(fig8);
-
-function resizeFigure(figHandle, xFact, yFact)
-    figPos = get(figHandle, 'Position');
-    figPos(3) = xFact * figPos(3);
-    figPos(4) = yFact * figPos(4);
-    set(figHandle, 'Position', figPos);
-end

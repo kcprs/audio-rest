@@ -1,26 +1,45 @@
-% BASICSPECTRAL Audio restoration through spectral modelling
+% SPECTRALBASIC Audio restoration through spectral modelling with cubic
+% polynomial interpolation of trajectories (see section 6.2 in the report)
 
-%% Set variable values
+% Before the script is used, setup.m must be ran to set global variable
+% values and add required folders to workspace path. If the command 'clear all'
+% is used, the setup script has to be ran again to reinstate global variables.
+
+% Script returns processed signals in the following variables:
+% sig - original signal
+% sigDmg - damaged signal
+% sigRest - restored signal
+% Use MATLAB's audiowrite to save them to an audio file.
+
+%% Set up global variable values
 global fsGlobal
 fs = fsGlobal;
-frmLen = 1024;
-gapLen = 10240;
-hopLen = 256;
-numTrk = 60;
-minTrkLen = 8;
-resOrdAR = 50;
 almostNegInf = -100;
-noMatchBehaviour = "constant";
-% noMatchBehaviour = "polynomial";
+
+%% ----------- Script Settings - user editable --------------------
+% Analysis settings
+frmLen = 1024; % STFT frame length
+hopLen = 256; % STFT hop length
+numTrk = 60; % Number of sinusoidal tracks to be used for spectral modelling
+minTrkLen = 8; % Minimum trajectory length
+
+% Length of gap in samples - must be greater than frmLen and integer multiple of hopLen
+gapLen = 10240;
+
+% Select behaviour for trajectories without a match across the gap
+noMatchBehaviour = "constant"; % Frequency stays constant
+% noMatchBehaviour = "polynomial"; % Frequency is extrapolated using cubic polynomial
 
 % Residual computation settings
-smthRes = false;
+resOrdAR = 50; % Order of the AR model used for residual restoration
+smthRes = false; % Smooth residual spectrum before resynthesis?
 
 % Plotting settings
 xRange = 3; % Plotting range on x axis. Value of 1 corresponds to gap length.
 freqLim = [0, 10000] / 1000; % Freq range
 magMin = -70; % Lowest magnitude to be shown in the plot of magnitude trajectories
 
+% Uncomment below to set audio source
 % source = "saw";
 % source = "sin";
 % source = "audio/Flute.nonvib.A4.wav";
@@ -34,13 +53,8 @@ if contains(source, "audio/")
     sigLen = length(sig);
 elseif strcmp(source, 'sin')
     sigLen = fs;
-    f = 440; % + 2 * getSineSig(sigLen, 8);
+    f = 440;
     sig = getCosSig(sigLen, f, -6);
-    % sig = sig + getCosSig(sigLen, 2 * f, -12, pi);
-    % sig = sig + getCosSig(sigLen, 3 * f, -15, pi / 2);
-    % sig = sig + getCosSig(sigLen, 4 * f, -18, 0.75 * pi);
-    % sig = sig + getCosSig(sigLen, 5 * f, -21);
-    % sig = sig + 0.1 * randn(size(sig)) ./ 6;
 else
     sigLen = fs;
     f0 = 880; % A5 note
@@ -51,6 +65,8 @@ else
     sig = getSawSig(sigLen, f, -12);
     sig = sig + 0.002 * randn([sigLen, 1]);
 end
+
+%% ----------- end of Script Settings --------------------
 
 %% Damage the source signal
 [sigDmg, gapStart, gapEnd] = makeGap(sig, gapLen);
@@ -66,6 +82,7 @@ for trkIter = 1:numTrk
     trksPre(trkIter).reverse(length(sigPre))
 end
 
+% Convert SinTrack objects into a frequency, magnitude and phase matrices
 [freqPre, magPre, phsPre, smplPre] = SinTrack.consolidateFMP(trksPre);
 
 % Post-gap section
@@ -279,8 +296,7 @@ sigRest(gapEnd + 1:end) = sigRest(gapEnd + 1:end) + sigPostXF;
 gapCentre = int64((gapStart + gapEnd) / 2);
 plotStart = gapCentre - int64(0.5 * xRange * gapLen);
 plotEnd = gapCentre + int64(0.5 * xRange * gapLen);
-% plotStart = 14883;
-% plotEnd = 29218;
+
 plotStart = max(1, plotStart);
 plotEnd = min(length(sig), plotEnd);
 
@@ -491,106 +507,3 @@ ylabel("Magnitude (dB)");
 xlim([0, 20000] / 1000);
 grid on;
 legend;
-
-% Save figures
-switch source
-    case "audio/Flute.nonvib.A4.wav"
-        sigDesc = ['flute_gapLen_', num2str(gapLen)];
-    case "audio/Flute.vib.A4.wav"
-        sigDesc = ['fluteVib_gapLen_', num2str(gapLen)];
-    case "audio/Trumpet.nonvib.A4.wav"
-        sigDesc = ['trumpet_gapLen_', num2str(gapLen)];
-    case "audio/Trumpet.vib.A4.wav"
-        sigDesc = ['trumpetVib_gapLen_', num2str(gapLen)];
-    case "saw"
-        sigDesc = ['saw_', num2str(f0), '-', num2str(f1), ...
-                    '_gapLen_', num2str(gapLen)];
-end
-
-% filename = [sigDesc, '_orig'];
-% audiowrite(['audioExamples\\poly_', filename, '.wav'], sig, fs);
-
-% filename = [sigDesc, '_dmg'];
-% audiowrite(['audioExamples\\poly_', filename, '.wav'], sigDmg, fs);
-
-% filename = [sigDesc, '_rest'];
-% audiowrite(['audioExamples\\poly_', filename, '.wav'], sigRest, fs);
-
-% filename = [sigDesc, '_t_orig'];
-% resizeFigure(fig1, 1, 0.7);
-% saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig1, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig1);
-
-% filename = [sigDesc, '_t_gap'];
-% resizeFigure(fig2, 1, 0.7);
-% saveas(fig2, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig2, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig2);
-
-% filename = [sigDesc, '_t_sigGap'];
-% resizeFigure(fig3, 1, 0.7);
-% saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig3, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig3);
-
-% filename = [sigDesc, '_t_rest'];
-% resizeFigure(fig4, 1, 0.7);
-% saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig4, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig4);
-
-% filename = [sigDesc, '_trk_freq'];
-% resizeFigure(fig5, 1, 0.7);
-% saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig5, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig5);
-
-% filename = [sigDesc, '_trk_mag'];
-% resizeFigure(fig6, 1, 0.7);
-% saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig6, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig6);
-
-% filename = [sigDesc, '_spgm_orig'];
-% resizeFigure(fig7, 1, 1);
-% saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig7, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig7);
-
-% filename = [sigDesc, '_spgm_rest'];
-% resizeFigure(fig8, 1, 1);
-% saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig8, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig8);
-
-% filename = [sigDesc, '_spgm_diff'];
-% resizeFigure(fig9, 1, 0.7);
-% saveas(fig9, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig9, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig9);
-
-% filename = [sigDesc, '_lsd'];
-% resizeFigure(fig10, 1, 0.7);
-% saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.eps'], 'epsc');
-% saveas(fig10, ['figures\\spectralModelling\\basicRestoration\\', filename, '.png']);
-% close(fig10);
-
-% filename = [sigDesc, '_resFrqRespFwd'];
-% resizeFigure(fig11, 1, 0.7);
-% saveas(fig11, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig11, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-% close(fig11);
-
-% filename = [sigDesc, '_resFrqRespBwd'];
-% resizeFigure(fig12, 1, 0.7);
-% saveas(fig12, ['figures\\spectralModelling\\pitchInformed\\', filename, '.eps'], 'epsc');
-% saveas(fig12, ['figures\\spectralModelling\\pitchInformed\\', filename, '.png']);
-% close(fig12);
-
-function resizeFigure(figHandle, xFact, yFact)
-    figPos = get(figHandle, 'Position');
-    figPos(3) = xFact * figPos(3);
-    figPos(4) = yFact * figPos(4);
-    set(figHandle, 'Position', figPos);
-end

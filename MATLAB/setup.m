@@ -23,11 +23,11 @@ function setup(basePath)
     end
 
     % Define paths to add
-    pathsAdded = [basePath + "\\functions";
-            basePath + "\\scripts";
+    pathsAdded = [basePath + "\\audio";
             basePath + "\\classes";
-            basePath + "\\util";
-            basePath + "\\audio"];
+            basePath + "\\functions";
+            basePath + "\\scripts";
+            basePath + "\\tests"];
 
     % Add required subfolders to path
     for iter = 1:length(pathsAdded)
